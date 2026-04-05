@@ -185,7 +185,7 @@ jobs:
         env:
           LOCALE: ${{ inputs.locale }}
         run: |
-          if git diff --quiet -- "docs/${LOCALE}" "docs/.i18n/${LOCALE}.tm.jsonl"; then
+          if [ -z "$(git status --porcelain --untracked-files=all -- "docs/${LOCALE}" "docs/.i18n/${LOCALE}.tm.jsonl")" ]; then
             echo "No ${LOCALE} translation changes."
             exit 0
           fi

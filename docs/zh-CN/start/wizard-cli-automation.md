@@ -6,10 +6,10 @@ sidebarTitle: CLI automation
 summary: 用于 OpenClaw CLI 的脚本化新手引导和智能体设置
 title: CLI 自动化
 x-i18n:
-    generated_at: "2026-04-05T10:09:53Z"
+    generated_at: "2026-04-05T17:49:19Z"
     model: gpt-5.4
     provider: openai
-    source_hash: a757d58df443e5e71f97417aed20e6a80a63b84f69f7dbf0e093319827d37836
+    source_hash: 878ea3fa9f2a75cff9f1a803ccb8a52a1219102e2970883ad18e3aaec5967fd2
     source_path: start/wizard-cli-automation.md
     workflow: 15
 ---
@@ -19,7 +19,7 @@ x-i18n:
 使用 `--non-interactive` 来自动化 `openclaw onboard`。
 
 <Note>
-`--json` 并不意味着非交互式模式。对于脚本，请使用 `--non-interactive`（以及 `--workspace`）。
+`--json` 并不意味着非交互模式。对于脚本，请使用 `--non-interactive`（以及 `--workspace`）。
 </Note>
 
 ## 基础非交互式示例
@@ -39,11 +39,11 @@ openclaw onboard --non-interactive \
 
 添加 `--json` 可获得机器可读的摘要。
 
-使用 `--secret-input-mode ref` 可将基于环境变量的引用存储到 auth profile 中，而不是存储明文值。
+使用 `--secret-input-mode ref` 可在认证配置文件中存储由环境变量支持的引用，而不是明文值。
 在新手引导流程中，支持在环境变量引用和已配置的提供商引用（`file` 或 `exec`）之间进行交互式选择。
 
-在非交互式 `ref` 模式下，必须在进程环境中设置提供商环境变量。
-如果传入了内联密钥标志但未设置对应的环境变量，现在会快速失败。
+在非交互式 `ref` 模式下，提供商环境变量必须在进程环境中设置。
+如果传入内联密钥 flag，但没有对应的环境变量，现在会快速失败。
 
 示例：
 
@@ -58,17 +58,15 @@ openclaw onboard --non-interactive \
 ## 特定提供商示例
 
 <AccordionGroup>
-  <Accordion title="Anthropic Claude CLI 示例">
+  <Accordion title="Anthropic API key 示例">
     ```bash
     openclaw onboard --non-interactive \
       --mode local \
-      --auth-choice anthropic-cli \
+      --auth-choice apiKey \
+      --anthropic-api-key "$ANTHROPIC_API_KEY" \
       --gateway-port 18789 \
       --gateway-bind loopback
     ```
-
-    需要在同一 Gateway 网关主机上预先安装并登录 Claude CLI。
-
   </Accordion>
   <Accordion title="Gemini 示例">
     ```bash
@@ -151,7 +149,7 @@ openclaw onboard --non-interactive \
       --gateway-port 18789 \
       --gateway-bind loopback
     ```
-    如需使用 Go 目录，请改用 `--auth-choice opencode-go --opencode-go-api-key "$OPENCODE_API_KEY"`。
+    如需使用 Go 目录，请改为 `--auth-choice opencode-go --opencode-go-api-key "$OPENCODE_API_KEY"`。
   </Accordion>
   <Accordion title="Ollama 示例">
     ```bash
@@ -201,14 +199,12 @@ openclaw onboard --non-interactive \
   </Accordion>
 </AccordionGroup>
 
-Anthropic setup-token 现已再次作为旧版/手动新手引导路径提供。
-使用它时，请注意 Anthropic 已告知 OpenClaw 用户，OpenClaw 的
-Claude 登录路径需要 **Extra Usage**。在生产环境中，请优先使用
-Anthropic API 密钥。
+Anthropic setup-token 再次作为一种旧版 / 手动新手引导路径可用。
+使用它时，请预期 Anthropic 已告知 OpenClaw 用户，OpenClaw 的 Claude 登录路径需要 **Extra Usage**。在生产环境中，优先使用 Anthropic API key。
 
 ## 添加另一个智能体
 
-使用 `openclaw agents add <name>` 创建一个独立的智能体，它拥有自己的工作区、会话和 auth profile。不带 `--workspace` 运行会启动向导。
+使用 `openclaw agents add <name>` 创建一个具有独立工作区、会话和认证配置文件的单独智能体。不带 `--workspace` 运行会启动向导。
 
 ```bash
 openclaw agents add work \
@@ -228,11 +224,11 @@ openclaw agents add work \
 说明：
 
 - 默认工作区遵循 `~/.openclaw/workspace-<agentId>`。
-- 添加 `bindings` 以路由入站消息（向导可以执行此操作）。
-- 非交互式标志：`--model`、`--agent-dir`、`--bind`、`--non-interactive`。
+- 添加 `bindings` 可路由入站消息（向导可以处理这个）。
+- 非交互式 flag：`--model`、`--agent-dir`、`--bind`、`--non-interactive`。
 
 ## 相关文档
 
-- 新手引导中心：[新手引导（CLI）](/zh-CN/start/wizard)
+- 新手引导中心：[设置向导（CLI）](/zh-CN/start/wizard)
 - 完整参考：[CLI 设置参考](/zh-CN/start/wizard-cli-reference)
 - 命令参考：[`openclaw onboard`](/cli/onboard)

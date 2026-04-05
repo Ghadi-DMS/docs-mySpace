@@ -5,17 +5,17 @@ read_when:
 summary: OpenClaw 中的 Alibaba Model Studio Wan 视频生成
 title: Alibaba Model Studio
 x-i18n:
-    generated_at: "2026-04-05T22:22:54Z"
+    generated_at: "2026-04-05T22:29:53Z"
     model: gpt-5.4
     provider: openai
-    source_hash: dca1ddd91e884773c3835eebda2da3da2994f82f940bdd26fe94e55cac149058
+    source_hash: 97a1eddc7cbd816776b9368f2a926b5ef9ee543f08d151a490023736f67dc635
     source_path: providers/alibaba.md
     workflow: 15
 ---
 
 # Alibaba Model Studio
 
-OpenClaw 内置了一个 `alibaba` 视频生成提供商，用于 Alibaba Model Studio / DashScope 上的 Wan 模型。
+OpenClaw 内置了一个 `alibaba` 视频生成提供商，用于在 Alibaba Model Studio / DashScope 上运行 Wan 模型。
 
 - 提供商：`alibaba`
 - 首选凭证：`MODELSTUDIO_API_KEY`
@@ -46,7 +46,7 @@ openclaw onboard --auth-choice qwen-standard-api-key
 
 ## 内置 Wan 模型
 
-内置的 `alibaba` 提供商当前注册了以下模型：
+内置的 `alibaba` 提供商当前注册了：
 
 - `alibaba/wan2.6-t2v`
 - `alibaba/wan2.6-i2v`
@@ -56,7 +56,7 @@ openclaw onboard --auth-choice qwen-standard-api-key
 
 ## 当前限制
 
-- 每次请求最多 **1** 个输出视频
+- 每个请求最多 **1** 个输出视频
 - 最多 **1** 张输入图片
 - 最多 **4** 个输入视频
 - 最长 **10 秒** 时长
@@ -65,14 +65,13 @@ openclaw onboard --auth-choice qwen-standard-api-key
 
 ## 与 Qwen 的关系
 
-内置的 `qwen` 提供商也使用 Alibaba 托管的 DashScope 端点来进行 Wan 视频生成。请使用：
+内置的 `qwen` 提供商也使用由 Alibaba 托管的 DashScope 端点来生成 Wan 视频。使用：
 
-- 当你想使用规范的 Qwen 提供商接口时，使用 `qwen/...`
-- 当你想使用供应商直接拥有的 Wan 视频接口时，使用 `alibaba/...`
+- 当你想使用标准的 Qwen 提供商接口时，使用 `qwen/...`
+- 当你想使用由供应商直接维护的 Wan 视频接口时，使用 `alibaba/...`
 
 ## 相关内容
 
 - [视频生成](/zh-CN/tools/video-generation)
 - [Qwen](/zh-CN/providers/qwen)
-- [Qwen / Model Studio](/zh-CN/providers/qwen_modelstudio)
 - [配置参考](/zh-CN/gateway/configuration-reference#agent-defaults)

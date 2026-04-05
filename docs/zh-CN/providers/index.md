@@ -1,14 +1,14 @@
 ---
 read_when:
     - 你想选择一个模型提供商
-    - 你需要快速了解支持的 LLM 后端
+    - 你需要快速了解受支持的 LLM 后端
 summary: OpenClaw 支持的模型提供商（LLM）
 title: 提供商目录
 x-i18n:
-    generated_at: "2026-04-05T22:22:58Z"
+    generated_at: "2026-04-05T22:29:57Z"
     model: gpt-5.4
     provider: openai
-    source_hash: a13202fc20a64c68e9c7de4f2cd8ad11908029f3fe3300a8e6d69fcb0b6080ba
+    source_hash: 83911cf9bba0d0711fd49081529becf4eb1eea08b61079d71eac927a1d069061
     source_path: providers/index.md
     workflow: 15
 ---
@@ -17,7 +17,7 @@ x-i18n:
 
 OpenClaw 可以使用许多 LLM 提供商。选择一个提供商，完成身份验证，然后将默认模型设置为 `provider/model`。
 
-在寻找聊天渠道文档（WhatsApp/Telegram/Discord/Slack/Mattermost（插件）/ 等）？请参见 [Channels](/zh-CN/channels)。
+在找聊天渠道文档（WhatsApp/Telegram/Discord/Slack/Mattermost（插件）/ 等）？请参阅 [渠道](/zh-CN/channels)。
 
 ## 快速开始
 
@@ -32,14 +32,14 @@ OpenClaw 可以使用许多 LLM 提供商。选择一个提供商，完成身份
 
 ## 提供商文档
 
-- [阿里巴巴 Model Studio](/providers/alibaba)
+- [Alibaba Model Studio](/zh-CN/providers/alibaba)
 - [Amazon Bedrock](/zh-CN/providers/bedrock)
 - [Anthropic（API + Claude CLI）](/zh-CN/providers/anthropic)
 - [BytePlus（国际版）](/zh-CN/concepts/model-providers#byteplus-international)
 - [Chutes](/zh-CN/providers/chutes)
 - [Cloudflare AI Gateway](/zh-CN/providers/cloudflare-ai-gateway)
 - [DeepSeek](/zh-CN/providers/deepseek)
-- [fal](/providers/fal)
+- [fal](/zh-CN/providers/fal)
 - [Fireworks](/zh-CN/providers/fireworks)
 - [GitHub Copilot](/zh-CN/providers/github-copilot)
 - [GLM 模型](/zh-CN/providers/glm)
@@ -60,7 +60,6 @@ OpenClaw 可以使用许多 LLM 提供商。选择一个提供商，完成身份
 - [Perplexity（网页搜索）](/zh-CN/providers/perplexity-provider)
 - [Qianfan](/zh-CN/providers/qianfan)
 - [Qwen Cloud](/zh-CN/providers/qwen)
-- [Qwen / Model Studio（端点详情；`qwen-*` 为规范名称，`modelstudio-*` 为旧版名称）](/zh-CN/providers/qwen_modelstudio)
 - [SGLang（本地模型）](/zh-CN/providers/sglang)
 - [StepFun](/zh-CN/providers/stepfun)
 - [Synthetic](/zh-CN/providers/synthetic)
@@ -87,4 +86,4 @@ OpenClaw 可以使用许多 LLM 提供商。选择一个提供商，完成身份
 
 - [Claude Max API Proxy](/zh-CN/providers/claude-max-api-proxy) - 用于 Claude 订阅凭证的社区代理（使用前请确认 Anthropic 的政策/条款）
 
-有关完整的提供商目录（xAI、Groq、Mistral 等）和高级配置，请参见 [模型提供商](/zh-CN/concepts/model-providers)。
+如需查看完整的提供商目录（xAI、Groq、Mistral 等）和高级配置，请参阅 [模型提供商](/zh-CN/concepts/model-providers)。

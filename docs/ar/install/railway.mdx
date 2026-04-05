@@ -1,0 +1,97 @@
+---
+read_when:
+    - نشر OpenClaw على Railway
+    - أنت تريد نشرًا سحابيًا بنقرة واحدة مع Control UI عبر المتصفح
+summary: انشر OpenClaw على Railway باستخدام قالب بنقرة واحدة
+title: Railway
+x-i18n:
+    generated_at: "2026-04-05T12:48:24Z"
+    model: gpt-5.4
+    provider: openai
+    source_hash: f59699aa4e9d27d50018acc2e89ed1bbb1b1a5c85e3fd52f2afe5b2c97b21720
+    source_path: install/railway.mdx
+    workflow: 15
+---
+
+انشر OpenClaw على Railway باستخدام قالب بنقرة واحدة وادخل إليه عبر Control UI على الويب.
+هذا هو أسهل مسار "من دون طرفية على الخادم": إذ يقوم Railway بتشغيل Gateway نيابةً عنك.
+
+## قائمة تحقق سريعة (للمستخدمين الجدد)
+
+1. انقر **Deploy on Railway** (أدناه).
+2. أضف **Volume** مركبة عند `/data`.
+3. اضبط **Variables** المطلوبة (على الأقل `OPENCLAW_GATEWAY_PORT` و`OPENCLAW_GATEWAY_TOKEN`).
+4. فعّل **HTTP Proxy** على المنفذ `8080`.
+5. افتح `https://<your-railway-domain>/openclaw` واتصل باستخدام السر المشترك الذي ضبطته. يستخدم هذا القالب `OPENCLAW_GATEWAY_TOKEN` افتراضيًا؛ وإذا استبدلته بمصادقة كلمة مرور، فاستخدم تلك الكلمة بدلًا منه.
+
+## النشر بنقرة واحدة
+
+<a href="https://railway.com/deploy/clawdbot-railway-template" target="_blank" rel="noreferrer">
+  Deploy on Railway
+</a>
+
+بعد النشر، اعثر على عنوان URL العام في **Railway → خدمتك → Settings → Domains**.
+
+سيقوم Railway إما بما يلي:
+
+- منحك نطاقًا مُولّدًا (غالبًا `https://<something>.up.railway.app`)، أو
+- استخدام نطاقك المخصص إذا قمت بإرفاقه.
+
+ثم افتح:
+
+- `https://<your-railway-domain>/openclaw` — Control UI
+
+## ما الذي ستحصل عليه
+
+- OpenClaw Gateway + Control UI مستضافان
+- تخزين دائم عبر Railway Volume ‏(`/data`) بحيث تبقى `openclaw.json`،
+  و`auth-profiles.json` الخاصة بكل وكيل، وحالة القنوات/الموفّرين، والجلسات،
+  ومساحة العمل موجودة بعد إعادة النشر
+
+## إعدادات Railway المطلوبة
+
+### الشبكات العامة
+
+فعّل **HTTP Proxy** للخدمة.
+
+- المنفذ: `8080`
+
+### Volume (مطلوبة)
+
+أرفق volume مركبة عند:
+
+- `/data`
+
+### Variables
+
+اضبط هذه المتغيرات على الخدمة:
+
+- `OPENCLAW_GATEWAY_PORT=8080` ‏(مطلوب — يجب أن يطابق المنفذ في Public Networking)
+- `OPENCLAW_GATEWAY_TOKEN` ‏(مطلوب؛ تعامل معه كسر إداري)
+- `OPENCLAW_STATE_DIR=/data/.openclaw` ‏(موصى به)
+- `OPENCLAW_WORKSPACE_DIR=/data/workspace` ‏(موصى به)
+
+## ربط قناة
+
+استخدم Control UI عند `/openclaw` أو شغّل `openclaw onboard` عبر shell الخاص بـ Railway للحصول على تعليمات إعداد القنوات:
+
+- [Telegram](/channels/telegram) ‏(الأسرع — يحتاج فقط إلى رمز بوت مميز)
+- [Discord](/channels/discord)
+- [جميع القنوات](/channels)
+
+## النسخ الاحتياطية والترحيل
+
+صدّر الحالة، والإعدادات، وملفات auth profiles، ومساحة العمل:
+
+```bash
+openclaw backup create
+```
+
+ينشئ هذا أرشيف نسخ احتياطيًا محمولًا يتضمن حالة OpenClaw وأي
+مساحة عمل مهيأة. راجع [Backup](/cli/backup) للحصول على التفاصيل.
+
+## الخطوات التالية
+
+- إعداد قنوات المراسلة: [القنوات](/channels)
+- إعداد Gateway: [إعداد Gateway](/gateway/configuration)
+- حافظ على تحديث OpenClaw: [التحديث](/install/updating)

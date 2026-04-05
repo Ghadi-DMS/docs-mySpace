@@ -1,0 +1,217 @@
+---
+read_when:
+    - تريد بوابة تعمل داخل حاوية باستخدام Podman بدلًا من Docker
+summary: شغّل OpenClaw داخل حاوية Podman دون root
+title: Podman
+x-i18n:
+    generated_at: "2026-04-05T12:48:36Z"
+    model: gpt-5.4
+    provider: openai
+    source_hash: 6cb06e2d85b4b0c8a8c6e69c81f629c83b447cbcbb32e34b7876a1819c488020
+    source_path: install/podman.md
+    workflow: 15
+---
+
+# Podman
+
+شغّل OpenClaw Gateway داخل حاوية Podman دون root، وتُدار بواسطة المستخدم الحالي غير الجذر.
+
+النموذج المقصود هو:
+
+- تقوم Podman بتشغيل حاوية gateway.
+- يكون `openclaw` CLI على المضيف هو مستوى التحكم.
+- تعيش الحالة المستدامة على المضيف ضمن `~/.openclaw` افتراضيًا.
+- تُدار العمليات اليومية باستخدام `openclaw --container <name> ...` بدلًا من `sudo -u openclaw` أو `podman exec` أو مستخدم خدمة منفصل.
+
+## المتطلبات المسبقة
+
+- **Podman** في وضع rootless
+- **OpenClaw CLI** مثبتة على المضيف
+- **اختياري:** `systemd --user` إذا كنت تريد بدءًا تلقائيًا مُدارًا عبر Quadlet
+- **اختياري:** `sudo` فقط إذا كنت تريد `loginctl enable-linger "$(whoami)"` من أجل الاستمرارية عند الإقلاع على مضيف headless
+
+## البدء السريع
+
+<Steps>
+  <Step title="إعداد لمرة واحدة">
+    من جذر المستودع، شغّل `./scripts/podman/setup.sh`.
+  </Step>
+
+  <Step title="ابدأ حاوية Gateway">
+    ابدأ الحاوية باستخدام `./scripts/run-openclaw-podman.sh launch`.
+  </Step>
+
+  <Step title="شغّل الإعداد التفاعلي داخل الحاوية">
+    شغّل `./scripts/run-openclaw-podman.sh launch setup`، ثم افتح `http://127.0.0.1:18789/`.
+  </Step>
+
+  <Step title="أدِر الحاوية العاملة من CLI المضيف">
+    اضبط `OPENCLAW_CONTAINER=openclaw`، ثم استخدم أوامر `openclaw` العادية من المضيف.
+  </Step>
+</Steps>
+
+تفاصيل الإعداد:
+
+- يبني `./scripts/podman/setup.sh` الصورة `openclaw:local` داخل مخزن Podman rootless لديك افتراضيًا، أو يستخدم `OPENCLAW_IMAGE` / `OPENCLAW_PODMAN_IMAGE` إذا قمت بضبط أحدهما.
+- ينشئ `~/.openclaw/openclaw.json` مع `gateway.mode: "local"` إذا كان مفقودًا.
+- ينشئ `~/.openclaw/.env` مع `OPENCLAW_GATEWAY_TOKEN` إذا كان مفقودًا.
+- في عمليات التشغيل اليدوية، لا يقرأ المساعد إلا allowlist صغيرة من المفاتيح المتعلقة بـ Podman من `~/.openclaw/.env` ويمرر متغيرات بيئة وقت تشغيل صريحة إلى الحاوية؛ ولا يمرر ملف البيئة الكامل إلى Podman.
+
+إعداد مُدار عبر Quadlet:
+
+```bash
+./scripts/podman/setup.sh --quadlet
+```
+
+يُعد Quadlet خيارًا خاصًا بـ Linux فقط لأنه يعتمد على خدمات systemd الخاصة بالمستخدم.
+
+يمكنك أيضًا ضبط `OPENCLAW_PODMAN_QUADLET=1`.
+
+متغيرات البيئة الاختيارية للبناء/الإعداد:
+
+- `OPENCLAW_IMAGE` أو `OPENCLAW_PODMAN_IMAGE` -- استخدام صورة موجودة/مسحوبة بدلًا من بناء `openclaw:local`
+- `OPENCLAW_DOCKER_APT_PACKAGES` -- تثبيت حزم apt إضافية أثناء بناء الصورة
+- `OPENCLAW_EXTENSIONS` -- تثبيت تبعيات الإضافات مسبقًا وقت البناء
+
+بدء الحاوية:
+
+```bash
+./scripts/run-openclaw-podman.sh launch
+```
+
+يبدأ script الحاوية باستخدام uid/gid الحاليين مع `--userns=keep-id` ويجري bind-mount لحالة OpenClaw الخاصة بك داخل الحاوية.
+
+الإعداد التفاعلي:
+
+```bash
+./scripts/run-openclaw-podman.sh launch setup
+```
+
+ثم افتح `http://127.0.0.1:18789/` واستخدم token من `~/.openclaw/.env`.
+
+الافتراضي لـ CLI على المضيف:
+
+```bash
+export OPENCLAW_CONTAINER=openclaw
+```
+
+بعد ذلك، ستعمل أوامر مثل هذه تلقائيًا داخل تلك الحاوية:
+
+```bash
+openclaw dashboard --no-open
+openclaw gateway status --deep   # يتضمن فحصًا إضافيًا للخدمات
+openclaw doctor
+openclaw channels login
+```
+
+على macOS، قد تجعل Podman machine المتصفح يبدو غير محلي بالنسبة إلى gateway.
+إذا أبلغت Control UI عن أخطاء في مصادقة الجهاز بعد التشغيل، فاستخدم إرشادات Tailscale في
+[Podman + Tailscale](#podman--tailscale).
+
+<a id="podman--tailscale"></a>
+
+## Podman + Tailscale
+
+بالنسبة إلى HTTPS أو الوصول البعيد من المتصفح، اتبع مستندات Tailscale الرئيسية.
+
+ملاحظة خاصة بـ Podman:
+
+- أبقِ مضيف النشر في Podman مضبوطًا على `127.0.0.1`.
+- فضّل `tailscale serve` المُدار من المضيف بدلًا من `openclaw gateway --tailscale serve`.
+- على macOS، إذا كان سياق مصادقة الجهاز للمتصفح المحلي غير موثوق، فاستخدم وصول Tailscale بدلًا من الحلول المؤقتة المحلية غير الرسمية.
+
+راجع:
+
+- [Tailscale](/gateway/tailscale)
+- [Control UI](/web/control-ui)
+
+## Systemd (Quadlet، اختياري)
+
+إذا شغّلت `./scripts/podman/setup.sh --quadlet`، فسيثبت الإعداد ملف Quadlet في:
+
+```bash
+~/.config/containers/systemd/openclaw.container
+```
+
+أوامر مفيدة:
+
+- **البدء:** `systemctl --user start openclaw.service`
+- **الإيقاف:** `systemctl --user stop openclaw.service`
+- **الحالة:** `systemctl --user status openclaw.service`
+- **السجلات:** `journalctl --user -u openclaw.service -f`
+
+بعد تعديل ملف Quadlet:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user restart openclaw.service
+```
+
+من أجل الاستمرارية عند الإقلاع على مضيفات SSH/headless، فعّل lingering للمستخدم الحالي:
+
+```bash
+sudo loginctl enable-linger "$(whoami)"
+```
+
+## التكوين والبيئة والتخزين
+
+- **دليل التكوين:** `~/.openclaw`
+- **دليل مساحة العمل:** `~/.openclaw/workspace`
+- **ملف token:** `~/.openclaw/.env`
+- **مساعد التشغيل:** `./scripts/run-openclaw-podman.sh`
+
+يقوم script التشغيل وQuadlet بعمل bind-mount لحالة المضيف داخل الحاوية:
+
+- `OPENCLAW_CONFIG_DIR` -> `/home/node/.openclaw`
+- `OPENCLAW_WORKSPACE_DIR` -> `/home/node/.openclaw/workspace`
+
+افتراضيًا، تكون هذه أدلة على المضيف، وليست حالة مجهولة داخل الحاوية، لذا
+تبقى `openclaw.json` و`auth-profiles.json` لكل وكيل، وحالة القنوات/المزوّدين،
+والجلسات، ومساحة العمل بعد استبدال الحاوية.
+كما يقوم إعداد Podman بتهيئة `gateway.controlUi.allowedOrigins` من أجل `127.0.0.1` و`localhost` على منفذ gateway المنشور لكي تعمل لوحة التحكم المحلية مع الربط غير المعتمد على loopback داخل الحاوية.
+
+متغيرات البيئة المفيدة لمشغّل الإطلاق اليدوي:
+
+- `OPENCLAW_PODMAN_CONTAINER` -- اسم الحاوية (`openclaw` افتراضيًا)
+- `OPENCLAW_PODMAN_IMAGE` / `OPENCLAW_IMAGE` -- الصورة التي سيتم تشغيلها
+- `OPENCLAW_PODMAN_GATEWAY_HOST_PORT` -- منفذ المضيف المعين إلى `18789` داخل الحاوية
+- `OPENCLAW_PODMAN_BRIDGE_HOST_PORT` -- منفذ المضيف المعين إلى `18790` داخل الحاوية
+- `OPENCLAW_PODMAN_PUBLISH_HOST` -- واجهة المضيف للمنافذ المنشورة؛ والافتراضي هو `127.0.0.1`
+- `OPENCLAW_GATEWAY_BIND` -- وضع bind الخاص بالبوابة داخل الحاوية؛ والافتراضي `lan`
+- `OPENCLAW_PODMAN_USERNS` -- `keep-id` (الافتراضي) أو `auto` أو `host`
+
+يقرأ المشغّل اليدوي `~/.openclaw/.env` قبل تثبيت القيم الافتراضية النهائية للحاوية/الصورة، لذا يمكنك حفظ هذه القيم هناك.
+
+إذا استخدمت `OPENCLAW_CONFIG_DIR` أو `OPENCLAW_WORKSPACE_DIR` غير الافتراضيين، فاضبط المتغيرات نفسها لكل من `./scripts/podman/setup.sh` وأوامر `./scripts/run-openclaw-podman.sh launch` اللاحقة. لا يحتفظ مشغّل المستودع المحلي بتجاوزات المسارات المخصصة عبر sessions shell المختلفة.
+
+ملاحظة Quadlet:
+
+- تتعمد خدمة Quadlet المولدة الحفاظ على شكل افتراضي ثابت ومقوّى: منافذ منشورة على `127.0.0.1`، و`--bind lan` داخل الحاوية، وفضاء أسماء مستخدم `keep-id`.
+- وهي تثبت `OPENCLAW_NO_RESPAWN=1`، و`Restart=on-failure`، و`TimeoutStartSec=300`.
+- وتنشر كلا المنفذين `127.0.0.1:18789:18789` (gateway) و`127.0.0.1:18790:18790` (bridge).
+- وتقرأ `~/.openclaw/.env` باعتباره `EnvironmentFile` وقت التشغيل لقيم مثل `OPENCLAW_GATEWAY_TOKEN`، لكنها لا تستهلك allowlist الخاصة بتجاوزات Podman الموجودة في المشغّل اليدوي.
+- إذا كنت تحتاج إلى منافذ نشر مخصصة، أو مضيف نشر، أو أعلام تشغيل أخرى للحاوية، فاستخدم المشغّل اليدوي أو حرّر `~/.config/containers/systemd/openclaw.container` مباشرة، ثم أعد تحميل الخدمة وإعادة تشغيلها.
+
+## أوامر مفيدة
+
+- **سجلات الحاوية:** `podman logs -f openclaw`
+- **إيقاف الحاوية:** `podman stop openclaw`
+- **إزالة الحاوية:** `podman rm -f openclaw`
+- **فتح URL لوحة التحكم من CLI المضيف:** `openclaw dashboard --no-open`
+- **الصحة/الحالة عبر CLI المضيف:** `openclaw gateway status --deep` (فحص RPC + فحص
+  إضافي للخدمات)
+
+## استكشاف الأخطاء وإصلاحها
+
+- **رفض الإذن (EACCES) على التكوين أو مساحة العمل:** تعمل الحاوية افتراضيًا باستخدام `--userns=keep-id` و`--user <your uid>:<your gid>`. تأكد من أن مسارات التكوين/مساحة العمل على المضيف مملوكة للمستخدم الحالي.
+- **تم حظر بدء تشغيل Gateway (غياب `gateway.mode=local`):** تأكد من وجود `~/.openclaw/openclaw.json` وأنه يضبط `gateway.mode="local"`. ينشئ `scripts/podman/setup.sh` هذا الملف إذا كان مفقودًا.
+- **أوامر CLI الخاصة بالحاوية تصل إلى الهدف الخطأ:** استخدم `openclaw --container <name> ...` صراحةً، أو صدّر `OPENCLAW_CONTAINER=<name>` في shell لديك.
+- **فشل `openclaw update` مع `--container`:** هذا متوقع. أعد بناء/سحب الصورة، ثم أعد تشغيل الحاوية أو خدمة Quadlet.
+- **خدمة Quadlet لا تبدأ:** شغّل `systemctl --user daemon-reload`، ثم `systemctl --user start openclaw.service`. وعلى الأنظمة headless قد تحتاج أيضًا إلى `sudo loginctl enable-linger "$(whoami)"`.
+- **يحظر SELinux عمليات bind mount:** اترك سلوك mount الافتراضي كما هو؛ فالمشغّل يضيف `:Z` تلقائيًا على Linux عندما يكون SELinux في وضع enforcing أو permissive.
+
+## ذو صلة
+
+- [Docker](/install/docker)
+- [العملية الخلفية للبوابة](/gateway/background-process)
+- [استكشاف أخطاء البوابة وإصلاحها](/gateway/troubleshooting)

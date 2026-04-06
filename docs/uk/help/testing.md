@@ -2,14 +2,14 @@
 read_when:
     - Запуск тестів локально або в CI
     - Додавання регресій для багів моделей/провайдерів
-    - Налагодження поведінки gateway + агента
+    - Налагодження поведінки gateway + agent
 summary: 'Набір для тестування: unit/e2e/live набори, Docker-ранери та що покриває кожен тест'
 title: Тестування
 x-i18n:
-    generated_at: "2026-04-06T15:30:48Z"
+    generated_at: "2026-04-06T15:53:28Z"
     model: gpt-5.4
     provider: openai
-    source_hash: a2c8af6ff9cbef3d148f9d51016d9bc35b069a4467fb72874be265872ca13da1
+    source_hash: e287bb1ebdebfb27120271c03c9e4b10cea29bf7c881b89ce872b32c64cd64ed
     source_path: help/testing.md
     workflow: 15
 ---
@@ -18,43 +18,43 @@ x-i18n:
 
 OpenClaw має три набори Vitest (unit/integration, e2e, live) і невеликий набір Docker-ранерів.
 
-Цей документ — посібник «як ми тестуємо»:
+Цей документ — це посібник «як ми тестуємо»:
 
 - Що покриває кожен набір (і що він навмисно _не_ покриває)
 - Які команди запускати для типових сценаріїв роботи (локально, перед push, налагодження)
 - Як live-тести знаходять облікові дані та вибирають моделі/провайдерів
-- Як додавати регресії для реальних проблем із моделями/провайдерами
+- Як додавати регресії для реальних проблем моделей/провайдерів
 
 ## Швидкий старт
 
 У більшості випадків:
 
 - Повний gate (очікується перед push): `pnpm build && pnpm check && pnpm test`
-- Швидший локальний запуск повного набору на потужній машині: `pnpm test:max`
+- Швидший локальний запуск усього набору на потужній машині: `pnpm test:max`
 - Прямий цикл спостереження Vitest: `pnpm test:watch`
-- Прямий таргетинг файлу тепер також маршрутизує шляхи extension/channel: `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts`
+- Пряме націлювання на файл тепер також маршрутизує шляхи extensions/channel: `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts`
 
 Коли ви змінюєте тести або хочете більше впевненості:
 
 - Gate покриття: `pnpm test:coverage`
 - Набір E2E: `pnpm test:e2e`
 
-Коли налагоджуєте реальні провайдери/моделі (потрібні реальні облікові дані):
+Коли налагоджуєте реальних провайдерів/моделі (потрібні реальні облікові дані):
 
 - Live-набір (моделі + gateway tool/image probes): `pnpm test:live`
-- Тихо запустити один live-файл: `pnpm test:live -- src/agents/models.profiles.live.test.ts`
+- Тихо націлитися на один live-файл: `pnpm test:live -- src/agents/models.profiles.live.test.ts`
 
-Порада: якщо вам потрібен лише один збійний випадок, краще звузити live-тести через змінні середовища allowlist, описані нижче.
+Порада: коли вам потрібен лише один проблемний випадок, краще звузити live-тести через змінні середовища allowlist, описані нижче.
 
 ## Набори тестів (що де запускається)
 
-Сприймайте набори як «зростаючий реалізм» (і зростаючу флейковість/вартість):
+Сприймайте ці набори як такі, що мають «зростаючий реалізм» (і зростаючу нестабільність/вартість):
 
-### Unit / integration (за замовчуванням)
+### Unit / integration (типово)
 
 - Команда: `pnpm test`
-- Конфігурація: нативні Vitest `projects` через `vitest.config.ts`
-- Файли: інвентарі core/unit у `src/**/*.test.ts`, `packages/**/*.test.ts`, `test/**/*.test.ts` і включені до allowlist node-тести `ui`, що покриваються `vitest.unit.config.ts`
+- Конфігурація: вбудовані `projects` Vitest через `vitest.config.ts`
+- Файли: інвентарі core/unit у `src/**/*.test.ts`, `packages/**/*.test.ts`, `test/**/*.test.ts` і whitelisted node-тести `ui`, які покриваються `vitest.unit.config.ts`
 - Обсяг:
   - Чисті unit-тести
   - Внутрішньопроцесні integration-тести (gateway auth, routing, tooling, parsing, config)
@@ -63,192 +63,194 @@ OpenClaw має три набори Vitest (unit/integration, e2e, live) і не
   - Запускається в CI
   - Реальні ключі не потрібні
   - Має бути швидким і стабільним
-- Примітка щодо projects:
-  - Нетаргетований `pnpm test` усе ще використовує конфігурацію root `projects` Vitest.
-  - `pnpm test`, `pnpm test:watch` і `pnpm test:perf:imports` спочатку маршрутизують явні цілі файлів/каталогів через scoped lanes, тому `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts` уникає повної вартості запуску root project.
-  - `pnpm test:changed` розгортає змінені шляхи git у ті самі scoped lanes, коли diff торкається лише маршрутизованих source/test файлів; зміни config/setup усе ще повертаються до широкого повторного запуску root project.
-  - Вибрані тести `plugin-sdk` і `commands` також маршрутизуються через окремі легкі lanes, що пропускають `test/setup-openclaw-runtime.ts`; stateful/runtime-heavy файли залишаються на наявних lanes.
-  - Вибрані helper source-файли `plugin-sdk` і `commands` також зіставляють changed-mode запуски з явними сусідніми тестами в цих легких lanes, щоб зміни helper-файлів не спричиняли повторний запуск усього важкого набору для цього каталогу.
-- Примітка щодо embedded runner:
-  - Коли ви змінюєте вхідні дані для виявлення message-tool або контекст виконання compaction,
+- Примітка про projects:
+  - Ненацілений `pnpm test` усе ще використовує вбудовану кореневу конфігурацію Vitest `projects`.
+  - `pnpm test`, `pnpm test:watch` і `pnpm test:perf:imports` спершу маршрутизують явні цілі файлів/каталогів через scoped lanes, тому `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts` не платить за повний startup усіх кореневих project.
+  - `pnpm test:changed` розгортає змінені git-шляхи в ті самі scoped lanes, коли diff змінює лише routable source/test файли; зміни config/setup усе ще повертаються до широкого повторного запуску кореневого project.
+  - Вибрані тести `plugin-sdk` і `commands` також маршрутизуються через окремі легкі lanes, які пропускають `test/setup-openclaw-runtime.ts`; stateful/runtime-heavy файли залишаються на наявних lanes.
+  - Вибрані helper source-файли `plugin-sdk` і `commands` також зіставляють запуски changed-mode з явними sibling-тестами в цих легких lanes, тому зміни helper не змушують повторно запускати весь важкий набір для цього каталогу.
+- Примітка про embedded runner:
+  - Коли ви змінюєте входи виявлення message-tool або runtime context компактування,
     зберігайте обидва рівні покриття.
   - Додавайте сфокусовані helper-регресії для чистих меж routing/normalization.
-  - Також підтримуйте інтеграційні набори embedded runner у справному стані:
+  - Також підтримуйте в здоровому стані integration-набори embedded runner:
     `src/agents/pi-embedded-runner/compact.hooks.test.ts`,
-    `src/agents/pi-embedded-runner/run.overflow-compaction.test.ts`, і
+    `src/agents/pi-embedded-runner/run.overflow-compaction.test.ts` і
     `src/agents/pi-embedded-runner/run.overflow-compaction.loop.test.ts`.
-  - Ці набори перевіряють, що scoped ids і поведінка compaction як і раніше проходять
+  - Ці набори перевіряють, що scoped ids і поведінка компактування все ще проходять
     через реальні шляхи `run.ts` / `compact.ts`; лише helper-тести не є
-    достатньою заміною для цих інтеграційних шляхів.
-- Примітка щодо pool:
-  - Базова конфігурація Vitest тепер за замовчуванням використовує `threads`.
-  - Спільна конфігурація Vitest також фіксує `isolate: false` і використовує non-isolated runner для root projects, e2e і live config.
-  - Root UI lane зберігає свій `jsdom` setup та optimizer, але тепер також працює на спільному non-isolated runner.
-  - `pnpm test` успадковує ті самі значення `threads` + `isolate: false` з конфігурації root `projects` у `vitest.config.ts`.
-  - Спільний launcher `scripts/run-vitest.mjs` тепер також за замовчуванням додає `--no-maglev` для дочірніх Node-процесів Vitest, щоб зменшити churn компіляції V8 під час великих локальних запусків. Установіть `OPENCLAW_VITEST_ENABLE_MAGLEV=1`, якщо вам потрібно порівняти з типовою поведінкою V8.
-- Примітка щодо швидкої локальної ітерації:
-  - `pnpm test:changed` маршрутизується через scoped lanes, коли змінені шляхи однозначно зіставляються з меншим набором.
-  - `pnpm test:max` і `pnpm test:changed:max` зберігають ту саму поведінку маршрутизації, лише з вищою межею кількості worker-ів.
-  - Автомасштабування локальних worker-ів тепер навмисно консервативне і також зменшує навантаження, коли середнє навантаження хоста вже високе, тому кілька одночасних запусків Vitest за замовчуванням менше шкодять.
-  - Базова конфігурація Vitest позначає файли projects/config як `forceRerunTriggers`, щоб changed-mode повторні запуски залишалися коректними, коли змінюється wiring тестів.
-  - Конфігурація зберігає ввімкненим `OPENCLAW_VITEST_FS_MODULE_CACHE` на підтримуваних хостах; установіть `OPENCLAW_VITEST_FS_MODULE_CACHE_PATH=/abs/path`, якщо хочете мати одне явне місце кешу для прямого профілювання.
-- Примітка щодо perf-debug:
-  - `pnpm test:perf:imports` вмикає звітність Vitest про тривалість імпорту, а також вивід import-breakdown.
-  - `pnpm test:perf:imports:changed` обмежує той самий профільний вигляд файлами, зміненими відносно `origin/main`.
-  - `pnpm test:perf:profile:main` записує профіль CPU головного потоку для накладних витрат запуску та трансформації Vitest/Vite.
-  - `pnpm test:perf:profile:runner` записує профілі CPU+heap runner-а для unit-набору з вимкненим паралелізмом файлів.
+    достатньою заміною для цих integration-шляхів.
+- Примітка про pool:
+  - Базова конфігурація Vitest тепер типово використовує `threads`.
+  - Спільна конфігурація Vitest також фіксує `isolate: false` і використовує non-isolated runner у кореневих projects, e2e та live-конфігураціях.
+  - Коренева lane UI зберігає свій `jsdom` setup і optimizer, але тепер також працює на спільному non-isolated runner.
+  - `pnpm test` успадковує ті самі типові значення `threads` + `isolate: false` із конфігурації projects у кореневому `vitest.config.ts`.
+  - Спільний launcher `scripts/run-vitest.mjs` тепер також типово додає `--no-maglev` для дочірніх Node-процесів Vitest, щоб зменшити churn компіляції V8 під час великих локальних запусків. Установіть `OPENCLAW_VITEST_ENABLE_MAGLEV=1`, якщо потрібно порівняти зі стандартною поведінкою V8.
+- Примітка про швидку локальну ітерацію:
+  - `pnpm test:changed` маршрутизує через scoped lanes, коли змінені шляхи однозначно відповідають меншому набору.
+  - `pnpm test:max` і `pnpm test:changed:max` зберігають ту саму поведінку маршрутизації, лише з вищим обмеженням на кількість workers.
+  - Автомасштабування локальних workers тепер навмисно більш консервативне і також зменшує навантаження, коли середнє навантаження хоста вже високе, тож кілька одночасних запусків Vitest типово завдають менше шкоди.
+  - Базова конфігурація Vitest позначає файли projects/config як `forceRerunTriggers`, щоб повторні запуски в changed-mode залишалися коректними, коли змінюється wiring тестів.
+  - Конфігурація зберігає ввімкненим `OPENCLAW_VITEST_FS_MODULE_CACHE` на підтримуваних хостах; установіть `OPENCLAW_VITEST_FS_MODULE_CACHE_PATH=/abs/path`, якщо хочете одну явну локацію кешу для прямого профілювання.
+- Примітка про perf-debug:
+  - `pnpm test:perf:imports` вмикає звітність Vitest про тривалість import, а також вивід import-breakdown.
+  - `pnpm test:perf:imports:changed` обмежує той самий вигляд профілювання файлами, зміненими відносно `origin/main`.
+- `pnpm test:perf:changed:bench -- --ref <git-ref>` порівнює маршрутизований `test:changed` із вбудованим шляхом кореневого project для цього зафіксованого diff і виводить wall time та macOS max RSS.
+- `pnpm test:perf:changed:bench -- --worktree` виконує benchmark поточного dirty tree, маршрутизуючи список змінених файлів через `scripts/test-projects.mjs` і кореневу конфігурацію Vitest.
+  - `pnpm test:perf:profile:main` записує профіль CPU головного потоку для накладних витрат запуску та transform у Vitest/Vite.
+  - `pnpm test:perf:profile:runner` записує профілі CPU+heap runner для unit-набору з вимкненим файловим паралелізмом.
 
 ### E2E (gateway smoke)
 
 - Команда: `pnpm test:e2e`
 - Конфігурація: `vitest.e2e.config.ts`
 - Файли: `src/**/*.e2e.test.ts`, `test/**/*.e2e.test.ts`
-- Значення runtime за замовчуванням:
-  - Використовує Vitest `threads` з `isolate: false`, узгоджено з рештою репозиторію.
-  - Використовує адаптивну кількість worker-ів (CI: до 2, локально: 1 за замовчуванням).
-  - За замовчуванням запускається в тихому режимі, щоб зменшити накладні витрати на I/O консолі.
-- Корисні перевизначення:
-  - `OPENCLAW_E2E_WORKERS=<n>` щоб примусово встановити кількість worker-ів (обмежено 16).
-  - `OPENCLAW_E2E_VERBOSE=1` щоб знову ввімкнути докладний вивід у консоль.
+- Типові параметри runtime:
+  - Використовує Vitest `threads` з `isolate: false`, як і решта репозиторію.
+  - Використовує адаптивну кількість workers (CI: до 2, локально: 1 типово).
+  - Типово працює в silent-режимі, щоб зменшити накладні витрати на console I/O.
+- Корисні override:
+  - `OPENCLAW_E2E_WORKERS=<n>` для примусового задання кількості workers (обмежено 16).
+  - `OPENCLAW_E2E_VERBOSE=1` для повторного ввімкнення докладного виводу в консоль.
 - Обсяг:
   - Наскрізна поведінка gateway з кількома екземплярами
-  - Поверхні WebSocket/HTTP, прив’язка вузлів і важчі мережеві сценарії
+  - Поверхні WebSocket/HTTP, pairing вузлів і важчий networking
 - Очікування:
   - Запускається в CI (коли ввімкнено в pipeline)
   - Реальні ключі не потрібні
-  - Більше рухомих частин, ніж у unit-тестів (може бути повільніше)
+  - Більше рухомих частин, ніж у unit-тестах (може бути повільніше)
 
-### E2E: OpenShell backend smoke
+### E2E: smoke для backend OpenShell
 
 - Команда: `pnpm test:e2e:openshell`
 - Файл: `test/openshell-sandbox.e2e.test.ts`
 - Обсяг:
-  - Запускає ізольований OpenShell gateway на хості через Docker
+  - Запускає ізольований gateway OpenShell на хості через Docker
   - Створює sandbox із тимчасового локального Dockerfile
-  - Перевіряє OpenShell backend OpenClaw через реальні `sandbox ssh-config` + SSH exec
-  - Перевіряє remote-canonical поведінку файлової системи через fs bridge sandbox-а
+  - Перевіряє backend OpenShell у OpenClaw через реальні `sandbox ssh-config` + SSH exec
+  - Перевіряє canonical-поведінку віддаленої файлової системи через sandbox fs bridge
 - Очікування:
-  - Лише opt-in; не входить до стандартного запуску `pnpm test:e2e`
-  - Потрібні локальний CLI `openshell` і справний Docker daemon
-  - Використовує ізольовані `HOME` / `XDG_CONFIG_HOME`, а потім знищує тестовий gateway і sandbox
-- Корисні перевизначення:
-  - `OPENCLAW_E2E_OPENSHELL=1` щоб увімкнути тест під час ручного запуску ширшого e2e-набору
-  - `OPENCLAW_E2E_OPENSHELL_COMMAND=/path/to/openshell` щоб указати нестандартний CLI binary або wrapper script
+  - Лише opt-in; не входить у типовий запуск `pnpm test:e2e`
+  - Потрібен локальний CLI `openshell` і працюючий Docker daemon
+  - Використовує ізольовані `HOME` / `XDG_CONFIG_HOME`, після чого знищує test gateway і sandbox
+- Корисні override:
+  - `OPENCLAW_E2E_OPENSHELL=1`, щоб увімкнути тест під час ручного запуску ширшого e2e-набору
+  - `OPENCLAW_E2E_OPENSHELL_COMMAND=/path/to/openshell`, щоб вказати нетиповий бінарний файл CLI або wrapper script
 
 ### Live (реальні провайдери + реальні моделі)
 
 - Команда: `pnpm test:live`
 - Конфігурація: `vitest.live.config.ts`
 - Файли: `src/**/*.live.test.ts`
-- За замовчуванням: **увімкнено** через `pnpm test:live` (встановлює `OPENCLAW_LIVE_TEST=1`)
+- Типово: **увімкнено** через `pnpm test:live` (встановлює `OPENCLAW_LIVE_TEST=1`)
 - Обсяг:
   - «Чи справді цей провайдер/модель працює _сьогодні_ з реальними обліковими даними?»
-  - Виявлення змін формату провайдера, особливостей tool-calling, проблем auth і поведінки rate limit
+  - Виявлення змін форматів у провайдерів, особливостей tool calling, проблем auth і поведінки rate limit
 - Очікування:
-  - Не є стабільним для CI за своєю природою (реальні мережі, реальні політики провайдерів, квоти, збої)
+  - Навмисно не є стабільним для CI (реальні мережі, реальні політики провайдерів, квоти, збої)
   - Коштує грошей / витрачає rate limits
-  - Краще запускати звужені піднабори, а не «все»
-- Live-запуски зчитують `~/.profile`, щоб підхопити відсутні API-ключі.
-- За замовчуванням live-запуски все одно ізолюють `HOME` і копіюють config/auth-матеріали у тимчасовий test home, щоб unit-fixtures не могли змінити ваш реальний `~/.openclaw`.
-- Встановлюйте `OPENCLAW_LIVE_USE_REAL_HOME=1` лише тоді, коли вам навмисно потрібно, щоб live-тести використовували ваш реальний домашній каталог.
-- `pnpm test:live` тепер за замовчуванням працює в тихішому режимі: він зберігає вивід прогресу `[live] ...`, але приховує додаткове повідомлення про `~/.profile` і приглушує логи завантаження gateway/шум Bonjour. Установіть `OPENCLAW_LIVE_TEST_QUIET=0`, якщо хочете знову бачити повні стартові логи.
-- Ротація API-ключів (специфічно для провайдера): установіть `*_API_KEYS` у форматі з комами/крапками з комою або `*_API_KEY_1`, `*_API_KEY_2` (наприклад, `OPENAI_API_KEYS`, `ANTHROPIC_API_KEYS`, `GEMINI_API_KEYS`) або використайте перевизначення для конкретного live-запуску через `OPENCLAW_LIVE_*_KEY`; тести повторюють спроби у відповідь на rate limit.
+  - Краще запускати звужені підмножини, а не «все»
+- Live-запуски підвантажують `~/.profile`, щоб отримати відсутні API-ключі.
+- Типово live-запуски все одно ізолюють `HOME` і копіюють config/auth-матеріали до тимчасового test home, щоб unit-fixtures не могли змінити ваш реальний `~/.openclaw`.
+- Установлюйте `OPENCLAW_LIVE_USE_REAL_HOME=1` лише тоді, коли вам навмисно потрібно, щоб live-тести використовували ваш реальний домашній каталог.
+- `pnpm test:live` тепер типово працює в тихішому режимі: він зберігає вивід прогресу `[live] ...`, але приховує додаткове повідомлення про `~/.profile` і приглушує логи bootstrap gateway/шум Bonjour. Установіть `OPENCLAW_LIVE_TEST_QUIET=0`, якщо хочете повернути повні стартові логи.
+- Ротація API-ключів (залежить від провайдера): задайте `*_API_KEYS` у форматі через кому/крапку з комою або `*_API_KEY_1`, `*_API_KEY_2` (наприклад, `OPENAI_API_KEYS`, `ANTHROPIC_API_KEYS`, `GEMINI_API_KEYS`) або використайте override для окремого live-запуску через `OPENCLAW_LIVE_*_KEY`; тести повторюють спробу при відповідях із rate limit.
 - Вивід прогресу/heartbeat:
-  - Live-набори тепер виводять рядки прогресу в stderr, щоб було видно активність навіть під час довгих викликів провайдера, коли перехоплення консолі Vitest працює тихо.
-  - `vitest.live.config.ts` вимикає перехоплення консолі Vitest, тому рядки прогресу провайдера/gateway одразу передаються під час live-запусків.
-  - Налаштовуйте heartbeat для прямих моделей через `OPENCLAW_LIVE_HEARTBEAT_MS`.
-  - Налаштовуйте heartbeat для gateway/probe через `OPENCLAW_LIVE_GATEWAY_HEARTBEAT_MS`.
+  - Live-набори тепер виводять рядки прогресу до stderr, щоб довгі виклики провайдера були помітно активними навіть коли Vitest тихо перехоплює консоль.
+  - `vitest.live.config.ts` вимикає перехоплення консолі Vitest, щоб рядки прогресу провайдера/gateway одразу транслювалися під час live-запусків.
+  - Налаштовуйте heartbeats прямих моделей через `OPENCLAW_LIVE_HEARTBEAT_MS`.
+  - Налаштовуйте heartbeats gateway/probe через `OPENCLAW_LIVE_GATEWAY_HEARTBEAT_MS`.
 
 ## Який набір мені запускати?
 
-Використовуйте таку таблицю рішень:
+Користуйтеся цією таблицею рішень:
 
-- Редагування логіки/тестів: запускайте `pnpm test` (і `pnpm test:coverage`, якщо ви багато що змінили)
-- Зміни в gateway networking / WS protocol / pairing: додайте `pnpm test:e2e`
-- Налагодження «мій бот не працює» / специфічних для провайдера збоїв / tool calling: запускайте звужений `pnpm test:live`
+- Редагуєте логіку/тести: запустіть `pnpm test` (і `pnpm test:coverage`, якщо змін було багато)
+- Зачіпаєте networking gateway / протокол WS / pairing: додайте `pnpm test:e2e`
+- Налагоджуєте «мій бот не працює» / специфічні збої провайдера / tool calling: запустіть звужений `pnpm test:live`
 
-## Live: sweep можливостей Android node
+## Live: перевірка можливостей Android node
 
 - Тест: `src/gateway/android-node.capabilities.live.test.ts`
 - Скрипт: `pnpm android:test:integration`
-- Мета: викликати **кожну команду, яку наразі рекламує** підключений Android node, і перевірити поведінку контракту команд.
+- Мета: викликати **кожну команду, що наразі рекламується** підключеним Android node, і перевірити поведінку контракту команд.
 - Обсяг:
-  - Передумови/ручне налаштування (набір не встановлює/не запускає/не прив’язує застосунок).
-  - Перевірка `node.invoke` gateway для вибраного Android node по кожній команді.
-- Потрібне попереднє налаштування:
-  - Android app уже підключено та прив’язано до gateway.
-  - Застосунок утримується на передньому плані.
-  - Надано дозволи/згоду на захоплення для можливостей, які ви очікуєте успішними.
-- Необов’язкові перевизначення цілі:
+  - Попередньо підготовлений/ручний setup (набір не встановлює/не запускає/не pair-ить app).
+  - Перевірка `node.invoke` gateway покомандно для вибраного Android node.
+- Обов’язкова попередня підготовка:
+  - Android app уже підключено та спарено з gateway.
+  - App утримується на передньому плані.
+  - Дозволи/згоду на захоплення надано для можливостей, які ви очікуєте пройти.
+- Необов’язкові override для вибору цілі:
   - `OPENCLAW_ANDROID_NODE_ID` або `OPENCLAW_ANDROID_NODE_NAME`.
   - `OPENCLAW_ANDROID_GATEWAY_URL` / `OPENCLAW_ANDROID_GATEWAY_TOKEN` / `OPENCLAW_ANDROID_GATEWAY_PASSWORD`.
-- Повні деталі налаштування Android: [Android App](/uk/platforms/android)
+- Повні деталі setup Android: [Android App](/uk/platforms/android)
 
 ## Live: smoke моделей (ключі профілів)
 
 Live-тести поділено на два шари, щоб можна було ізолювати збої:
 
-- «Пряма модель» показує, чи здатні провайдер/модель взагалі відповісти з наданим ключем.
-- «Gateway smoke» показує, що повний pipeline gateway+agent працює для цієї моделі (sessions, history, tools, sandbox policy тощо).
+- «Пряма модель» показує, чи може провайдер/модель взагалі відповісти з даним ключем.
+- «Gateway smoke» показує, чи працює повний pipeline gateway+agent для цієї моделі (sessions, history, tools, sandbox policy тощо).
 
-### Шар 1: Пряме завершення моделі (без gateway)
+### Шар 1: пряме завершення моделі (без gateway)
 
 - Тест: `src/agents/models.profiles.live.test.ts`
 - Мета:
-  - Перелічити виявлені моделі
-  - Використати `getApiKeyForModel` для вибору моделей, для яких у вас є облікові дані
-  - Запустити невелике completion для кожної моделі (і таргетовані регресії там, де потрібно)
+  - Перерахувати виявлені моделі
+  - Використати `getApiKeyForModel`, щоб вибрати моделі, для яких у вас є облікові дані
+  - Виконати невелике completion для кожної моделі (і цільові регресії, де потрібно)
 - Як увімкнути:
-  - `pnpm test:live` (або `OPENCLAW_LIVE_TEST=1`, якщо викликаєте Vitest напряму)
-- Встановіть `OPENCLAW_LIVE_MODELS=modern` (або `all`, псевдонім для modern), щоб цей набір справді запускався; інакше він буде пропущений, щоб `pnpm test:live` залишався зосередженим на gateway smoke
-- Як вибрати моделі:
-  - `OPENCLAW_LIVE_MODELS=modern` щоб запустити modern allowlist (Opus/Sonnet 4.6+, GPT-5.x + Codex, Gemini 3, GLM 4.7, MiniMax M2.7, Grok 4)
-  - `OPENCLAW_LIVE_MODELS=all` є псевдонімом для modern allowlist
+  - `pnpm test:live` (або `OPENCLAW_LIVE_TEST=1`, якщо запускаєте Vitest напряму)
+- Установіть `OPENCLAW_LIVE_MODELS=modern` (або `all`, псевдонім для modern), щоб цей набір справді виконувався; інакше він буде пропущений, щоб `pnpm test:live` залишався сфокусованим на gateway smoke
+- Як вибирати моделі:
+  - `OPENCLAW_LIVE_MODELS=modern` — запустити modern allowlist (Opus/Sonnet 4.6+, GPT-5.x + Codex, Gemini 3, GLM 4.7, MiniMax M2.7, Grok 4)
+  - `OPENCLAW_LIVE_MODELS=all` — псевдонім для modern allowlist
   - або `OPENCLAW_LIVE_MODELS="openai/gpt-5.4,anthropic/claude-opus-4-6,..."` (allowlist через кому)
-- Як вибрати провайдерів:
+- Як вибирати провайдерів:
   - `OPENCLAW_LIVE_PROVIDERS="google,google-antigravity,google-gemini-cli"` (allowlist через кому)
 - Звідки беруться ключі:
-  - За замовчуванням: зі сховища профілів і резервних env-значень
-  - Встановіть `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, щоб примусово використовувати **лише сховище профілів**
+  - Типово: сховище профілів і env fallback
+  - Установіть `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, щоб примусово використовувати **лише сховище профілів**
 - Навіщо це існує:
-  - Відокремлює «API провайдера зламане / ключ недійсний» від «pipeline агента gateway зламаний»
-  - Містить невеликі, ізольовані регресії (наприклад, reasoning replay + tool-call flows для OpenAI Responses/Codex Responses)
+  - Відокремлює «API провайдера зламане / ключ недійсний» від «pipeline gateway agent зламаний»
+  - Містить малі, ізольовані регресії (приклад: OpenAI Responses/Codex Responses reasoning replay + tool-call flows)
 
-### Шар 2: Gateway + dev agent smoke (що насправді робить "@openclaw")
+### Шар 2: smoke gateway + dev agent (що насправді робить "@openclaw")
 
 - Тест: `src/gateway/gateway-models.profiles.live.test.ts`
 - Мета:
   - Підняти in-process gateway
-  - Створити/змінити сесію `agent:dev:*` (перевизначення моделі на кожен запуск)
-  - Ітеруватися по моделях із ключами й перевіряти:
+  - Створити/змінити session `agent:dev:*` (override моделі на кожен запуск)
+  - Ітерувати моделі-з-ключами та перевіряти:
     - «змістовну» відповідь (без tools)
-    - що працює реальний виклик tool (read probe)
-    - додаткові probes tools за потреби (exec+read probe)
-    - що шляхи регресій OpenAI (лише tool-call → follow-up) продовжують працювати
-- Деталі probe-ів (щоб ви могли швидко пояснити збої):
-  - `read` probe: тест записує nonce-файл у workspace і просить агента `read` його та повернути nonce.
-  - `exec+read` probe: тест просить агента записати nonce у тимчасовий файл через `exec`, а потім прочитати його назад через `read`.
-  - image probe: тест прикріплює згенерований PNG (cat + випадковий код) і очікує, що модель поверне `cat <CODE>`.
+    - що реальний виклик tool працює (read probe)
+    - необов’язкові додаткові tool probes (exec+read probe)
+    - що регресійні шляхи OpenAI (лише tool-call → follow-up) і далі працюють
+- Деталі probe (щоб ви могли швидко пояснювати збої):
+  - `read` probe: тест записує файл із nonce у workspace і просить agent `read` його та повернути nonce.
+  - `exec+read` probe: тест просить agent записати nonce в тимчасовий файл через `exec`, а потім прочитати його назад через `read`.
+  - image probe: тест прикріплює згенерований PNG (cat + рандомізований код) і очікує, що модель поверне `cat <CODE>`.
   - Посилання на реалізацію: `src/gateway/gateway-models.profiles.live.test.ts` і `src/gateway/live-image-probe.ts`.
 - Як увімкнути:
-  - `pnpm test:live` (або `OPENCLAW_LIVE_TEST=1`, якщо викликаєте Vitest напряму)
-- Як вибрати моделі:
-  - За замовчуванням: modern allowlist (Opus/Sonnet 4.6+, GPT-5.x + Codex, Gemini 3, GLM 4.7, MiniMax M2.7, Grok 4)
-  - `OPENCLAW_LIVE_GATEWAY_MODELS=all` є псевдонімом для modern allowlist
+  - `pnpm test:live` (або `OPENCLAW_LIVE_TEST=1`, якщо запускаєте Vitest напряму)
+- Як вибирати моделі:
+  - Типово: modern allowlist (Opus/Sonnet 4.6+, GPT-5.x + Codex, Gemini 3, GLM 4.7, MiniMax M2.7, Grok 4)
+  - `OPENCLAW_LIVE_GATEWAY_MODELS=all` — псевдонім для modern allowlist
   - Або встановіть `OPENCLAW_LIVE_GATEWAY_MODELS="provider/model"` (або список через кому), щоб звузити вибір
-- Як вибрати провайдерів (уникайте «усе OpenRouter»):
+- Як вибирати провайдерів (уникати «OpenRouter для всього»):
   - `OPENCLAW_LIVE_GATEWAY_PROVIDERS="google,google-antigravity,google-gemini-cli,openai,anthropic,zai,minimax"` (allowlist через кому)
 - Tool + image probes у цьому live-тесті завжди ввімкнені:
-  - `read` probe + `exec+read` probe (навантаження на tools)
-  - image probe запускається, коли модель рекламує підтримку image input
+  - `read` probe + `exec+read` probe (стрес tool)
+  - image probe виконується, коли модель оголошує підтримку image input
   - Потік (на високому рівні):
     - Тест генерує маленький PNG із «CAT» + випадковим кодом (`src/gateway/live-image-probe.ts`)
     - Надсилає його через `agent` `attachments: [{ mimeType: "image/png", content: "<base64>" }]`
-    - Gateway розбирає attachments в `images[]` (`src/gateway/server-methods/agent.ts` + `src/gateway/chat-attachments.ts`)
-    - Embedded agent передає моделі multimodal user message
-    - Перевірка: відповідь містить `cat` + код (OCR tolerance: незначні помилки допустимі)
+    - Gateway розбирає attachments у `images[]` (`src/gateway/server-methods/agent.ts` + `src/gateway/chat-attachments.ts`)
+    - Embedded agent пересилає multimodal user message моделі
+    - Перевірка: відповідь містить `cat` + код (OCR tolerance: незначні помилки допускаються)
 
-Порада: щоб побачити, що саме можна протестувати на вашій машині (і точні ідентифікатори `provider/model`), виконайте:
+Порада: щоб побачити, що саме можна тестувати на вашій машині (і точні ідентифікатори `provider/model`), запустіть:
 
 ```bash
 openclaw models list
@@ -258,22 +260,22 @@ openclaw models list --json
 ## Live: smoke CLI backend (Codex CLI або інші локальні CLI)
 
 - Тест: `src/gateway/gateway-cli-backend.live.test.ts`
-- Мета: перевірити pipeline Gateway + agent з використанням локального CLI backend, не торкаючись вашої стандартної конфігурації.
+- Мета: перевірити pipeline Gateway + agent, використовуючи локальний CLI backend, не торкаючись вашої типової config.
 - Увімкнення:
-  - `pnpm test:live` (або `OPENCLAW_LIVE_TEST=1`, якщо викликаєте Vitest напряму)
+  - `pnpm test:live` (або `OPENCLAW_LIVE_TEST=1`, якщо запускаєте Vitest напряму)
   - `OPENCLAW_LIVE_CLI_BACKEND=1`
-- Значення за замовчуванням:
+- Типові значення:
   - Модель: `codex-cli/gpt-5.4`
   - Команда: `codex`
   - Аргументи: `["exec","--json","--color","never","--sandbox","read-only","--skip-git-repo-check"]`
-- Перевизначення (необов’язкові):
+- Override (необов’язкові):
   - `OPENCLAW_LIVE_CLI_BACKEND_MODEL="codex-cli/gpt-5.4"`
   - `OPENCLAW_LIVE_CLI_BACKEND_COMMAND="/full/path/to/codex"`
   - `OPENCLAW_LIVE_CLI_BACKEND_ARGS='["exec","--json","--color","never","--sandbox","read-only","--skip-git-repo-check"]'`
-  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_PROBE=1` щоб надіслати реальне image attachment (шляхи інжектуються в prompt).
-  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_ARG="--image"` щоб передавати шляхи до image-файлів як аргументи CLI замість інжекції в prompt.
-  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_MODE="repeat"` (або `"list"`) щоб керувати передаванням image-аргументів, коли встановлено `IMAGE_ARG`.
-  - `OPENCLAW_LIVE_CLI_BACKEND_RESUME_PROBE=1` щоб надіслати другий хід і перевірити resume flow.
+  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_PROBE=1`, щоб надіслати реальне image attachment (шляхи підставляються в prompt).
+  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_ARG="--image"`, щоб передавати шляхи до image-файлів як аргументи CLI, а не через підстановку в prompt.
+  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_MODE="repeat"` (або `"list"`), щоб керувати способом передавання аргументів image, коли встановлено `IMAGE_ARG`.
+  - `OPENCLAW_LIVE_CLI_BACKEND_RESUME_PROBE=1`, щоб надіслати другий хід і перевірити flow відновлення.
 
 Приклад:
 
@@ -283,7 +285,7 @@ OPENCLAW_LIVE_CLI_BACKEND=1 \
   pnpm test:live src/gateway/gateway-cli-backend.live.test.ts
 ```
 
-Рецепт Docker:
+Рецепт для Docker:
 
 ```bash
 pnpm test:docker:live-cli-backend
@@ -292,31 +294,31 @@ pnpm test:docker:live-cli-backend
 Примітки:
 
 - Docker-ранер розташований у `scripts/test-live-cli-backend-docker.sh`.
-- Він запускає live smoke CLI-backend усередині Docker-образу репозиторію від імені непривілейованого користувача `node`.
-- Для `codex-cli` він установлює Linux-пакет `@openai/codex` у кешований доступний для запису префікс за адресою `OPENCLAW_DOCKER_CLI_TOOLS_DIR` (за замовчуванням: `~/.cache/openclaw/docker-cli-tools`).
+- Він запускає live smoke CLI-backend усередині Docker-образу репозиторію від імені non-root користувача `node`.
+- Для `codex-cli` він установлює Linux-пакет `@openai/codex` у кешований записуваний префікс за адресою `OPENCLAW_DOCKER_CLI_TOOLS_DIR` (типово: `~/.cache/openclaw/docker-cli-tools`).
 
 ## Live: smoke ACP bind (`/acp spawn ... --bind here`)
 
 - Тест: `src/gateway/gateway-acp-bind.live.test.ts`
-- Мета: перевірити реальний conversation-bind flow ACP із live ACP agent:
+- Мета: перевірити реальний flow ACP conversation-bind із live ACP agent:
   - надіслати `/acp spawn <agent> --bind here`
-  - прив’язати synthetic message-channel conversation на місці
-  - надіслати звичайне follow-up у тій самій conversation
-  - перевірити, що follow-up потрапляє в transcript прив’язаної ACP session
+  - прив’язати synthetic conversation message-channel на місці
+  - надіслати звичайний follow-up у тій самій conversation
+  - перевірити, що follow-up потрапляє до transcript прив’язаної ACP session
 - Увімкнення:
   - `pnpm test:live src/gateway/gateway-acp-bind.live.test.ts`
   - `OPENCLAW_LIVE_ACP_BIND=1`
-- Значення за замовчуванням:
+- Типові значення:
   - ACP agent: `claude`
   - Synthetic channel: контекст conversation у стилі Slack DM
   - ACP backend: `acpx`
-- Перевизначення:
+- Override:
   - `OPENCLAW_LIVE_ACP_BIND_AGENT=claude`
   - `OPENCLAW_LIVE_ACP_BIND_AGENT=codex`
   - `OPENCLAW_LIVE_ACP_BIND_AGENT_COMMAND='npx -y @agentclientprotocol/claude-agent-acp@<version>'`
 - Примітки:
-  - Цей lane використовує поверхню gateway `chat.send` з admin-only synthetic originating-route полями, щоб тести могли прикріпити контекст message-channel, не вдаючи зовнішню доставку.
-  - Коли `OPENCLAW_LIVE_ACP_BIND_AGENT_COMMAND` не задано, тест використовує вбудований реєстр агентів плагіна `acpx` для вибраного ACP harness agent.
+  - Ця lane використовує поверхню gateway `chat.send` з admin-only synthetic originating-route fields, щоб тести могли під’єднати контекст message-channel без удавання зовнішньої доставки.
+  - Коли `OPENCLAW_LIVE_ACP_BIND_AGENT_COMMAND` не задано, тест використовує вбудований реєстр agent плагіна `acpx` для вибраного ACP harness agent.
 
 Приклад:
 
@@ -326,21 +328,21 @@ OPENCLAW_LIVE_ACP_BIND=1 \
   pnpm test:live src/gateway/gateway-acp-bind.live.test.ts
 ```
 
-Рецепт Docker:
+Рецепт для Docker:
 
 ```bash
 pnpm test:docker:live-acp-bind
 ```
 
-Примітки щодо Docker:
+Примітки для Docker:
 
 - Docker-ранер розташований у `scripts/test-live-acp-bind-docker.sh`.
-- Він зчитує `~/.profile`, підготовлює відповідні auth-матеріали CLI в контейнері, установлює `acpx` у доступний для запису npm prefix, а потім установлює потрібний live CLI (`@anthropic-ai/claude-code` або `@openai/codex`), якщо його немає.
-- Усередині Docker раннер установлює `OPENCLAW_LIVE_ACP_BIND_ACPX_COMMAND=$HOME/.npm-global/bin/acpx`, щоб acpx зберігав env-змінні провайдера із завантаженого profile доступними для дочірнього harness CLI.
+- Він підвантажує `~/.profile`, переносить відповідні auth-матеріали CLI в контейнер, установлює `acpx` у записуваний npm-префікс, а потім установлює запитаний live CLI (`@anthropic-ai/claude-code` або `@openai/codex`), якщо його немає.
+- Усередині Docker раннер встановлює `OPENCLAW_LIVE_ACP_BIND_ACPX_COMMAND=$HOME/.npm-global/bin/acpx`, щоб acpx зберігав env vars провайдера з підвантаженого profile доступними для дочірнього harness CLI.
 
-### Рекомендовані live-рецепти
+### Рекомендовані рецепти live
 
-Вузькі, явні allowlist-и є найшвидшими та найменш флейковими:
+Вузькі, явні allowlist — найшвидші й найменш нестабільні:
 
 - Одна модель, напряму (без gateway):
   - `OPENCLAW_LIVE_MODELS="openai/gpt-5.4" pnpm test:live src/agents/models.profiles.live.test.ts`
@@ -348,7 +350,7 @@ pnpm test:docker:live-acp-bind
 - Одна модель, gateway smoke:
   - `OPENCLAW_LIVE_GATEWAY_MODELS="openai/gpt-5.4" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
-- Tool calling через кілька провайдерів:
+- Tool calling для кількох провайдерів:
   - `OPENCLAW_LIVE_GATEWAY_MODELS="openai/gpt-5.4,anthropic/claude-opus-4-6,google/gemini-3-flash-preview,zai/glm-4.7,minimax/MiniMax-M2.7" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
 - Фокус на Google (Gemini API key + Antigravity):
@@ -358,21 +360,21 @@ pnpm test:docker:live-acp-bind
 Примітки:
 
 - `google/...` використовує Gemini API (API key).
-- `google-antigravity/...` використовує OAuth-міст Antigravity (endpoint агента у стилі Cloud Code Assist).
+- `google-antigravity/...` використовує OAuth-міст Antigravity (agent endpoint у стилі Cloud Code Assist).
 - `google-gemini-cli/...` використовує локальний Gemini CLI на вашій машині (окрема auth + особливості tooling).
 - Gemini API проти Gemini CLI:
-  - API: OpenClaw викликає розміщений Google Gemini API через HTTP (API key / auth профілю); це те, що більшість користувачів має на увазі під «Gemini».
-  - CLI: OpenClaw викликає локальний binary `gemini`; він має власну auth-модель і може поводитися інакше (streaming/tool support/version skew).
+  - API: OpenClaw викликає розміщений у Google Gemini API через HTTP (API key / auth профілю); це те, що більшість користувачів має на увазі під «Gemini».
+  - CLI: OpenClaw виконує локальний бінарний файл `gemini`; він має власну auth і може поводитися інакше (streaming/tool support/version skew).
 
 ## Live: матриця моделей (що ми покриваємо)
 
-Фіксованого «списку моделей CI» немає (live є opt-in), але це **рекомендовані** моделі, які слід регулярно покривати на робочій машині з ключами.
+Немає фіксованого «списку моделей CI» (live — opt-in), але це **рекомендовані** моделі для регулярного покриття на машині розробника з ключами.
 
-### Сучасний smoke-набір (tool calling + image)
+### Modern smoke-набір (tool calling + image)
 
-Це запуск «поширених моделей», який ми очікуємо підтримувати в робочому стані:
+Це запуск «типових моделей», який ми очікуємо підтримувати в робочому стані:
 
-- OpenAI (не Codex): `openai/gpt-5.4` (необов’язково: `openai/gpt-5.4-mini`)
+- OpenAI (не-Codex): `openai/gpt-5.4` (необов’язково: `openai/gpt-5.4-mini`)
 - OpenAI Codex: `openai-codex/gpt-5.4`
 - Anthropic: `anthropic/claude-opus-4-6` (або `anthropic/claude-sonnet-4-6`)
 - Google (Gemini API): `google/gemini-3.1-pro-preview` і `google/gemini-3-flash-preview` (уникайте старіших моделей Gemini 2.x)
@@ -380,12 +382,12 @@ pnpm test:docker:live-acp-bind
 - Z.AI (GLM): `zai/glm-4.7`
 - MiniMax: `minimax/MiniMax-M2.7`
 
-Запускати gateway smoke з tools + image:
+Запуск gateway smoke із tools + image:
 `OPENCLAW_LIVE_GATEWAY_MODELS="openai/gpt-5.4,openai-codex/gpt-5.4,anthropic/claude-opus-4-6,google/gemini-3.1-pro-preview,google/gemini-3-flash-preview,google-antigravity/claude-opus-4-6-thinking,google-antigravity/gemini-3-flash,zai/glm-4.7,minimax/MiniMax-M2.7" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
-### Базовий рівень: tool calling (Read + необов’язковий Exec)
+### Базове покриття: tool calling (Read + необов’язковий Exec)
 
-Виберіть принаймні одну модель з кожного сімейства провайдерів:
+Виберіть принаймні одну модель на сімейство провайдерів:
 
 - OpenAI: `openai/gpt-5.4` (або `openai/gpt-5.4-mini`)
 - Anthropic: `anthropic/claude-opus-4-6` (або `anthropic/claude-sonnet-4-6`)
@@ -393,46 +395,46 @@ pnpm test:docker:live-acp-bind
 - Z.AI (GLM): `zai/glm-4.7`
 - MiniMax: `minimax/MiniMax-M2.7`
 
-Необов’язкове додаткове покриття (було б добре мати):
+Необов’язкове додаткове покриття (бажано мати):
 
-- xAI: `xai/grok-4` (або найновішу доступну)
-- Mistral: `mistral/`… (виберіть одну модель із підтримкою “tools”, яку у вас увімкнено)
+- xAI: `xai/grok-4` (або найновіша доступна)
+- Mistral: `mistral/`… (виберіть одну модель із підтримкою “tools”, яку у вас ввімкнено)
 - Cerebras: `cerebras/`… (якщо у вас є доступ)
 - LM Studio: `lmstudio/`… (локально; tool calling залежить від режиму API)
 
 ### Vision: надсилання image (attachment → multimodal message)
 
-Додайте принаймні одну модель із підтримкою image у `OPENCLAW_LIVE_GATEWAY_MODELS` (Claude/Gemini/OpenAI vision-capable variants тощо), щоб перевірити image probe.
+Включіть принаймні одну модель із підтримкою image до `OPENCLAW_LIVE_GATEWAY_MODELS` (варіанти Claude/Gemini/OpenAI із підтримкою vision тощо), щоб пройти image probe.
 
 ### Агрегатори / альтернативні gateway
 
-Якщо у вас увімкнено ключі, ми також підтримуємо тестування через:
+Якщо у вас є ввімкнені ключі, ми також підтримуємо тестування через:
 
-- OpenRouter: `openrouter/...` (сотні моделей; використайте `openclaw models scan`, щоб знайти кандидатів із підтримкою tools+image)
+- OpenRouter: `openrouter/...` (сотні моделей; використовуйте `openclaw models scan`, щоб знайти кандидатів із підтримкою tool+image)
 - OpenCode: `opencode/...` для Zen і `opencode-go/...` для Go (auth через `OPENCODE_API_KEY` / `OPENCODE_ZEN_API_KEY`)
 
-Інші провайдери, які можна включити до live-матриці (якщо у вас є облікові дані/конфігурація):
+Більше провайдерів, які можна включити до live-матриці (якщо у вас є облікові дані/config):
 
 - Вбудовані: `openai`, `openai-codex`, `anthropic`, `google`, `google-vertex`, `google-antigravity`, `google-gemini-cli`, `zai`, `openrouter`, `opencode`, `opencode-go`, `xai`, `groq`, `cerebras`, `mistral`, `github-copilot`
-- Через `models.providers` (власні endpoint-и): `minimax` (cloud/API), а також будь-який сумісний з OpenAI/Anthropic proxy (LM Studio, vLLM, LiteLLM тощо)
+- Через `models.providers` (custom endpoints): `minimax` (cloud/API), а також будь-який сумісний із OpenAI/Anthropic proxy (LM Studio, vLLM, LiteLLM тощо)
 
-Порада: не намагайтеся жорстко зафіксувати «всі моделі» в документації. Авторитетний список — це все, що повертає `discoverModels(...)` на вашій машині, плюс усі доступні ключі.
+Порада: не намагайтеся жорстко закодувати в документації «усі моделі». Авторитетний список — це все, що повертає `discoverModels(...)` на вашій машині + усі доступні ключі.
 
 ## Облікові дані (ніколи не комітьте)
 
-Live-тести знаходять облікові дані так само, як і CLI. Практичні наслідки:
+Live-тести знаходять облікові дані так само, як CLI. Практичні наслідки:
 
 - Якщо CLI працює, live-тести мають знаходити ті самі ключі.
 - Якщо live-тест каже «немає облікових даних», налагоджуйте це так само, як налагоджували б `openclaw models list` / вибір моделі.
 
-- Профілі auth для окремих агентів: `~/.openclaw/agents/<agentId>/agent/auth-profiles.json` (саме це означає «ключі профілів» у live-тестах)
-- Конфігурація: `~/.openclaw/openclaw.json` (або `OPENCLAW_CONFIG_PATH`)
-- Каталог застарілого стану: `~/.openclaw/credentials/` (копіюється у staged live home, якщо присутній, але це не основне сховище ключів профілю)
-- Локальні live-запуски за замовчуванням копіюють активну конфігурацію, файли `auth-profiles.json` для окремих агентів, застарілий каталог `credentials/` і підтримувані зовнішні каталоги auth CLI у тимчасовий test home; перевизначення шляхів `agents.*.workspace` / `agentDir` видаляються в цій staged-конфігурації, щоб probes не торкалися вашого реального робочого середовища хоста.
+- Профілі auth на рівні agent: `~/.openclaw/agents/<agentId>/agent/auth-profiles.json` (саме це мається на увазі під «ключами профілів» у live-тестах)
+- Config: `~/.openclaw/openclaw.json` (або `OPENCLAW_CONFIG_PATH`)
+- Застарілий каталог стану: `~/.openclaw/credentials/` (копіюється у staged live home, якщо присутній, але це не основне сховище ключів профілів)
+- Локальні live-запуски типово копіюють активну config, усі файли `auth-profiles.json` на рівні agent, застарілий `credentials/` і підтримувані зовнішні каталоги auth CLI до тимчасового test home; override шляхів `agents.*.workspace` / `agentDir` у staged config видаляються, щоб probes не торкалися вашого реального host workspace.
 
-Якщо ви хочете покладатися на env-ключі (наприклад, експортовані у вашому `~/.profile`), запускайте локальні тести після `source ~/.profile`, або використовуйте Docker-ранери нижче (вони можуть монтувати `~/.profile` у контейнер).
+Якщо ви хочете покладатися на env-ключі (наприклад, експортовані у ваш `~/.profile`), запускайте локальні тести після `source ~/.profile` або використовуйте Docker-ранери нижче (вони можуть монтувати `~/.profile` у контейнер).
 
-## Deepgram live (транскрибування аудіо)
+## Deepgram live (транскрипція аудіо)
 
 - Тест: `src/media-understanding/providers/deepgram/audio.live.test.ts`
 - Увімкнення: `DEEPGRAM_API_KEY=... DEEPGRAM_LIVE_TEST=1 pnpm test:live src/media-understanding/providers/deepgram/audio.live.test.ts`
@@ -441,7 +443,7 @@ Live-тести знаходять облікові дані так само, я
 
 - Тест: `src/agents/byteplus.live.test.ts`
 - Увімкнення: `BYTEPLUS_API_KEY=... BYTEPLUS_LIVE_TEST=1 pnpm test:live src/agents/byteplus.live.test.ts`
-- Необов’язкове перевизначення моделі: `BYTEPLUS_CODING_MODEL=ark-code-latest`
+- Необов’язковий override моделі: `BYTEPLUS_CODING_MODEL=ark-code-latest`
 
 ## ComfyUI workflow media live
 
@@ -450,18 +452,18 @@ Live-тести знаходять облікові дані так само, я
 - Обсяг:
   - Перевіряє вбудовані шляхи comfy image, video і `music_generate`
   - Пропускає кожну можливість, якщо `models.providers.comfy.<capability>` не налаштовано
-  - Корисно після змін у надсиланні workflow comfy, polling, downloads або реєстрації плагіна
+  - Корисно після змін у надсиланні workflow comfy, polling, downloads або реєстрації plugin
 
-## Live для генерації зображень
+## Image generation live
 
 - Тест: `src/image-generation/runtime.live.test.ts`
 - Команда: `pnpm test:live src/image-generation/runtime.live.test.ts`
 - Обсяг:
-  - Перелічує кожен зареєстрований provider plugin генерації зображень
-  - Завантажує відсутні env-змінні провайдерів із вашого login shell (`~/.profile`) перед probe
-  - За замовчуванням використовує live/env API-ключі раніше за збережені auth-профілі, щоб застарілі тестові ключі в `auth-profiles.json` не маскували реальні shell-облікові дані
-  - Пропускає провайдери без придатних auth/profile/model
-  - Запускає стандартні варіанти генерації зображень через спільну runtime capability:
+  - Перераховує кожен зареєстрований provider plugin для image generation
+  - Завантажує відсутні env vars провайдерів із вашого login shell (`~/.profile`) перед виконанням probes
+  - Типово використовує live/env API-ключі раніше за збережені auth-профілі, щоб застарілі test-ключі в `auth-profiles.json` не маскували реальні shell credentials
+  - Пропускає провайдерів без придатної auth/profile/model
+  - Проганяє стандартні варіанти image generation через shared runtime capability:
     - `google:flash-generate`
     - `google:pro-generate`
     - `google:pro-edit`
@@ -474,234 +476,234 @@ Live-тести знаходять облікові дані так само, я
   - `OPENCLAW_LIVE_IMAGE_GENERATION_MODELS="openai/gpt-image-1,google/gemini-3.1-flash-image-preview"`
   - `OPENCLAW_LIVE_IMAGE_GENERATION_CASES="google:flash-generate,google:pro-edit"`
 - Необов’язкова поведінка auth:
-  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, щоб примусово використовувати auth зі сховища профілів і ігнорувати перевизначення лише через env
+  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, щоб примусово використовувати auth зі сховища профілів і ігнорувати override лише з env
 
-## Live для генерації музики
+## Music generation live
 
 - Тест: `extensions/music-generation-providers.live.test.ts`
 - Увімкнення: `OPENCLAW_LIVE_TEST=1 pnpm test:live -- extensions/music-generation-providers.live.test.ts`
 - Обсяг:
-  - Перевіряє спільний вбудований шлях provider для генерації музики
+  - Перевіряє спільний шлях bundled music-generation provider
   - Наразі покриває Google і MiniMax
-  - Завантажує env-змінні провайдерів із вашого login shell (`~/.profile`) перед probe
-  - За замовчуванням використовує live/env API-ключі раніше за збережені auth-профілі, щоб застарілі тестові ключі в `auth-profiles.json` не маскували реальні shell-облікові дані
-  - Пропускає провайдери без придатних auth/profile/model
+  - Завантажує env vars провайдерів із вашого login shell (`~/.profile`) перед виконанням probes
+  - Типово використовує live/env API-ключі раніше за збережені auth-профілі, щоб застарілі test-ключі в `auth-profiles.json` не маскували реальні shell credentials
+  - Пропускає провайдерів без придатної auth/profile/model
   - Запускає обидва оголошені runtime-режими, коли вони доступні:
-    - `generate` з input лише у вигляді prompt
+    - `generate` із вхідними даними лише у вигляді prompt
     - `edit`, коли провайдер оголошує `capabilities.edit.enabled`
-  - Поточне покриття спільної лінії:
+  - Поточне покриття shared-lane:
     - `google`: `generate`, `edit`
     - `minimax`: `generate`
-    - `comfy`: окремий live-файл Comfy, а не цей спільний sweep
+    - `comfy`: окремий live-файл Comfy, не ця shared sweep
 - Необов’язкове звуження:
   - `OPENCLAW_LIVE_MUSIC_GENERATION_PROVIDERS="google,minimax"`
   - `OPENCLAW_LIVE_MUSIC_GENERATION_MODELS="google/lyria-3-clip-preview,minimax/music-2.5+"`
 - Необов’язкова поведінка auth:
-  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, щоб примусово використовувати auth зі сховища профілів і ігнорувати перевизначення лише через env
+  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, щоб примусово використовувати auth зі сховища профілів і ігнорувати override лише з env
 
-## Live для генерації відео
+## Video generation live
 
 - Тест: `extensions/video-generation-providers.live.test.ts`
 - Увімкнення: `OPENCLAW_LIVE_TEST=1 pnpm test:live -- extensions/video-generation-providers.live.test.ts`
 - Обсяг:
-  - Перевіряє спільний вбудований шлях provider для генерації відео
-  - Завантажує env-змінні провайдерів із вашого login shell (`~/.profile`) перед probe
-  - За замовчуванням використовує live/env API-ключі раніше за збережені auth-профілі, щоб застарілі тестові ключі в `auth-profiles.json` не маскували реальні shell-облікові дані
-  - Пропускає провайдери без придатних auth/profile/model
+  - Перевіряє спільний шлях bundled video-generation provider
+  - Завантажує env vars провайдерів із вашого login shell (`~/.profile`) перед виконанням probes
+  - Типово використовує live/env API-ключі раніше за збережені auth-профілі, щоб застарілі test-ключі в `auth-profiles.json` не маскували реальні shell credentials
+  - Пропускає провайдерів без придатної auth/profile/model
   - Запускає обидва оголошені runtime-режими, коли вони доступні:
-    - `generate` з input лише у вигляді prompt
+    - `generate` із вхідними даними лише у вигляді prompt
     - `imageToVideo`, коли провайдер оголошує `capabilities.imageToVideo.enabled`
-    - `videoToVideo`, коли провайдер оголошує `capabilities.videoToVideo.enabled` і вибраний провайдер/модель приймає локальний відеовхід на основі буфера в межах спільного sweep
+    - `videoToVideo`, коли провайдер оголошує `capabilities.videoToVideo.enabled` і вибраний провайдер/модель приймає локальний відеовхід із буфера в shared sweep
   - Поточне live-покриття `videoToVideo`:
     - `google`
     - `openai`
     - `runway` лише коли вибрана модель — `runway/gen4_aleph`
-  - Поточні оголошені, але пропущені провайдери `videoToVideo` у спільному sweep:
-    - `alibaba`, `qwen`, `xai`, тому що ці шляхи наразі потребують віддалених URL-посилань `http(s)` / MP4
+  - Поточні провайдери `videoToVideo`, оголошені, але пропущені в shared sweep:
+    - `alibaba`, `qwen`, `xai`, тому що ці шляхи наразі потребують віддалених reference URL `http(s)` / MP4
 - Необов’язкове звуження:
   - `OPENCLAW_LIVE_VIDEO_GENERATION_PROVIDERS="google,openai,runway"`
   - `OPENCLAW_LIVE_VIDEO_GENERATION_MODELS="google/veo-3.1-fast-generate-preview,openai/sora-2,runway/gen4_aleph"`
 - Необов’язкова поведінка auth:
-  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, щоб примусово використовувати auth зі сховища профілів і ігнорувати перевизначення лише через env
+  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, щоб примусово використовувати auth зі сховища профілів і ігнорувати override лише з env
 
 ## Docker-ранери (необов’язкові перевірки «працює в Linux»)
 
 Ці Docker-ранери поділяються на дві групи:
 
-- Ранери live-моделей: `test:docker:live-models` і `test:docker:live-gateway` запускають лише відповідний live-файл із ключами профілів усередині Docker-образу репозиторію (`src/agents/models.profiles.live.test.ts` і `src/gateway/gateway-models.profiles.live.test.ts`), монтують ваш локальний каталог конфігурації та workspace (і зчитують `~/.profile`, якщо його змонтовано). Відповідні локальні entrypoint-и: `test:live:models-profiles` і `test:live:gateway-profiles`.
-- Docker live-ранери за замовчуванням використовують меншу межу smoke, щоб повний Docker sweep залишався практичним:
-  `test:docker:live-models` за замовчуванням використовує `OPENCLAW_LIVE_MAX_MODELS=12`, а
-  `test:docker:live-gateway` за замовчуванням використовує `OPENCLAW_LIVE_GATEWAY_SMOKE=1`,
+- Live-model ранери: `test:docker:live-models` і `test:docker:live-gateway` запускають лише відповідний profile-key live-файл усередині Docker-образу репозиторію (`src/agents/models.profiles.live.test.ts` і `src/gateway/gateway-models.profiles.live.test.ts`), монтують ваш локальний каталог config і workspace (і підвантажують `~/.profile`, якщо його змонтовано). Відповідні локальні entrypoint — `test:live:models-profiles` і `test:live:gateway-profiles`.
+- Live Docker-ранери типово мають менше обмеження smoke, щоб повний Docker sweep залишався практичним:
+  `test:docker:live-models` типово використовує `OPENCLAW_LIVE_MAX_MODELS=12`, а
+  `test:docker:live-gateway` типово використовує `OPENCLAW_LIVE_GATEWAY_SMOKE=1`,
   `OPENCLAW_LIVE_GATEWAY_MAX_MODELS=8`,
   `OPENCLAW_LIVE_GATEWAY_STEP_TIMEOUT_MS=45000` і
-  `OPENCLAW_LIVE_GATEWAY_MODEL_TIMEOUT_MS=90000`. Перевизначайте ці env-змінні, коли
-  вам навмисно потрібен більший вичерпний прогін.
+  `OPENCLAW_LIVE_GATEWAY_MODEL_TIMEOUT_MS=90000`. Перевизначте ці env vars, коли
+  вам явно потрібне більше повне вичерпне сканування.
 - `test:docker:all` один раз збирає live Docker-образ через `test:docker:live-build`, а потім повторно використовує його для двох live Docker lanes.
-- Контейнерні smoke-ранери: `test:docker:openwebui`, `test:docker:onboard`, `test:docker:gateway-network`, `test:docker:mcp-channels` і `test:docker:plugins` піднімають один або кілька реальних контейнерів і перевіряють інтеграційні шляхи вищого рівня.
+- Container smoke ранери: `test:docker:openwebui`, `test:docker:onboard`, `test:docker:gateway-network`, `test:docker:mcp-channels` і `test:docker:plugins` піднімають один або кілька реальних контейнерів і перевіряють integration-шляхи вищого рівня.
 
-Docker-ранери live-моделей також bind-mount-ять лише потрібні auth-home каталогів CLI (або всі підтримувані, коли запуск не звужений), а потім копіюють їх у home контейнера перед запуском, щоб OAuth зовнішніх CLI міг оновлювати токени, не змінюючи host auth store:
+Live-model Docker-ранери також bind-mount лише потрібні CLI auth homes (або всі підтримувані, якщо запуск не звужено), а потім копіюють їх у home контейнера перед запуском, щоб OAuth зовнішнього CLI міг оновлювати токени, не змінюючи host auth store:
 
 - Прямі моделі: `pnpm test:docker:live-models` (скрипт: `scripts/test-live-models-docker.sh`)
 - ACP bind smoke: `pnpm test:docker:live-acp-bind` (скрипт: `scripts/test-live-acp-bind-docker.sh`)
 - CLI backend smoke: `pnpm test:docker:live-cli-backend` (скрипт: `scripts/test-live-cli-backend-docker.sh`)
 - Gateway + dev agent: `pnpm test:docker:live-gateway` (скрипт: `scripts/test-live-gateway-models-docker.sh`)
 - Open WebUI live smoke: `pnpm test:docker:openwebui` (скрипт: `scripts/e2e/openwebui-docker.sh`)
-- Майстер онбордингу (TTY, повне scaffolding): `pnpm test:docker:onboard` (скрипт: `scripts/e2e/onboard-docker.sh`)
-- Мережа gateway (два контейнери, WS auth + health): `pnpm test:docker:gateway-network` (скрипт: `scripts/e2e/gateway-network-docker.sh`)
-- Міст MCP channel (seeded Gateway + stdio bridge + raw Claude notification-frame smoke): `pnpm test:docker:mcp-channels` (скрипт: `scripts/e2e/mcp-channels-docker.sh`)
-- Плагіни (smoke встановлення + псевдонім `/plugin` + семантика перезапуску Claude-bundle): `pnpm test:docker:plugins` (скрипт: `scripts/e2e/plugins-docker.sh`)
+- Майстер onboarding (TTY, повний scaffolding): `pnpm test:docker:onboard` (скрипт: `scripts/e2e/onboard-docker.sh`)
+- Networking gateway (два контейнери, WS auth + health): `pnpm test:docker:gateway-network` (скрипт: `scripts/e2e/gateway-network-docker.sh`)
+- MCP channel bridge (seeded Gateway + stdio bridge + raw Claude notification-frame smoke): `pnpm test:docker:mcp-channels` (скрипт: `scripts/e2e/mcp-channels-docker.sh`)
+- Plugins (smoke інсталяції + псевдонім `/plugin` + семантика перезапуску Claude-bundle): `pnpm test:docker:plugins` (скрипт: `scripts/e2e/plugins-docker.sh`)
 
-Docker-ранери live-моделей також монтують поточний checkout лише для читання і
-підготовлюють його в тимчасовому workdir усередині контейнера. Це зберігає runtime
-image компактним, але водночас дає змогу запускати Vitest саме на вашому локальному source/config.
-Етап підготовки пропускає великі локальні кеші та результати збирання застосунків, такі як
-`.pnpm-store`, `.worktrees`, `__openclaw_vitest__` і локальні каталоги виходу `.build` або
-Gradle, щоб Docker live-запуски не витрачали хвилини на копіювання
-машинно-специфічних артефактів.
-Вони також установлюють `OPENCLAW_SKIP_CHANNELS=1`, щоб live-probes gateway не запускали
-реальні channel worker-и Telegram/Discord тощо всередині контейнера.
-`test:docker:live-models` усе ще запускає `pnpm test:live`, тому також передавайте
-`OPENCLAW_LIVE_GATEWAY_*`, коли вам потрібно звузити або виключити gateway
-live-покриття з цього Docker lane.
-`test:docker:openwebui` — це smoke-перевірка сумісності вищого рівня: вона запускає
-контейнер gateway OpenClaw з увімкненими OpenAI-compatible HTTP endpoint-ами,
-запускає закріплений контейнер Open WebUI проти цього gateway, входить
-через Open WebUI, перевіряє, що `/api/models` відкриває `openclaw/default`, а потім надсилає
-реальний chat request через проксі `/api/chat/completions` Open WebUI.
-Перший запуск може бути помітно повільнішим, тому що Docker може знадобитися завантажити
-образ Open WebUI, а самому Open WebUI — завершити власне холодне початкове налаштування.
-Цей lane очікує придатний live-ключ моделі, і `OPENCLAW_PROFILE_FILE`
-(`~/.profile` за замовчуванням) є основним способом надати його в Dockerized-запусках.
-Успішні запуски друкують невеликий JSON payload на кшталт `{ "ok": true, "model":
+Live-model Docker-ранери також bind-mount поточний checkout у режимі лише для читання і
+переносять його до тимчасового workdir усередині контейнера. Це зберігає runtime
+образ компактним, але все одно дає запускати Vitest точно на вашому локальному source/config.
+Крок staging пропускає великі локальні кеші та артефакти збірки app, як-от
+`.pnpm-store`, `.worktrees`, `__openclaw_vitest__` і локальні каталоги `.build` app або
+виводу Gradle, щоб Docker live-запуски не витрачали хвилини на копіювання
+машинозалежних артефактів.
+Вони також встановлюють `OPENCLAW_SKIP_CHANNELS=1`, щоб gateway live probes не запускали
+реальні workers каналів Telegram/Discord тощо всередині контейнера.
+`test:docker:live-models` усе ще запускає `pnpm test:live`, тож також передавайте
+`OPENCLAW_LIVE_GATEWAY_*`, коли потрібно звузити або виключити покриття gateway
+live із цієї Docker lane.
+`test:docker:openwebui` — це smoke сумісності вищого рівня: він запускає
+контейнер gateway OpenClaw із увімкненими HTTP endpoint, сумісними з OpenAI,
+запускає pinned контейнер Open WebUI проти цього gateway, входить через
+Open WebUI, перевіряє, що `/api/models` показує `openclaw/default`, а потім надсилає
+реальний chat request через proxy `/api/chat/completions` Open WebUI.
+Перший запуск може бути помітно повільнішим, тому що Docker може знадобитися витягнути
+образ Open WebUI, а самому Open WebUI — завершити власний cold-start setup.
+Ця lane очікує наявний live model key, а `OPENCLAW_PROFILE_FILE`
+(типово `~/.profile`) — основний спосіб передати його в Dockerized runs.
+Успішні запуски виводять невеликий JSON payload на кшталт `{ "ok": true, "model":
 "openclaw/default", ... }`.
 `test:docker:mcp-channels` навмисно детермінований і не потребує
-реального облікового запису Telegram, Discord або iMessage. Він піднімає seeded Gateway
-container, запускає другий контейнер, який запускає `openclaw mcp serve`, а потім
-перевіряє виявлення маршрутизованих conversation, читання transcript, metadata attachment-ів,
-поведінку черги live-подій, маршрутизацію вихідного надсилання, а також сповіщення каналу +
-дозволів у стилі Claude через реальний stdio MCP bridge. Перевірка сповіщень
-безпосередньо інспектує сирі stdio MCP frame-и, тому smoke перевіряє те, що
-міст фактично видає, а не лише те, що трапляється на поверхню певного SDK клієнта.
+реального акаунта Telegram, Discord або iMessage. Він піднімає seeded Gateway
+контейнер, запускає другий контейнер, який стартує `openclaw mcp serve`, а потім
+перевіряє виявлення conversation через routing, читання transcript, metadata вкладень,
+поведінку черги live events, routing вихідного надсилання і сповіщення у стилі Claude про channel +
+permissions через реальний stdio MCP bridge. Перевірка notifications
+безпосередньо аналізує raw stdio MCP frames, тож smoke перевіряє те, що
+міст справді випромінює, а не лише те, що конкретний client SDK випадково вміє показати.
 
-Ручний smoke plain-language thread ACP (не CI):
+Ручний smoke plain-language thread для ACP (не CI):
 
 - `bun scripts/dev/discord-acp-plain-language-smoke.ts --channel <discord-channel-id> ...`
-- Зберігайте цей скрипт для сценаріїв регресії/налагодження. Він може знову знадобитися для перевірки ACP thread routing, тому не видаляйте його.
+- Зберігайте цей скрипт для workflows регресії/налагодження. Він може знову знадобитися для перевірки routing ACP thread, тому не видаляйте його.
 
-Корисні env-змінні:
+Корисні env vars:
 
-- `OPENCLAW_CONFIG_DIR=...` (за замовчуванням: `~/.openclaw`) монтується в `/home/node/.openclaw`
-- `OPENCLAW_WORKSPACE_DIR=...` (за замовчуванням: `~/.openclaw/workspace`) монтується в `/home/node/.openclaw/workspace`
-- `OPENCLAW_PROFILE_FILE=...` (за замовчуванням: `~/.profile`) монтується в `/home/node/.profile` і зчитується перед запуском тестів
-- `OPENCLAW_DOCKER_CLI_TOOLS_DIR=...` (за замовчуванням: `~/.cache/openclaw/docker-cli-tools`) монтується в `/home/node/.npm-global` для кешованих установок CLI усередині Docker
-- Зовнішні auth-каталоги/файли CLI в `$HOME` монтуються лише для читання під `/host-auth...`, а потім копіюються в `/home/node/...` перед стартом тестів
-  - Каталоги за замовчуванням: `.minimax`
-  - Файли за замовчуванням: `~/.codex/auth.json`, `~/.codex/config.toml`, `.claude.json`, `~/.claude/.credentials.json`, `~/.claude/settings.json`, `~/.claude/settings.local.json`
-  - Для звужених запусків провайдерів монтуються лише потрібні каталоги/файли, виведені з `OPENCLAW_LIVE_PROVIDERS` / `OPENCLAW_LIVE_GATEWAY_PROVIDERS`
-  - Ручне перевизначення: `OPENCLAW_DOCKER_AUTH_DIRS=all`, `OPENCLAW_DOCKER_AUTH_DIRS=none` або список через кому, наприклад `OPENCLAW_DOCKER_AUTH_DIRS=.claude,.codex`
-- `OPENCLAW_LIVE_GATEWAY_MODELS=...` / `OPENCLAW_LIVE_MODELS=...` щоб звузити запуск
-- `OPENCLAW_LIVE_GATEWAY_PROVIDERS=...` / `OPENCLAW_LIVE_PROVIDERS=...` щоб відфільтрувати провайдерів усередині контейнера
+- `OPENCLAW_CONFIG_DIR=...` (типово: `~/.openclaw`) монтується в `/home/node/.openclaw`
+- `OPENCLAW_WORKSPACE_DIR=...` (типово: `~/.openclaw/workspace`) монтується в `/home/node/.openclaw/workspace`
+- `OPENCLAW_PROFILE_FILE=...` (типово: `~/.profile`) монтується в `/home/node/.profile` і підвантажується перед запуском тестів
+- `OPENCLAW_DOCKER_CLI_TOOLS_DIR=...` (типово: `~/.cache/openclaw/docker-cli-tools`) монтується в `/home/node/.npm-global` для кешованих установок CLI всередині Docker
+- Зовнішні каталоги/файли auth CLI в `$HOME` монтуються лише для читання під `/host-auth...`, а потім копіюються в `/home/node/...` перед стартом тестів
+  - Типові каталоги: `.minimax`
+  - Типові файли: `~/.codex/auth.json`, `~/.codex/config.toml`, `.claude.json`, `~/.claude/.credentials.json`, `~/.claude/settings.json`, `~/.claude/settings.local.json`
+  - Звужені запуски провайдерів монтують лише потрібні каталоги/файли, виведені з `OPENCLAW_LIVE_PROVIDERS` / `OPENCLAW_LIVE_GATEWAY_PROVIDERS`
+  - Можна перевизначити вручну через `OPENCLAW_DOCKER_AUTH_DIRS=all`, `OPENCLAW_DOCKER_AUTH_DIRS=none` або список через кому, наприклад `OPENCLAW_DOCKER_AUTH_DIRS=.claude,.codex`
+- `OPENCLAW_LIVE_GATEWAY_MODELS=...` / `OPENCLAW_LIVE_MODELS=...`, щоб звузити запуск
+- `OPENCLAW_LIVE_GATEWAY_PROVIDERS=...` / `OPENCLAW_LIVE_PROVIDERS=...`, щоб фільтрувати провайдерів у контейнері
 - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, щоб гарантувати, що облікові дані беруться зі сховища профілів (а не з env)
-- `OPENCLAW_OPENWEBUI_MODEL=...` щоб вибрати модель, яку gateway відкриває для smoke Open WebUI
-- `OPENCLAW_OPENWEBUI_PROMPT=...` щоб перевизначити prompt перевірки nonce, використаний у smoke Open WebUI
-- `OPENWEBUI_IMAGE=...` щоб перевизначити закріплений тег образу Open WebUI
+- `OPENCLAW_OPENWEBUI_MODEL=...`, щоб вибрати модель, яку gateway показує для smoke Open WebUI
+- `OPENCLAW_OPENWEBUI_PROMPT=...`, щоб перевизначити prompt перевірки nonce, який використовується в smoke Open WebUI
+- `OPENWEBUI_IMAGE=...`, щоб перевизначити pinned tag образу Open WebUI
 
-## Базова перевірка документації
+## Перевірка документації
 
-Запускайте перевірки docs після редагування документації: `pnpm check:docs`.
-Запускайте повну перевірку anchor-ів Mintlify, коли вам також потрібні перевірки заголовків у межах сторінки: `pnpm docs:check-links:anchors`.
+Після змін у документації запускайте перевірки docs: `pnpm check:docs`.
+Запускайте повну перевірку anchor у Mintlify, коли також потрібна перевірка внутрішньосторінкових heading: `pnpm docs:check-links:anchors`.
 
-## Офлайн-регресія (безпечна для CI)
+## Офлайн-регресії (безпечні для CI)
 
 Це регресії «реального pipeline» без реальних провайдерів:
 
-- Gateway tool calling (mock OpenAI, реальний цикл gateway + agent): `src/gateway/gateway.test.ts` (випадок: "runs a mock OpenAI tool call end-to-end via gateway agent loop")
-- Gateway wizard (WS `wizard.start`/`wizard.next`, примусовий запис config + auth): `src/gateway/gateway.test.ts` (випадок: "runs wizard over ws and writes auth token config")
+- Tool calling gateway (mock OpenAI, реальний цикл gateway + agent): `src/gateway/gateway.test.ts` (випадок: "runs a mock OpenAI tool call end-to-end via gateway agent loop")
+- Майстер gateway (WS `wizard.start`/`wizard.next`, записує config + примусову auth): `src/gateway/gateway.test.ts` (випадок: "runs wizard over ws and writes auth token config")
 
-## Оцінювання надійності агента (Skills)
+## Оцінювання надійності agent (Skills)
 
-У нас уже є кілька безпечних для CI тестів, які поводяться як «оцінювання надійності агента»:
+У нас уже є кілька безпечних для CI тестів, які поводяться як «оцінювання надійності agent»:
 
 - Mock tool-calling через реальний цикл gateway + agent (`src/gateway/gateway.test.ts`).
-- Наскрізні потоки wizard, що перевіряють wiring сесій і ефекти конфігурації (`src/gateway/gateway.test.ts`).
+- Наскрізні flows майстра, які перевіряють wiring session і вплив на config (`src/gateway/gateway.test.ts`).
 
 Що ще бракує для Skills (див. [Skills](/uk/tools/skills)):
 
-- **Прийняття рішень:** коли Skills перелічені в prompt, чи вибирає агент правильний skill (або уникає нерелевантних)?
-- **Відповідність вимогам:** чи читає агент `SKILL.md` перед використанням і чи виконує потрібні кроки/аргументи?
-- **Контракти workflow:** багатокрокові сценарії, що перевіряють порядок tools, перенесення history сесії та межі sandbox.
+- **Decisioning:** коли Skills перелічено в prompt, чи вибирає agent правильний skill (або уникає нерелевантних)?
+- **Compliance:** чи читає agent `SKILL.md` перед використанням і чи виконує потрібні кроки/args?
+- **Workflow contracts:** багатокрокові сценарії, що перевіряють порядок tools, перенесення історії session і межі sandbox.
 
-Майбутні eval-и мають насамперед залишатися детермінованими:
+Майбутні evals мають спершу залишатися детермінованими:
 
-- Scenario runner з mock-провайдерами для перевірки викликів tools + їхнього порядку, читання skill-файлів і wiring сесій.
-- Невеликий набір сценаріїв, зосереджених на skill (використовувати чи уникати, gating, prompt injection).
-- Необов’язкові live eval-и (opt-in, із керуванням через env) лише після того, як безпечний для CI набір буде готовий.
+- Runner сценаріїв із mock-провайдерами для перевірки викликів tools + порядку, читання skill-файлів і wiring session.
+- Невеликий набір сценаріїв, сфокусованих на Skills (використовувати чи уникати, gating, prompt injection).
+- Необов’язкові live evals (opt-in, з увімкненням через env) — лише після того, як безпечний для CI набір буде готовий.
 
-## Contract-тести (форма plugin і channel)
+## Contract tests (форма plugin і channel)
 
-Contract-тести перевіряють, що кожен зареєстрований plugin і channel відповідає своєму
-контракту інтерфейсу. Вони перебирають усі виявлені plugins і запускають набір
-перевірок форми та поведінки. Unit lane `pnpm test` за замовчуванням навмисно
-пропускає ці спільні seam- і smoke-файли; запускайте contract-команди явно,
-коли ви змінюєте спільні поверхні channel або provider.
+Contract tests перевіряють, що кожен зареєстрований plugin і channel відповідає
+своєму interface contract. Вони ітерують усі виявлені plugins і запускають набір
+перевірок форми та поведінки. Типова unit-lane `pnpm test` навмисно
+пропускає ці shared seam і smoke-файли; запускайте contract-команди явно,
+коли торкаєтеся спільних поверхонь channel або provider.
 
 ### Команди
 
 - Усі контракти: `pnpm test:contracts`
-- Лише контракти channel: `pnpm test:contracts:channels`
-- Лише контракти provider: `pnpm test:contracts:plugins`
+- Лише channel contracts: `pnpm test:contracts:channels`
+- Лише provider contracts: `pnpm test:contracts:plugins`
 
-### Контракти channel
+### Channel contracts
 
 Розташовані в `src/channels/plugins/contracts/*.contract.test.ts`:
 
-- **plugin** - Базова форма plugin-а (id, name, capabilities)
+- **plugin** - Базова форма plugin (id, name, capabilities)
 - **setup** - Контракт майстра налаштування
-- **session-binding** - Поведінка прив’язки сесії
+- **session-binding** - Поведінка прив’язки session
 - **outbound-payload** - Структура payload повідомлення
 - **inbound** - Обробка вхідних повідомлень
 - **actions** - Обробники дій channel
 - **threading** - Обробка ID thread
-- **directory** - API directory/roster
-- **group-policy** - Застосування group policy
+- **directory** - API каталогу/списку учасників
+- **group-policy** - Примусове застосування group policy
 
-### Контракти статусу provider
+### Контракти стану provider
 
 Розташовані в `src/plugins/contracts/*.contract.test.ts`.
 
-- **status** - Probes статусу channel
-- **registry** - Форма registry plugin-ів
+- **status** - Probes стану channel
+- **registry** - Форма реєстру plugin
 
-### Контракти provider
+### Provider contracts
 
 Розташовані в `src/plugins/contracts/*.contract.test.ts`:
 
-- **auth** - Контракт потоку auth
-- **auth-choice** - Вибір/відбір auth
+- **auth** - Контракт flow auth
+- **auth-choice** - Вибір/селектор auth
 - **catalog** - API каталогу моделей
-- **discovery** - Виявлення plugin-ів
-- **loader** - Завантаження plugin-ів
-- **runtime** - Runtime provider-а
-- **shape** - Форма/інтерфейс plugin-а
+- **discovery** - Виявлення plugin
+- **loader** - Завантаження plugin
+- **runtime** - Runtime provider
+- **shape** - Форма/інтерфейс plugin
 - **wizard** - Майстер налаштування
 
 ### Коли запускати
 
-- Після зміни export-ів або subpath-ів plugin-sdk
-- Після додавання або зміни channel чи provider plugin-а
-- Після рефакторингу реєстрації або виявлення plugin-ів
+- Після зміни export або subpath у plugin-sdk
+- Після додавання або зміни channel чи provider plugin
+- Після рефакторингу реєстрації або виявлення plugin
 
-Contract-тести запускаються в CI й не потребують реальних API-ключів.
+Contract tests запускаються в CI й не потребують реальних API-ключів.
 
 ## Додавання регресій (рекомендації)
 
 Коли ви виправляєте проблему провайдера/моделі, виявлену в live:
 
-- Додайте безпечну для CI регресію, якщо це можливо (mock/stub провайдера або фіксація точної трансформації форми запиту)
-- Якщо це за своєю природою лише live-проблема (rate limits, політики auth), залишайте live-тест вузьким і opt-in через env-змінні
-- Віддавайте перевагу найменшому шару, який ловить баг:
-  - баг перетворення/відтворення запиту провайдера → тест прямих моделей
-  - баг pipeline gateway session/history/tool → gateway live smoke або безпечний для CI gateway mock-тест
-- Захисне обмеження обходу SecretRef:
-  - `src/secrets/exec-secret-ref-id-parity.test.ts` виводить по одній sampled-цілі для кожного класу SecretRef з metadata registry (`listSecretTargetRegistryEntries()`), а потім перевіряє, що traversal-segment exec ids відхиляються.
-  - Якщо ви додаєте нову родину цілей SecretRef з `includeInPlan` у `src/secrets/target-registry-data.ts`, оновіть `classifyTargetClass` у цьому тесті. Тест навмисно падає на некласифікованих target id, щоб нові класи не могли бути тихо пропущені.
+- Додайте безпечну для CI регресію, якщо це можливо (mock/stub провайдера або захоплення точної трансформації форми запиту)
+- Якщо це за своєю природою можливо лише в live (rate limits, політики auth), залишайте live-тест вузьким і opt-in через env vars
+- Намагайтеся націлюватися на найменший шар, який ловить баг:
+  - баг перетворення/повторення запиту провайдера → тест прямих моделей
+  - баг у pipeline session/history/tool gateway → gateway live smoke або безпечний для CI mock-тест gateway
+- Guardrail для обходу SecretRef:
+  - `src/secrets/exec-secret-ref-id-parity.test.ts` виводить по одній вибірковій цілі на клас SecretRef із metadata реєстру (`listSecretTargetRegistryEntries()`), а потім перевіряє, що exec ids traversal-segment відхиляються.
+  - Якщо ви додаєте нове сімейство цілей SecretRef з `includeInPlan` у `src/secrets/target-registry-data.ts`, оновіть `classifyTargetClass` у цьому тесті. Тест навмисно падає на некласифікованих target ids, щоб нові класи не можна було тихо пропустити.

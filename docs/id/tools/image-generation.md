@@ -1,56 +1,60 @@
 ---
 read_when:
     - Membuat gambar melalui agen
-    - Mengonfigurasi penyedia dan model pembuatan gambar
-    - Memahami parameter tool image_generate
-summary: Membuat dan mengedit gambar menggunakan penyedia yang dikonfigurasi (OpenAI, Google Gemini, fal, MiniMax)
+    - Mengonfigurasi provider dan model pembuatan gambar
+    - Memahami parameter tool `image_generate`
+summary: Buat dan edit gambar menggunakan provider yang dikonfigurasi (OpenAI, Google Gemini, fal, MiniMax, ComfyUI, Vydra)
 title: Pembuatan Gambar
 x-i18n:
-    generated_at: "2026-04-05T14:08:29Z"
+    generated_at: "2026-04-06T03:11:55Z"
     model: gpt-5.4
     provider: openai
-    source_hash: d38a8a583997ceff6523ce4f51808c97a2b59fe4e5a34cf79cdcb70d7e83aec2
+    source_hash: dde416dd1441a06605db85b5813cf61ccfc525813d6db430b7b7dfa53d6a3134
     source_path: tools/image-generation.md
     workflow: 15
 ---
 
 # Pembuatan Gambar
 
-Tool `image_generate` memungkinkan agen membuat dan mengedit gambar menggunakan penyedia yang telah Anda konfigurasi. Gambar yang dihasilkan dikirim secara otomatis sebagai lampiran media dalam balasan agen.
+Tool `image_generate` memungkinkan agen membuat dan mengedit gambar menggunakan provider yang Anda konfigurasi. Gambar yang dihasilkan dikirimkan secara otomatis sebagai lampiran media dalam balasan agen.
 
 <Note>
-Tool ini hanya muncul ketika setidaknya satu penyedia pembuatan gambar tersedia. Jika Anda tidak melihat `image_generate` dalam tools agen Anda, konfigurasi `agents.defaults.imageGenerationModel` atau siapkan API key penyedia.
+Tool ini hanya muncul ketika setidaknya satu provider pembuatan gambar tersedia. Jika Anda tidak melihat `image_generate` dalam tool agen Anda, konfigurasikan `agents.defaults.imageGenerationModel` atau siapkan API key provider.
 </Note>
 
-## Mulai cepat
+## Memulai cepat
 
-1. Setel API key untuk setidaknya satu penyedia (misalnya `OPENAI_API_KEY` atau `GEMINI_API_KEY`).
-2. Opsional, setel model pilihan Anda:
+1. Tetapkan API key untuk setidaknya satu provider (misalnya `OPENAI_API_KEY` atau `GEMINI_API_KEY`).
+2. Secara opsional tetapkan model pilihan Anda:
 
 ```json5
 {
   agents: {
     defaults: {
-      imageGenerationModel: "openai/gpt-image-1",
+      imageGenerationModel: {
+        primary: "openai/gpt-image-1",
+      },
     },
   },
 }
 ```
 
-3. Minta agen: _"Buat gambar maskot lobster yang ramah."_
+3. Minta agen: _"Generate an image of a friendly lobster mascot."_
 
-Agen akan memanggil `image_generate` secara otomatis. Tidak perlu allow-list tool — tool ini aktif secara default ketika penyedia tersedia.
+Agen memanggil `image_generate` secara otomatis. Tidak perlu allow-listing tool — tool ini diaktifkan secara default saat provider tersedia.
 
-## Penyedia yang didukung
+## Provider yang didukung
 
-| Penyedia | Model default                    | Dukungan edit          | API key                                               |
-| -------- | -------------------------------- | ---------------------- | ----------------------------------------------------- |
-| OpenAI   | `gpt-image-1`                    | Ya (hingga 5 gambar)   | `OPENAI_API_KEY`                                      |
-| Google   | `gemini-3.1-flash-image-preview` | Ya                     | `GEMINI_API_KEY` atau `GOOGLE_API_KEY`                |
-| fal      | `fal-ai/flux/dev`                | Ya                     | `FAL_KEY`                                             |
-| MiniMax  | `image-01`                       | Ya (referensi subjek)  | `MINIMAX_API_KEY` atau OAuth MiniMax (`minimax-portal`) |
+| Provider | Model default                    | Dukungan edit                      | API key                                               |
+| -------- | -------------------------------- | ---------------------------------- | ----------------------------------------------------- |
+| OpenAI   | `gpt-image-1`                    | Ya (hingga 5 gambar)               | `OPENAI_API_KEY`                                      |
+| Google   | `gemini-3.1-flash-image-preview` | Ya                                 | `GEMINI_API_KEY` atau `GOOGLE_API_KEY`                |
+| fal      | `fal-ai/flux/dev`                | Ya                                 | `FAL_KEY`                                             |
+| MiniMax  | `image-01`                       | Ya (referensi subjek)              | `MINIMAX_API_KEY` atau OAuth MiniMax (`minimax-portal`) |
+| ComfyUI  | `workflow`                       | Ya (1 gambar, dikonfigurasi workflow) | `COMFY_API_KEY` atau `COMFY_CLOUD_API_KEY` untuk cloud    |
+| Vydra    | `grok-imagine`                   | Tidak                              | `VYDRA_API_KEY`                                       |
 
-Gunakan `action: "list"` untuk memeriksa penyedia dan model yang tersedia saat runtime:
+Gunakan `action: "list"` untuk memeriksa provider dan model yang tersedia saat runtime:
 
 ```
 /tool image_generate action=list
@@ -58,20 +62,20 @@ Gunakan `action: "list"` untuk memeriksa penyedia dan model yang tersedia saat r
 
 ## Parameter tool
 
-| Parameter     | Tipe     | Deskripsi                                                                           |
-| ------------- | -------- | ----------------------------------------------------------------------------------- |
-| `prompt`      | string   | Prompt pembuatan gambar (wajib untuk `action: "generate"`)                          |
-| `action`      | string   | `"generate"` (default) atau `"list"` untuk memeriksa penyedia                       |
-| `model`       | string   | Penimpaan penyedia/model, misalnya `openai/gpt-image-1`                             |
-| `image`       | string   | Jalur atau URL gambar referensi tunggal untuk mode edit                             |
-| `images`      | string[] | Beberapa gambar referensi untuk mode edit (hingga 5)                                |
-| `size`        | string   | Petunjuk ukuran: `1024x1024`, `1536x1024`, `1024x1536`, `1024x1792`, `1792x1024`    |
+| Parameter     | Tipe     | Deskripsi                                                                              |
+| ------------- | -------- | -------------------------------------------------------------------------------------- |
+| `prompt`      | string   | Prompt pembuatan gambar (wajib untuk `action: "generate"`)                            |
+| `action`      | string   | `"generate"` (default) atau `"list"` untuk memeriksa provider                         |
+| `model`       | string   | Override provider/model, misalnya `openai/gpt-image-1`                                |
+| `image`       | string   | Path atau URL gambar referensi tunggal untuk mode edit                                |
+| `images`      | string[] | Beberapa gambar referensi untuk mode edit (hingga 5)                                  |
+| `size`        | string   | Petunjuk ukuran: `1024x1024`, `1536x1024`, `1024x1536`, `1024x1792`, `1792x1024`      |
 | `aspectRatio` | string   | Rasio aspek: `1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9` |
-| `resolution`  | string   | Petunjuk resolusi: `1K`, `2K`, atau `4K`                                            |
-| `count`       | number   | Jumlah gambar yang akan dibuat (1–4)                                                |
-| `filename`    | string   | Petunjuk nama file output                                                           |
+| `resolution`  | string   | Petunjuk resolusi: `1K`, `2K`, atau `4K`                                              |
+| `count`       | number   | Jumlah gambar yang akan dibuat (1–4)                                                  |
+| `filename`    | string   | Petunjuk nama file output                                                             |
 
-Tidak semua penyedia mendukung semua parameter. Tool ini meneruskan apa yang didukung masing-masing penyedia dan mengabaikan sisanya.
+Tidak semua provider mendukung semua parameter. Tool ini meneruskan parameter yang didukung setiap provider, mengabaikan sisanya, dan melaporkan override yang dibuang dalam hasil tool.
 
 ## Konfigurasi
 
@@ -81,10 +85,6 @@ Tidak semua penyedia mendukung semua parameter. Tool ini meneruskan apa yang did
 {
   agents: {
     defaults: {
-      // Bentuk string: hanya model utama
-      imageGenerationModel: "google/gemini-3.1-flash-image-preview",
-
-      // Bentuk objek: utama + fallback berurutan
       imageGenerationModel: {
         primary: "openai/gpt-image-1",
         fallbacks: ["google/gemini-3.1-flash-image-preview", "fal/fal-ai/flux/dev"],
@@ -94,53 +94,59 @@ Tidak semua penyedia mendukung semua parameter. Tool ini meneruskan apa yang did
 }
 ```
 
-### Urutan pemilihan penyedia
+### Urutan pemilihan provider
 
-Saat membuat gambar, OpenClaw mencoba penyedia dalam urutan ini:
+Saat membuat gambar, OpenClaw mencoba provider dalam urutan berikut:
 
-1. Parameter **`model`** dari pemanggilan tool (jika agen menentukannya)
+1. **Parameter `model`** dari pemanggilan tool (jika agen menentukannya)
 2. **`imageGenerationModel.primary`** dari konfigurasi
 3. **`imageGenerationModel.fallbacks`** secara berurutan
-4. **Deteksi otomatis** — hanya menggunakan default penyedia yang didukung auth:
-   - penyedia default saat ini terlebih dahulu
-   - penyedia pembuatan gambar terdaftar lainnya yang tersisa dalam urutan provider-id
+4. **Deteksi otomatis** — hanya menggunakan default provider yang didukung auth:
+   - provider default saat ini terlebih dahulu
+   - provider pembuatan gambar terdaftar yang tersisa dalam urutan id provider
 
-Jika suatu penyedia gagal (error auth, rate limit, dan sebagainya), kandidat berikutnya akan dicoba secara otomatis. Jika semuanya gagal, error akan menyertakan detail dari setiap percobaan.
+Jika suatu provider gagal (error auth, rate limit, dan sebagainya), kandidat berikutnya dicoba secara otomatis. Jika semuanya gagal, error akan menyertakan detail dari setiap percobaan.
 
 Catatan:
 
-- Deteksi otomatis bersifat sadar-auth. Default penyedia hanya masuk ke daftar kandidat
-  ketika OpenClaw benar-benar dapat mengautentikasi penyedia tersebut.
-- Gunakan `action: "list"` untuk memeriksa penyedia yang saat ini terdaftar, model
+- Deteksi otomatis sadar auth. Default provider hanya masuk ke daftar kandidat
+  saat OpenClaw benar-benar dapat mengautentikasi provider tersebut.
+- Gunakan `action: "list"` untuk memeriksa provider yang saat ini terdaftar, model
   defaultnya, dan petunjuk env var auth.
 
 ### Pengeditan gambar
 
-OpenAI, Google, fal, dan MiniMax mendukung pengeditan gambar referensi. Teruskan jalur atau URL gambar referensi:
+OpenAI, Google, fal, MiniMax, dan ComfyUI mendukung pengeditan gambar referensi. Berikan path atau URL gambar referensi:
 
 ```
-"Buat versi cat air dari foto ini" + image: "/path/to/photo.jpg"
+"Generate a watercolor version of this photo" + image: "/path/to/photo.jpg"
 ```
 
-OpenAI dan Google mendukung hingga 5 gambar referensi melalui parameter `images`. fal dan MiniMax mendukung 1.
+OpenAI dan Google mendukung hingga 5 gambar referensi melalui parameter `images`. fal, MiniMax, dan ComfyUI mendukung 1.
 
 Pembuatan gambar MiniMax tersedia melalui kedua jalur auth MiniMax bawaan:
 
 - `minimax/image-01` untuk penyiapan API key
 - `minimax-portal/image-01` untuk penyiapan OAuth
 
-## Kemampuan penyedia
+## Kapabilitas provider
 
-| Kemampuan            | OpenAI               | Google               | fal                 | MiniMax                    |
-| -------------------- | -------------------- | -------------------- | ------------------- | -------------------------- |
-| Membuat              | Ya (hingga 4)        | Ya (hingga 4)        | Ya (hingga 4)       | Ya (hingga 9)              |
-| Edit/referensi       | Ya (hingga 5 gambar) | Ya (hingga 5 gambar) | Ya (1 gambar)       | Ya (1 gambar, ref subjek)  |
-| Kontrol ukuran       | Ya                   | Ya                   | Ya                  | Tidak                      |
-| Rasio aspek          | Tidak                | Ya                   | Ya (hanya pembuatan) | Ya                        |
-| Resolusi (1K/2K/4K)  | Tidak                | Ya                   | Ya                  | Tidak                      |
+| Kapabilitas          | OpenAI               | Google               | fal                 | MiniMax                    | ComfyUI                            | Vydra |
+| -------------------- | -------------------- | -------------------- | ------------------- | -------------------------- | ---------------------------------- | ----- |
+| Membuat              | Ya (hingga 4)        | Ya (hingga 4)        | Ya (hingga 4)       | Ya (hingga 9)              | Ya (output ditentukan workflow)    | Ya (1) |
+| Edit/referensi       | Ya (hingga 5 gambar) | Ya (hingga 5 gambar) | Ya (1 gambar)       | Ya (1 gambar, referensi subjek) | Ya (1 gambar, dikonfigurasi workflow) | Tidak |
+| Kontrol ukuran       | Ya                   | Ya                   | Ya                  | Tidak                      | Tidak                              | Tidak |
+| Rasio aspek          | Tidak                | Ya                   | Ya (hanya generate) | Ya                         | Tidak                              | Tidak |
+| Resolusi (1K/2K/4K)  | Tidak                | Ya                   | Ya                  | Tidak                      | Tidak                              | Tidak |
 
 ## Terkait
 
-- [Gambaran Umum Tools](/tools) — semua tool agen yang tersedia
+- [Ikhtisar Tools](/id/tools) — semua tool agen yang tersedia
+- [fal](/providers/fal) — penyiapan provider gambar dan video fal
+- [ComfyUI](/providers/comfy) — penyiapan workflow ComfyUI lokal dan Comfy Cloud
+- [Google (Gemini)](/id/providers/google) — penyiapan provider gambar Gemini
+- [MiniMax](/id/providers/minimax) — penyiapan provider gambar MiniMax
+- [OpenAI](/id/providers/openai) — penyiapan provider OpenAI Images
+- [Vydra](/providers/vydra) — penyiapan gambar, video, dan speech Vydra
 - [Referensi Konfigurasi](/id/gateway/configuration-reference#agent-defaults) — konfigurasi `imageGenerationModel`
-- [Model](/id/concepts/models) — konfigurasi model dan failover
+- [Models](/id/concepts/models) — konfigurasi model dan failover

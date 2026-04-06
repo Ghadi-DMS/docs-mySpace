@@ -1,38 +1,37 @@
 ---
 read_when:
     - Anda ingin menggunakan model Google Gemini dengan OpenClaw
-    - Anda memerlukan alur auth API key atau OAuth
-summary: Penyiapan Google Gemini (API key + OAuth, pembuatan gambar, pemahaman media, pencarian web)
+    - Anda memerlukan alur auth API key
+summary: Setup Google Gemini (API key, pembuatan image, pemahaman media, pencarian web)
 title: Google (Gemini)
 x-i18n:
-    generated_at: "2026-04-05T14:03:31Z"
+    generated_at: "2026-04-06T03:10:17Z"
     model: gpt-5.4
     provider: openai
-    source_hash: fa3c4326e83fad277ae4c2cb9501b6e89457afcfa7e3e1d57ae01c9c0c6846e2
+    source_hash: 358d33a68275b01ebd916a3621dd651619cb9a1d062e2fb6196a7f3c501c015a
     source_path: providers/google.md
     workflow: 15
 ---
 
 # Google (Gemini)
 
-Plugin Google menyediakan akses ke model Gemini melalui Google AI Studio, plus
-pembuatan gambar, pemahaman media (gambar/audio/video), dan pencarian web melalui
+Plugin Google menyediakan akses ke model Gemini melalui Google AI Studio, serta
+pembuatan image, pemahaman media (image/audio/video), dan pencarian web melalui
 Gemini Grounding.
 
 - Provider: `google`
 - Auth: `GEMINI_API_KEY` atau `GOOGLE_API_KEY`
 - API: Google Gemini API
-- Provider alternatif: `google-gemini-cli` (OAuth)
 
 ## Mulai cepat
 
-1. Set API key:
+1. Tetapkan API key:
 
 ```bash
 openclaw onboard --auth-choice gemini-api-key
 ```
 
-2. Set model default:
+2. Tetapkan model default:
 
 ```json5
 {
@@ -53,68 +52,29 @@ openclaw onboard --non-interactive \
   --gemini-api-key "$GEMINI_API_KEY"
 ```
 
-## OAuth (Gemini CLI)
-
-Provider alternatif `google-gemini-cli` menggunakan PKCE OAuth alih-alih API
-key. Ini adalah integrasi tidak resmi; beberapa pengguna melaporkan pembatasan
-akun. Gunakan dengan risiko Anda sendiri.
-
-- Model default: `google-gemini-cli/gemini-3.1-pro-preview`
-- Alias: `gemini-cli`
-- Prasyarat instalasi: Gemini CLI lokal tersedia sebagai `gemini`
-  - Homebrew: `brew install gemini-cli`
-  - npm: `npm install -g @google/gemini-cli`
-- Login:
-
-```bash
-openclaw models auth login --provider google-gemini-cli --set-default
-```
-
-Environment variable:
-
-- `OPENCLAW_GEMINI_OAUTH_CLIENT_ID`
-- `OPENCLAW_GEMINI_OAUTH_CLIENT_SECRET`
-
-(Atau varian `GEMINI_CLI_*`.)
-
-Jika permintaan Gemini CLI OAuth gagal setelah login, set
-`GOOGLE_CLOUD_PROJECT` atau `GOOGLE_CLOUD_PROJECT_ID` di gateway host lalu
-coba lagi.
-
-Jika login gagal sebelum alur browser dimulai, pastikan perintah `gemini`
-lokal terinstal dan ada di `PATH`. OpenClaw mendukung instalasi Homebrew
-dan instalasi npm global, termasuk layout Windows/npm yang umum.
-
-Catatan penggunaan JSON Gemini CLI:
-
-- Teks balasan berasal dari field `response` JSON CLI.
-- Usage menggunakan fallback ke `stats` saat CLI membiarkan `usage` kosong.
-- `stats.cached` dinormalisasi ke `cacheRead` OpenClaw.
-- Jika `stats.input` hilang, OpenClaw menurunkan token input dari
-  `stats.input_tokens - stats.cached`.
-
 ## Kapabilitas
 
-| Kapabilitas            | Didukung           |
-| ---------------------- | ------------------ |
-| Chat completions       | Ya                 |
-| Pembuatan gambar       | Ya                 |
-| Pemahaman gambar       | Ya                 |
-| Transkripsi audio      | Ya                 |
-| Pemahaman video        | Ya                 |
-| Pencarian web (Grounding) | Ya              |
-| Thinking/reasoning     | Ya (Gemini 3.1+)   |
+| Capability             | Supported         |
+| ---------------------- | ----------------- |
+| Chat completions       | Ya                |
+| Image generation       | Ya                |
+| Music generation       | Ya                |
+| Image understanding    | Ya                |
+| Audio transcription    | Ya                |
+| Video understanding    | Ya                |
+| Web search (Grounding) | Ya                |
+| Thinking/reasoning     | Ya (Gemini 3.1+)  |
 
 ## Penggunaan ulang cache Gemini langsung
 
-Untuk eksekusi Gemini API langsung (`api: "google-generative-ai"`), OpenClaw kini
+Untuk run API Gemini langsung (`api: "google-generative-ai"`), OpenClaw kini
 meneruskan handle `cachedContent` yang dikonfigurasi ke permintaan Gemini.
 
-- Konfigurasikan params per-model atau global dengan salah satu dari
+- Konfigurasikan param per-model atau global dengan
   `cachedContent` atau `cached_content` legacy
-- Jika keduanya ada, `cachedContent` yang menang
+- Jika keduanya ada, `cachedContent` yang diprioritaskan
 - Contoh nilai: `cachedContents/prebuilt-context`
-- Penggunaan cache-hit Gemini dinormalisasi ke `cacheRead` OpenClaw dari
+- Penggunaan cache-hit Gemini dinormalisasi ke OpenClaw `cacheRead` dari
   `cachedContentTokenCount` upstream
 
 Contoh:
@@ -135,21 +95,93 @@ Contoh:
 }
 ```
 
-## Pembuatan gambar
+## Pembuatan image
 
-Provider pembuatan gambar bundled `google` menggunakan default
+Provider pembuatan image `google` bawaan secara default menggunakan
 `google/gemini-3.1-flash-image-preview`.
 
 - Juga mendukung `google/gemini-3-pro-image-preview`
-- Generate: hingga 4 gambar per permintaan
-- Mode edit: diaktifkan, hingga 5 gambar input
+- Generate: hingga 4 image per permintaan
+- Mode edit: diaktifkan, hingga 5 image input
 - Kontrol geometri: `size`, `aspectRatio`, dan `resolution`
 
-Provider `google-gemini-cli` yang hanya OAuth adalah permukaan
-inferensi teks yang terpisah. Pembuatan gambar, pemahaman media, dan Gemini Grounding tetap berada di
+Pembuatan image, pemahaman media, dan Gemini Grounding semuanya tetap berada pada
 id provider `google`.
 
-## Catatan environment
+Untuk menggunakan Google sebagai provider image default:
+
+```json5
+{
+  agents: {
+    defaults: {
+      imageGenerationModel: {
+        primary: "google/gemini-3.1-flash-image-preview",
+      },
+    },
+  },
+}
+```
+
+Lihat [Pembuatan Image](/id/tools/image-generation) untuk parameter tool bersama,
+pemilihan provider, dan perilaku failover.
+
+## Pembuatan video
+
+Plugin `google` bawaan juga mendaftarkan pembuatan video melalui tool bersama
+`video_generate`.
+
+- Model video default: `google/veo-3.1-fast-generate-preview`
+- Mode: text-to-video, image-to-video, dan alur referensi video tunggal
+- Mendukung `aspectRatio`, `resolution`, dan `audio`
+- Clamp durasi saat ini: **4 hingga 8 detik**
+
+Untuk menggunakan Google sebagai provider video default:
+
+```json5
+{
+  agents: {
+    defaults: {
+      videoGenerationModel: {
+        primary: "google/veo-3.1-fast-generate-preview",
+      },
+    },
+  },
+}
+```
+
+Lihat [Pembuatan Video](/tools/video-generation) untuk parameter tool bersama,
+pemilihan provider, dan perilaku failover.
+
+## Pembuatan musik
+
+Plugin `google` bawaan juga mendaftarkan pembuatan musik melalui tool bersama
+`music_generate`.
+
+- Model musik default: `google/lyria-3-clip-preview`
+- Juga mendukung `google/lyria-3-pro-preview`
+- Kontrol prompt: `lyrics` dan `instrumental`
+- Format output: `mp3` secara default, serta `wav` pada `google/lyria-3-pro-preview`
+- Input referensi: hingga 10 image
+- Run berbasis sesi dipisahkan melalui alur task/status bersama, termasuk `action: "status"`
+
+Untuk menggunakan Google sebagai provider musik default:
+
+```json5
+{
+  agents: {
+    defaults: {
+      musicGenerationModel: {
+        primary: "google/lyria-3-clip-preview",
+      },
+    },
+  },
+}
+```
+
+Lihat [Pembuatan Musik](/tools/music-generation) untuk parameter tool bersama,
+pemilihan provider, dan perilaku failover.
+
+## Catatan lingkungan
 
 Jika Gateway berjalan sebagai daemon (launchd/systemd), pastikan `GEMINI_API_KEY`
 tersedia untuk proses tersebut (misalnya, di `~/.openclaw/.env` atau melalui

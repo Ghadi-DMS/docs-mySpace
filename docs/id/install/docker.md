@@ -5,76 +5,76 @@ read_when:
 summary: Penyiapan dan onboarding berbasis Docker opsional untuk OpenClaw
 title: Docker
 x-i18n:
-    generated_at: "2026-04-05T13:57:47Z"
+    generated_at: "2026-04-06T03:08:07Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 4628362d52597f85e72c214efe96b2923c7a59a8592b3044dc8c230318c515b8
+    source_hash: d6aa0453340d7683b4954316274ba6dd1aa7c0ce2483e9bd8ae137ff4efd4c3c
     source_path: install/docker.md
     workflow: 15
 ---
 
 # Docker (opsional)
 
-Docker bersifat **opsional**. Gunakan hanya jika Anda menginginkan gateway dalam container atau untuk memvalidasi alur Docker.
+Docker bersifat **opsional**. Gunakan hanya jika Anda menginginkan gateway dalam container atau ingin memvalidasi alur Docker.
 
-## Apakah Docker cocok untuk saya?
+## Apakah Docker tepat untuk saya?
 
-- **Ya**: Anda menginginkan lingkungan gateway yang terisolasi dan mudah dibuang, atau ingin menjalankan OpenClaw pada host tanpa instalasi lokal.
-- **Tidak**: Anda menjalankannya di mesin sendiri dan hanya menginginkan loop pengembangan tercepat. Gunakan alur instalasi normal.
-- **Catatan sandboxing**: sandboxing agen juga menggunakan Docker, tetapi **tidak** mengharuskan seluruh gateway berjalan di Docker. Lihat [Sandboxing](/id/gateway/sandboxing).
+- **Ya**: Anda menginginkan lingkungan gateway yang terisolasi, sekali pakai, atau ingin menjalankan OpenClaw pada host tanpa instalasi lokal.
+- **Tidak**: Anda menjalankan di mesin Anda sendiri dan hanya menginginkan loop pengembangan tercepat. Gunakan alur instalasi normal sebagai gantinya.
+- **Catatan sandboxing**: sandboxing agen juga menggunakan Docker, tetapi itu **tidak** mengharuskan seluruh gateway berjalan di Docker. Lihat [Sandboxing](/id/gateway/sandboxing).
 
 ## Prasyarat
 
 - Docker Desktop (atau Docker Engine) + Docker Compose v2
-- Minimal RAM 2 GB untuk build image (`pnpm install` dapat dihentikan oleh OOM pada host 1 GB dengan exit 137)
+- Minimal 2 GB RAM untuk build image (`pnpm install` dapat dihentikan oleh OOM pada host 1 GB dengan exit 137)
 - Ruang disk yang cukup untuk image dan log
 - Jika berjalan di VPS/host publik, tinjau
-  [Penguatan keamanan untuk eksposur jaringan](/gateway/security),
+  [Penguatan keamanan untuk eksposur jaringan](/id/gateway/security),
   terutama kebijakan firewall Docker `DOCKER-USER`.
 
 ## Gateway dalam container
 
 <Steps>
   <Step title="Build image">
-    Dari root repo, jalankan script penyiapan:
+    Dari root repo, jalankan skrip penyiapan:
 
     ```bash
     ./scripts/docker/setup.sh
     ```
 
-    Ini membangun image gateway secara lokal. Untuk menggunakan image siap pakai sebagai gantinya:
+    Ini membangun image gateway secara lokal. Untuk menggunakan image yang sudah dibangun sebelumnya:
 
     ```bash
     export OPENCLAW_IMAGE="ghcr.io/openclaw/openclaw:latest"
     ./scripts/docker/setup.sh
     ```
 
-    Image siap pakai dipublikasikan di
+    Image yang sudah dibangun sebelumnya dipublikasikan di
     [GitHub Container Registry](https://github.com/openclaw/openclaw/pkgs/container/openclaw).
     Tag umum: `main`, `latest`, `<version>` (misalnya `2026.2.26`).
 
   </Step>
 
   <Step title="Selesaikan onboarding">
-    Script penyiapan menjalankan onboarding secara otomatis. Script ini akan:
+    Skrip penyiapan menjalankan onboarding secara otomatis. Skrip ini akan:
 
     - meminta API key provider
-    - membuat token gateway dan menuliskannya ke `.env`
+    - menghasilkan token gateway dan menuliskannya ke `.env`
     - memulai gateway melalui Docker Compose
 
-    Selama penyiapan, onboarding pra-start dan penulisan konfigurasi dijalankan melalui
+    Selama penyiapan, onboarding pra-start dan penulisan config saat setup dijalankan melalui
     `openclaw-gateway` secara langsung. `openclaw-cli` digunakan untuk perintah yang Anda jalankan setelah
     container gateway sudah ada.
 
   </Step>
 
-  <Step title="Buka Control UI">
+  <Step title="Buka UI Control">
     Buka `http://127.0.0.1:18789/` di browser Anda dan tempelkan
-    shared secret yang dikonfigurasi ke Settings. Script penyiapan menulis token ke `.env` secara
-    default; jika Anda mengubah konfigurasi container ke autentikasi password, gunakan
-    password tersebut sebagai gantinya.
+    shared secret yang telah dikonfigurasi ke Settings. Skrip penyiapan menulis token ke `.env` secara
+    default; jika Anda mengubah config container ke autentikasi kata sandi, gunakan
+    kata sandi tersebut.
 
-    Butuh URL-nya lagi?
+    Perlu URL-nya lagi?
 
     ```bash
     docker compose run --rm openclaw-cli dashboard --no-open
@@ -83,7 +83,7 @@ Docker bersifat **opsional**. Gunakan hanya jika Anda menginginkan gateway dalam
   </Step>
 
   <Step title="Konfigurasikan channel (opsional)">
-    Gunakan container CLI untuk menambahkan channel perpesanan:
+    Gunakan container CLI untuk menambahkan channel pesan:
 
     ```bash
     # WhatsApp (QR)
@@ -96,59 +96,54 @@ Docker bersifat **opsional**. Gunakan hanya jika Anda menginginkan gateway dalam
     docker compose run --rm openclaw-cli channels add --channel discord --token "<token>"
     ```
 
-    Dokumen: [WhatsApp](/id/channels/whatsapp), [Telegram](/id/channels/telegram), [Discord](/id/channels/discord)
+    Docs: [WhatsApp](/id/channels/whatsapp), [Telegram](/id/channels/telegram), [Discord](/id/channels/discord)
 
   </Step>
 </Steps>
 
 ### Alur manual
 
-Jika Anda lebih memilih menjalankan setiap langkah sendiri daripada menggunakan script penyiapan:
+Jika Anda lebih suka menjalankan setiap langkah sendiri alih-alih menggunakan skrip penyiapan:
 
 ```bash
 docker build -t openclaw:local -f Dockerfile .
 docker compose run --rm --no-deps --entrypoint node openclaw-gateway \
   dist/index.js onboard --mode local --no-install-daemon
 docker compose run --rm --no-deps --entrypoint node openclaw-gateway \
-  dist/index.js config set gateway.mode local
-docker compose run --rm --no-deps --entrypoint node openclaw-gateway \
-  dist/index.js config set gateway.bind lan
-docker compose run --rm --no-deps --entrypoint node openclaw-gateway \
-  dist/index.js config set gateway.controlUi.allowedOrigins \
-  '["http://localhost:18789","http://127.0.0.1:18789"]' --strict-json
+  dist/index.js config set --batch-json '[{"path":"gateway.mode","value":"local"},{"path":"gateway.bind","value":"lan"},{"path":"gateway.controlUi.allowedOrigins","value":["http://localhost:18789","http://127.0.0.1:18789"]}]'
 docker compose up -d openclaw-gateway
 ```
 
 <Note>
 Jalankan `docker compose` dari root repo. Jika Anda mengaktifkan `OPENCLAW_EXTRA_MOUNTS`
-atau `OPENCLAW_HOME_VOLUME`, script penyiapan akan menulis `docker-compose.extra.yml`;
+atau `OPENCLAW_HOME_VOLUME`, skrip penyiapan akan menulis `docker-compose.extra.yml`;
 sertakan dengan `-f docker-compose.yml -f docker-compose.extra.yml`.
 </Note>
 
 <Note>
-Karena `openclaw-cli` berbagi namespace jaringan milik `openclaw-gateway`, itu adalah
+Karena `openclaw-cli` berbagi namespace jaringan milik `openclaw-gateway`, ini adalah
 alat pasca-start. Sebelum `docker compose up -d openclaw-gateway`, jalankan onboarding
-dan penulisan konfigurasi saat penyiapan melalui `openclaw-gateway` dengan
+dan penulisan config saat setup melalui `openclaw-gateway` dengan
 `--no-deps --entrypoint node`.
 </Note>
 
-### Variabel environment
+### Variabel lingkungan
 
-Script penyiapan menerima variabel environment opsional berikut:
+Skrip penyiapan menerima variabel lingkungan opsional berikut:
 
-| Variable                       | Purpose                                                          |
-| ------------------------------ | ---------------------------------------------------------------- |
-| `OPENCLAW_IMAGE`               | Menggunakan image remote alih-alih membangunnya secara lokal     |
-| `OPENCLAW_DOCKER_APT_PACKAGES` | Menginstal package apt tambahan saat build (dipisahkan spasi)    |
-| `OPENCLAW_EXTENSIONS`          | Pra-instal dependensi extension saat build (nama dipisahkan spasi) |
-| `OPENCLAW_EXTRA_MOUNTS`        | Bind mount host tambahan (dipisahkan koma `source:target[:opts]`) |
-| `OPENCLAW_HOME_VOLUME`         | Menyimpan `/home/node` dalam volume Docker bernama               |
-| `OPENCLAW_SANDBOX`             | Mengaktifkan bootstrap sandbox (`1`, `true`, `yes`, `on`)       |
-| `OPENCLAW_DOCKER_SOCKET`       | Menimpa path Docker socket                                       |
+| Variabel                      | Tujuan                                                           |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `OPENCLAW_IMAGE`              | Gunakan image remote alih-alih build secara lokal                |
+| `OPENCLAW_DOCKER_APT_PACKAGES`| Instal paket apt tambahan selama build (dipisahkan spasi)        |
+| `OPENCLAW_EXTENSIONS`         | Pra-instal dependensi extension saat build (nama dipisahkan spasi) |
+| `OPENCLAW_EXTRA_MOUNTS`       | Bind mount host tambahan (dipisahkan koma `source:target[:opts]`) |
+| `OPENCLAW_HOME_VOLUME`        | Pertahankan `/home/node` dalam volume Docker bernama             |
+| `OPENCLAW_SANDBOX`            | Opt in ke bootstrap sandbox (`1`, `true`, `yes`, `on`)          |
+| `OPENCLAW_DOCKER_SOCKET`      | Override path socket Docker                                      |
 
 ### Health check
 
-Endpoint probe container (tidak memerlukan autentikasi):
+Endpoint probe container (tidak memerlukan auth):
 
 ```bash
 curl -fsS http://127.0.0.1:18789/healthz   # liveness
@@ -156,10 +151,10 @@ curl -fsS http://127.0.0.1:18789/readyz     # readiness
 ```
 
 Image Docker menyertakan `HEALTHCHECK` bawaan yang melakukan ping ke `/healthz`.
-Jika pemeriksaan terus gagal, Docker akan menandai container sebagai `unhealthy` dan
+Jika pemeriksaan terus gagal, Docker menandai container sebagai `unhealthy` dan
 sistem orkestrasi dapat memulai ulang atau menggantinya.
 
-Snapshot health mendalam yang diautentikasi:
+Snapshot deep health yang diautentikasi:
 
 ```bash
 docker compose exec openclaw-gateway node dist/index.js health --token "$OPENCLAW_GATEWAY_TOKEN"
@@ -167,11 +162,11 @@ docker compose exec openclaw-gateway node dist/index.js health --token "$OPENCLA
 
 ### LAN vs loopback
 
-`scripts/docker/setup.sh` secara default menggunakan `OPENCLAW_GATEWAY_BIND=lan` agar akses host ke
+`scripts/docker/setup.sh` secara default menggunakan `OPENCLAW_GATEWAY_BIND=lan` sehingga akses host ke
 `http://127.0.0.1:18789` berfungsi dengan publikasi port Docker.
 
-- `lan` (default): browser host dan CLI host dapat menjangkau port gateway yang dipublikasikan.
-- `loopback`: hanya proses di dalam namespace jaringan container yang dapat menjangkau
+- `lan` (default): browser host dan CLI host dapat mencapai port gateway yang dipublikasikan.
+- `loopback`: hanya proses di dalam namespace jaringan container yang dapat mencapai
   gateway secara langsung.
 
 <Note>
@@ -181,36 +176,36 @@ Gunakan nilai mode bind di `gateway.bind` (`lan` / `loopback` / `custom` /
 
 ### Penyimpanan dan persistensi
 
-Docker Compose melakukan bind mount `OPENCLAW_CONFIG_DIR` ke `/home/node/.openclaw` dan
+Docker Compose melakukan bind-mount `OPENCLAW_CONFIG_DIR` ke `/home/node/.openclaw` dan
 `OPENCLAW_WORKSPACE_DIR` ke `/home/node/.openclaw/workspace`, sehingga path tersebut
-tetap ada meskipun container diganti.
+tetap ada saat container diganti.
 
-Direktori konfigurasi yang di-mount itulah tempat OpenClaw menyimpan:
+Direktori config yang di-mount itulah tempat OpenClaw menyimpan:
 
-- `openclaw.json` untuk konfigurasi perilaku
-- `agents/<agentId>/agent/auth-profiles.json` untuk autentikasi OAuth/API-key provider yang disimpan
+- `openclaw.json` untuk config perilaku
+- `agents/<agentId>/agent/auth-profiles.json` untuk auth OAuth/API key provider yang tersimpan
 - `.env` untuk secret runtime berbasis env seperti `OPENCLAW_GATEWAY_TOKEN`
 
 Untuk detail persistensi lengkap pada deployment VM, lihat
-[Docker VM Runtime - What persists where](/install/docker-vm-runtime#what-persists-where).
+[Runtime VM Docker - Apa yang dipertahankan di mana](/id/install/docker-vm-runtime#what-persists-where).
 
-**Hotspot pertumbuhan disk:** awasi `media/`, file JSONL sesi, `cron/runs/*.jsonl`,
+**Titik panas pertumbuhan disk:** pantau `media/`, file JSONL sesi, `cron/runs/*.jsonl`,
 dan rolling file log di bawah `/tmp/openclaw/`.
 
 ### Helper shell (opsional)
 
-Untuk manajemen Docker sehari-hari yang lebih mudah, instal `ClawDock`:
+Untuk pengelolaan Docker sehari-hari yang lebih mudah, instal `ClawDock`:
 
 ```bash
 mkdir -p ~/.clawdock && curl -sL https://raw.githubusercontent.com/openclaw/openclaw/main/scripts/clawdock/clawdock-helpers.sh -o ~/.clawdock/clawdock-helpers.sh
 echo 'source ~/.clawdock/clawdock-helpers.sh' >> ~/.zshrc && source ~/.zshrc
 ```
 
-Jika Anda menginstal ClawDock dari raw path lama `scripts/shell-helpers/clawdock-helpers.sh`, jalankan kembali perintah instalasi di atas agar file helper lokal Anda mengikuti lokasi baru.
+Jika Anda menginstal ClawDock dari path raw lama `scripts/shell-helpers/clawdock-helpers.sh`, jalankan ulang perintah instalasi di atas agar file helper lokal Anda mengikuti lokasi baru.
 
-Lalu gunakan `clawdock-start`, `clawdock-stop`, `clawdock-dashboard`, dan sebagainya. Jalankan
+Lalu gunakan `clawdock-start`, `clawdock-stop`, `clawdock-dashboard`, dan seterusnya. Jalankan
 `clawdock-help` untuk semua perintah.
-Lihat [ClawDock](/install/clawdock) untuk panduan helper lengkap.
+Lihat [ClawDock](/id/install/clawdock) untuk panduan helper lengkap.
 
 <AccordionGroup>
   <Accordion title="Aktifkan sandbox agen untuk gateway Docker">
@@ -219,7 +214,7 @@ Lihat [ClawDock](/install/clawdock) untuk panduan helper lengkap.
     ./scripts/docker/setup.sh
     ```
 
-    Path socket kustom (misalnya Docker rootless):
+    Path socket khusus (misalnya Docker rootless):
 
     ```bash
     export OPENCLAW_SANDBOX=1
@@ -227,13 +222,13 @@ Lihat [ClawDock](/install/clawdock) untuk panduan helper lengkap.
     ./scripts/docker/setup.sh
     ```
 
-    Script hanya me-mount `docker.sock` setelah prasyarat sandbox lolos. Jika
-    penyiapan sandbox tidak dapat diselesaikan, script akan mereset `agents.defaults.sandbox.mode`
+    Skrip hanya me-mount `docker.sock` setelah prasyarat sandbox lolos. Jika
+    penyiapan sandbox tidak dapat diselesaikan, skrip mereset `agents.defaults.sandbox.mode`
     ke `off`.
 
   </Accordion>
 
-  <Accordion title="Otomasi / CI (non-interaktif)">
+  <Accordion title="Otomatisasi / CI (non-interaktif)">
     Nonaktifkan alokasi pseudo-TTY Compose dengan `-T`:
 
     ```bash
@@ -246,7 +241,7 @@ Lihat [ClawDock](/install/clawdock) untuk panduan helper lengkap.
   <Accordion title="Catatan keamanan jaringan bersama">
     `openclaw-cli` menggunakan `network_mode: "service:openclaw-gateway"` sehingga perintah CLI
     dapat menjangkau gateway melalui `127.0.0.1`. Perlakukan ini sebagai batas
-    kepercayaan bersama. Konfigurasi compose menghapus `NET_RAW`/`NET_ADMIN` dan mengaktifkan
+    kepercayaan bersama. Config compose menghapus `NET_RAW`/`NET_ADMIN` dan mengaktifkan
     `no-new-privileges` pada `openclaw-cli`.
   </Accordion>
 
@@ -260,8 +255,8 @@ Lihat [ClawDock](/install/clawdock) untuk panduan helper lengkap.
 
   </Accordion>
 
-  <Accordion title="Build ulang yang lebih cepat">
-    Urutkan Dockerfile Anda agar layer dependensi dapat di-cache. Ini menghindari menjalankan ulang
+  <Accordion title="Build ulang lebih cepat">
+    Atur urutan Dockerfile Anda agar layer dependensi di-cache. Ini menghindari pengulangan
     `pnpm install` kecuali lockfile berubah:
 
     ```dockerfile
@@ -286,57 +281,57 @@ Lihat [ClawDock](/install/clawdock) untuk panduan helper lengkap.
 
   <Accordion title="Opsi container untuk power user">
     Image default berfokus pada keamanan dan berjalan sebagai `node` non-root. Untuk container yang
-    lebih kaya fitur:
+    lebih lengkap fiturnya:
 
-    1. **Simpan `/home/node`**: `export OPENCLAW_HOME_VOLUME="openclaw_home"`
-    2. **Bake dependensi sistem**: `export OPENCLAW_DOCKER_APT_PACKAGES="git curl jq"`
+    1. **Pertahankan `/home/node`**: `export OPENCLAW_HOME_VOLUME="openclaw_home"`
+    2. **Masukkan dependensi sistem**: `export OPENCLAW_DOCKER_APT_PACKAGES="git curl jq"`
     3. **Instal browser Playwright**:
        ```bash
        docker compose run --rm openclaw-cli \
          node /app/node_modules/playwright-core/cli.js install chromium
        ```
-    4. **Simpan unduhan browser**: tetapkan
+    4. **Pertahankan unduhan browser**: setel
        `PLAYWRIGHT_BROWSERS_PATH=/home/node/.cache/ms-playwright` dan gunakan
        `OPENCLAW_HOME_VOLUME` atau `OPENCLAW_EXTRA_MOUNTS`.
 
   </Accordion>
 
-  <Accordion title="OpenAI Codex OAuth (Docker headless)">
-    Jika Anda memilih OpenAI Codex OAuth di wizard, browser URL akan dibuka. Pada
-    penyiapan Docker atau headless, salin URL redirect lengkap tempat Anda mendarat lalu tempelkan
-    kembali ke wizard untuk menyelesaikan autentikasi.
+  <Accordion title="OAuth OpenAI Codex (Docker headless)">
+    Jika Anda memilih OAuth OpenAI Codex di wizard, browser akan membuka URL. Pada
+    Docker atau penyiapan headless, salin URL pengalihan lengkap tempat Anda mendarat lalu tempelkan
+    kembali ke wizard untuk menyelesaikan auth.
   </Accordion>
 
   <Accordion title="Metadata image dasar">
     Image Docker utama menggunakan `node:24-bookworm` dan memublikasikan anotasi
-    OCI base-image termasuk `org.opencontainers.image.base.name`,
+    image dasar OCI termasuk `org.opencontainers.image.base.name`,
     `org.opencontainers.image.source`, dan lainnya. Lihat
-    [OCI image annotations](https://github.com/opencontainers/image-spec/blob/main/annotations.md).
+    [Anotasi image OCI](https://github.com/opencontainers/image-spec/blob/main/annotations.md).
   </Accordion>
 </AccordionGroup>
 
 ### Menjalankan di VPS?
 
-Lihat [Hetzner (Docker VPS)](/install/hetzner) dan
-[Docker VM Runtime](/install/docker-vm-runtime) untuk langkah deployment VM bersama
-termasuk baking biner, persistensi, dan pembaruan.
+Lihat [Hetzner (Docker VPS)](/id/install/hetzner) dan
+[Runtime VM Docker](/id/install/docker-vm-runtime) untuk langkah deployment VM bersama
+termasuk binary baking, persistensi, dan pembaruan.
 
 ## Sandbox Agen
 
 Saat `agents.defaults.sandbox` diaktifkan, gateway menjalankan eksekusi alat agen
-(shell, baca/tulis file, dll.) di dalam container Docker yang terisolasi sementara
-gateway itu sendiri tetap berjalan di host. Ini memberi Anda dinding keras di sekitar sesi agen
-yang tidak tepercaya atau multi-tenant tanpa harus membuat seluruh gateway berada dalam container.
+(shell, baca/tulis file, dan sebagainya) di dalam container Docker yang terisolasi sementara
+gateway itu sendiri tetap berada di host. Ini memberi Anda dinding keras di sekitar sesi agen yang tidak tepercaya atau
+multi-tenant tanpa membuat seluruh gateway berada dalam container.
 
 Cakupan sandbox dapat per agen (default), per sesi, atau bersama. Setiap cakupan
 mendapat workspace sendiri yang di-mount di `/workspace`. Anda juga dapat mengonfigurasi
-kebijakan alat allow/deny, isolasi jaringan, batas sumber daya, dan container browser.
+kebijakan allow/deny alat, isolasi jaringan, batas resource, dan container browser.
 
 Untuk konfigurasi lengkap, image, catatan keamanan, dan profil multi-agen, lihat:
 
 - [Sandboxing](/id/gateway/sandboxing) -- referensi sandbox lengkap
 - [OpenShell](/id/gateway/openshell) -- akses shell interaktif ke container sandbox
-- [Multi-Agent Sandbox and Tools](/tools/multi-agent-sandbox-tools) -- override per agen
+- [Sandbox dan Alat Multi-Agen](/id/tools/multi-agent-sandbox-tools) -- override per agen
 
 ### Aktifkan cepat
 
@@ -362,30 +357,30 @@ scripts/sandbox-setup.sh
 ## Pemecahan masalah
 
 <AccordionGroup>
-  <Accordion title="Image tidak ada atau container sandbox tidak mau mulai">
+  <Accordion title="Image hilang atau container sandbox tidak mau mulai">
     Build image sandbox dengan
     [`scripts/sandbox-setup.sh`](https://github.com/openclaw/openclaw/blob/main/scripts/sandbox-setup.sh)
-    atau tetapkan `agents.defaults.sandbox.docker.image` ke image kustom Anda.
+    atau setel `agents.defaults.sandbox.docker.image` ke image khusus Anda.
     Container dibuat otomatis per sesi sesuai permintaan.
   </Accordion>
 
   <Accordion title="Error izin di sandbox">
-    Tetapkan `docker.user` ke UID:GID yang cocok dengan kepemilikan workspace yang di-mount,
-    atau lakukan chown pada folder workspace.
+    Setel `docker.user` ke UID:GID yang cocok dengan kepemilikan workspace yang Anda mount,
+    atau jalankan chown pada folder workspace.
   </Accordion>
 
-  <Accordion title="Alat kustom tidak ditemukan di sandbox">
+  <Accordion title="Alat khusus tidak ditemukan di sandbox">
     OpenClaw menjalankan perintah dengan `sh -lc` (login shell), yang memuat
-    `/etc/profile` dan dapat mereset PATH. Tetapkan `docker.env.PATH` untuk menambahkan
-    path alat kustom Anda di depan, atau tambahkan script di bawah `/etc/profile.d/` dalam Dockerfile Anda.
+    `/etc/profile` dan dapat mereset PATH. Setel `docker.env.PATH` untuk menambahkan
+    path alat khusus Anda di depan, atau tambahkan skrip di bawah `/etc/profile.d/` di Dockerfile Anda.
   </Accordion>
 
-  <Accordion title="Dihentikan oleh OOM saat build image (exit 137)">
-    VM memerlukan minimal RAM 2 GB. Gunakan kelas mesin yang lebih besar lalu coba lagi.
+  <Accordion title="Dihentikan OOM selama build image (exit 137)">
+    VM memerlukan setidaknya 2 GB RAM. Gunakan kelas mesin yang lebih besar dan coba lagi.
   </Accordion>
 
-  <Accordion title="Unauthorized atau pairing diperlukan di Control UI">
-    Ambil tautan dashboard baru dan setujui perangkat browser:
+  <Accordion title="Unauthorized atau pairing diperlukan di UI Control">
+    Ambil tautan dashboard yang baru dan setujui perangkat browser:
 
     ```bash
     docker compose run --rm openclaw-cli dashboard --no-open
@@ -401,8 +396,7 @@ scripts/sandbox-setup.sh
     Reset mode dan bind gateway:
 
     ```bash
-    docker compose run --rm openclaw-cli config set gateway.mode local
-    docker compose run --rm openclaw-cli config set gateway.bind lan
+    docker compose run --rm openclaw-cli config set --batch-json '[{"path":"gateway.mode","value":"local"},{"path":"gateway.bind","value":"lan"}]'
     docker compose run --rm openclaw-cli devices list --url ws://127.0.0.1:18789
     ```
 
@@ -411,8 +405,8 @@ scripts/sandbox-setup.sh
 
 ## Terkait
 
-- [Ikhtisar Instalasi](/install) — semua metode instalasi
-- [Podman](/install/podman) — alternatif Podman untuk Docker
-- [ClawDock](/install/clawdock) — penyiapan komunitas Docker Compose
-- [Updating](/install/updating) — menjaga OpenClaw tetap terbaru
-- [Konfigurasi](/id/gateway/configuration) — konfigurasi gateway setelah instalasi
+- [Ikhtisar Instalasi](/id/install) — semua metode instalasi
+- [Podman](/id/install/podman) — alternatif Podman untuk Docker
+- [ClawDock](/id/install/clawdock) — penyiapan komunitas Docker Compose
+- [Updating](/id/install/updating) — menjaga OpenClaw tetap mutakhir
+- [Configuration](/id/gateway/configuration) — konfigurasi gateway setelah instalasi

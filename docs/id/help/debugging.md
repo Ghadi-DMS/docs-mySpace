@@ -1,28 +1,29 @@
 ---
 read_when:
-    - Anda perlu memeriksa output model mentah untuk kebocoran penalaran
+    - Anda perlu memeriksa keluaran model mentah untuk kebocoran reasoning
     - Anda ingin menjalankan Gateway dalam mode watch saat melakukan iterasi
     - Anda memerlukan alur kerja debugging yang dapat diulang
-summary: 'Alat debugging: mode watch, stream model mentah, dan pelacakan kebocoran penalaran'
+summary: 'Alat debugging: mode watch, stream model mentah, dan pelacakan kebocoran reasoning'
 title: Debugging
 x-i18n:
-    generated_at: "2026-04-05T13:56:00Z"
+    generated_at: "2026-04-06T03:07:23Z"
     model: gpt-5.4
     provider: openai
-    source_hash: f90d944ecc2e846ca0b26a162126ceefb3a3c6cf065c99b731359ec79d4289e3
+    source_hash: 4bc72e8d6cad3a1acaad066f381c82309583fabf304c589e63885f2685dc704e
     source_path: help/debugging.md
     workflow: 15
 ---
 
 # Debugging
 
-Halaman ini membahas helper debugging untuk output streaming, terutama saat provider mencampurkan penalaran ke dalam teks normal.
+Halaman ini membahas helper debugging untuk streaming output, terutama saat sebuah
+provider mencampurkan reasoning ke dalam teks normal.
 
 ## Override debug runtime
 
-Gunakan `/debug` di chat untuk menetapkan override konfigurasi **khusus runtime** (memori, bukan disk).
+Gunakan `/debug` di chat untuk menetapkan override konfigurasi **khusus runtime** (di memori, bukan di disk).
 `/debug` dinonaktifkan secara default; aktifkan dengan `commands.debug: true`.
-Ini berguna saat Anda perlu mengaktifkan atau menonaktifkan pengaturan yang jarang digunakan tanpa mengedit `openclaw.json`.
+Ini berguna ketika Anda perlu mengubah pengaturan yang jarang digunakan tanpa mengedit `openclaw.json`.
 
 Contoh:
 
@@ -33,7 +34,7 @@ Contoh:
 /debug reset
 ```
 
-`/debug reset` menghapus semua override dan mengembalikan ke konfigurasi di disk.
+`/debug reset` menghapus semua override dan kembali ke konfigurasi di disk.
 
 ## Mode watch Gateway
 
@@ -49,24 +50,25 @@ Ini dipetakan ke:
 node scripts/watch-node.mjs gateway --force
 ```
 
-Watcher akan memulai ulang saat ada file yang relevan terhadap build di bawah `src/`, file sumber extension,
-metadata extension `package.json` dan `openclaw.plugin.json`, `tsconfig.json`,
-`package.json`, dan `tsdown.config.ts`. Perubahan metadata extension akan memulai ulang
-gateway tanpa memaksa rebuild `tsdown`; perubahan sumber dan konfigurasi tetap akan
+Watcher memulai ulang pada file yang relevan dengan build di bawah `src/`, file sumber extension,
+metadata `package.json` dan `openclaw.plugin.json` extension, `tsconfig.json`,
+`package.json`, dan `tsdown.config.ts`. Perubahan metadata extension memulai ulang
+gateway tanpa memaksa rebuild `tsdown`; perubahan sumber dan konfigurasi tetap
 membangun ulang `dist` terlebih dahulu.
 
 Tambahkan flag CLI gateway apa pun setelah `gateway:watch` dan flag tersebut akan diteruskan pada
-setiap restart.
+setiap restart. Menjalankan ulang perintah watch yang sama untuk set repo/flag yang sama sekarang
+menggantikan watcher lama alih-alih meninggalkan parent watcher duplikat.
 
-## Profil dev + gateway dev (--dev)
+## Profil dev + gateway dev (`--dev`)
 
-Gunakan profil dev untuk mengisolasi state dan menyiapkan lingkungan yang aman serta mudah dibuang untuk
+Gunakan profil dev untuk mengisolasi status dan menyiapkan lingkungan yang aman serta disposable untuk
 debugging. Ada **dua** flag `--dev`:
 
-- **`--dev` global (profil):** mengisolasi state di bawah `~/.openclaw-dev` dan
-  secara default menetapkan port gateway ke `19001` (port turunan ikut bergeser).
-- **`gateway --dev`: memberi tahu Gateway untuk otomatis membuat config default +
-  workspace** jika belum ada (dan melewati BOOTSTRAP.md).
+- **`--dev` global (profil):** mengisolasi status di bawah `~/.openclaw-dev` dan
+  secara default menetapkan port gateway ke `19001` (port turunan bergeser mengikutinya).
+- **`gateway --dev`: memberi tahu Gateway untuk membuat otomatis config default + workspace**
+  saat belum ada (dan melewati `BOOTSTRAP.md`).
 
 Alur yang direkomendasikan (profil dev + bootstrap dev):
 
@@ -83,18 +85,18 @@ Yang dilakukan ini:
    - `OPENCLAW_PROFILE=dev`
    - `OPENCLAW_STATE_DIR=~/.openclaw-dev`
    - `OPENCLAW_CONFIG_PATH=~/.openclaw-dev/openclaw.json`
-   - `OPENCLAW_GATEWAY_PORT=19001` (browser/canvas ikut bergeser sesuai itu)
+   - `OPENCLAW_GATEWAY_PORT=19001` (browser/canvas ikut bergeser)
 
 2. **Bootstrap dev** (`gateway --dev`)
-   - Menulis konfigurasi minimal jika belum ada (`gateway.mode=local`, bind loopback).
+   - Menulis config minimal jika belum ada (`gateway.mode=local`, bind loopback).
    - Menetapkan `agent.workspace` ke workspace dev.
-   - Menetapkan `agent.skipBootstrap=true` (tanpa BOOTSTRAP.md).
+   - Menetapkan `agent.skipBootstrap=true` (tanpa `BOOTSTRAP.md`).
    - Mengisi file workspace jika belum ada:
      `AGENTS.md`, `SOUL.md`, `TOOLS.md`, `IDENTITY.md`, `USER.md`, `HEARTBEAT.md`.
    - Identitas default: **C3‑PO** (droid protokol).
    - Melewati provider channel dalam mode dev (`OPENCLAW_SKIP_CHANNELS=1`).
 
-Alur reset (mulai dari awal):
+Alur reset (mulai baru):
 
 ```bash
 pnpm gateway:dev:reset
@@ -107,7 +109,7 @@ Jika Anda perlu menuliskannya secara eksplisit, gunakan bentuk env var:
 OPENCLAW_PROFILE=dev openclaw gateway --dev --reset
 ```
 
-`--reset` menghapus konfigurasi, kredensial, sesi, dan workspace dev (menggunakan
+`--reset` menghapus config, kredensial, sesi, dan workspace dev (menggunakan
 `trash`, bukan `rm`), lalu membuat ulang penyiapan dev default.
 
 Tip: jika gateway non-dev sudah berjalan (launchd/systemd), hentikan terlebih dahulu:
@@ -118,8 +120,8 @@ openclaw gateway stop
 
 ## Logging stream mentah (OpenClaw)
 
-OpenClaw dapat mencatat **stream asisten mentah** sebelum pemfilteran/pemformatan apa pun.
-Ini adalah cara terbaik untuk melihat apakah penalaran datang sebagai delta teks biasa
+OpenClaw dapat mencatat **stream assistant mentah** sebelum pemfilteran/pemformatan apa pun.
+Ini adalah cara terbaik untuk melihat apakah reasoning datang sebagai delta teks biasa
 (atau sebagai blok thinking terpisah).
 
 Aktifkan melalui CLI:
@@ -134,7 +136,7 @@ Override path opsional:
 pnpm gateway:watch --raw-stream --raw-stream-path ~/.openclaw/logs/raw-stream.jsonl
 ```
 
-Env var yang setara:
+Env vars yang setara:
 
 ```bash
 OPENCLAW_RAW_STREAM=1
@@ -148,7 +150,7 @@ File default:
 ## Logging chunk mentah (pi-mono)
 
 Untuk menangkap **chunk kompatibel OpenAI mentah** sebelum diurai menjadi blok,
-pi-mono menyediakan logger terpisah:
+pi-mono mengekspos logger terpisah:
 
 ```bash
 PI_RAW_STREAM=1
@@ -164,11 +166,11 @@ File default:
 
 `~/.pi-mono/logs/raw-openai-completions.jsonl`
 
-> Catatan: ini hanya dihasilkan oleh proses yang menggunakan provider
-> `openai-completions` milik pi-mono.
+> Catatan: ini hanya dikeluarkan oleh proses yang menggunakan
+> provider `openai-completions` milik pi-mono.
 
 ## Catatan keamanan
 
-- Log stream mentah dapat mencakup prompt lengkap, output tool, dan data pengguna.
-- Simpan log secara lokal dan hapus setelah debugging selesai.
-- Jika Anda membagikan log, hapus rahasia dan PII terlebih dahulu.
+- Log stream mentah dapat mencakup prompt lengkap, keluaran alat, dan data pengguna.
+- Simpan log secara lokal dan hapus setelah debugging.
+- Jika Anda membagikan log, bersihkan rahasia dan PII terlebih dahulu.

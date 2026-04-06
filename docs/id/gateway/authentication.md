@@ -1,50 +1,51 @@
 ---
 read_when:
-    - Men-debug autentikasi model atau kedaluwarsa OAuth
+    - Men-debug autentikasi model atau masa berlaku OAuth
     - Mendokumentasikan autentikasi atau penyimpanan kredensial
-summary: 'Autentikasi model: OAuth, kunci API, dan penggunaan ulang Claude CLI'
+summary: 'Autentikasi model: OAuth, API key, dan setup-token Anthropic lama'
 title: Autentikasi
 x-i18n:
-    generated_at: "2026-04-05T13:53:11Z"
+    generated_at: "2026-04-06T03:07:04Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 1c0ceee7d10fe8d10345f32889b63425d81773f3a08d8ecd3fd88d965b207ddc
+    source_hash: f59ede3fcd7e692ad4132287782a850526acf35474b5bfcea29e0e23610636c2
     source_path: gateway/authentication.md
     workflow: 15
 ---
 
-# Autentikasi (Penyedia Model)
+# Autentikasi (Provider Model)
 
 <Note>
-Halaman ini membahas autentikasi **penyedia model** (kunci API, OAuth, penggunaan ulang Claude CLI). Untuk autentikasi **koneksi gateway** (token, kata sandi, trusted-proxy), lihat [Configuration](/gateway/configuration) dan [Trusted Proxy Auth](/gateway/trusted-proxy-auth).
+Halaman ini membahas autentikasi **provider model** (API key, OAuth, dan setup-token Anthropic lama). Untuk autentikasi **koneksi gateway** (token, kata sandi, trusted-proxy), lihat [Configuration](/id/gateway/configuration) dan [Trusted Proxy Auth](/id/gateway/trusted-proxy-auth).
 </Note>
 
-OpenClaw mendukung OAuth dan kunci API untuk penyedia model. Untuk host gateway
-yang selalu aktif, kunci API biasanya merupakan opsi yang paling dapat diprediksi. Alur
-langganan/OAuth juga didukung jika sesuai dengan model akun penyedia Anda.
+OpenClaw mendukung OAuth dan API key untuk provider model. Untuk host gateway
+yang selalu aktif, API key biasanya merupakan opsi yang paling dapat diprediksi. Alur
+langganan/OAuth juga didukung jika sesuai dengan model akun provider Anda.
 
-Lihat [/concepts/oauth](/concepts/oauth) untuk alur OAuth lengkap dan tata letak
+Lihat [/concepts/oauth](/id/concepts/oauth) untuk alur OAuth lengkap dan tata letak
 penyimpanan.
-Untuk autentikasi berbasis SecretRef (penyedia `env`/`file`/`exec`), lihat [Secrets Management](/gateway/secrets).
+Untuk autentikasi berbasis SecretRef (provider `env`/`file`/`exec`), lihat [Secrets Management](/id/gateway/secrets).
 Untuk aturan kelayakan kredensial/kode alasan yang digunakan oleh `models status --probe`, lihat
-[Semantik Kredensial Auth](/id/auth-credential-semantics).
+[Semantik Kredensial Autentikasi](/id/auth-credential-semantics).
 
-## Penyiapan yang direkomendasikan (kunci API, penyedia apa pun)
+## Penyiapan yang direkomendasikan (API key, provider apa pun)
 
-Jika Anda menjalankan gateway jangka panjang, mulailah dengan kunci API untuk
-penyedia pilihan Anda.
-Khusus untuk Anthropic, autentikasi kunci API adalah jalur yang aman. Penggunaan ulang Claude CLI adalah
-jalur penyiapan bergaya langganan lain yang didukung.
+Jika Anda menjalankan gateway yang berumur panjang, mulai dengan API key untuk
+provider pilihan Anda.
+Khusus untuk Anthropic, autentikasi API key adalah jalur yang aman. Autentikasi gaya
+langganan Anthropic di dalam OpenClaw adalah jalur setup-token lama dan
+harus diperlakukan sebagai jalur **Extra Usage**, bukan jalur batas paket.
 
-1. Buat kunci API di konsol penyedia Anda.
-2. Letakkan kunci itu di **host gateway** (mesin yang menjalankan `openclaw gateway`).
+1. Buat API key di konsol provider Anda.
+2. Tempatkan di **host gateway** (mesin yang menjalankan `openclaw gateway`).
 
 ```bash
 export <PROVIDER>_API_KEY="..."
 openclaw models status
 ```
 
-3. Jika Gateway berjalan di bawah systemd/launchd, sebaiknya letakkan kunci di
+3. Jika Gateway berjalan di bawah systemd/launchd, sebaiknya letakkan key di
    `~/.openclaw/.env` agar daemon dapat membacanya:
 
 ```bash
@@ -61,23 +62,25 @@ openclaw doctor
 ```
 
 Jika Anda lebih memilih untuk tidak mengelola env vars sendiri, onboarding dapat menyimpan
-kunci API untuk penggunaan daemon: `openclaw onboard`.
+API key untuk penggunaan daemon: `openclaw onboard`.
 
-Lihat [Help](/help) untuk detail tentang pewarisan env (`env.shellEnv`,
+Lihat [Help](/id/help) untuk detail tentang pewarisan env (`env.shellEnv`,
 `~/.openclaw/.env`, systemd/launchd).
 
 ## Anthropic: kompatibilitas token lama
 
-Autentikasi token setup Anthropic masih tersedia di OpenClaw sebagai
-jalur lama/manual. Dokumentasi publik Claude Code Anthropic masih membahas penggunaan terminal
-Claude Code secara langsung di bawah paket Claude, tetapi Anthropic secara terpisah memberi tahu
-pengguna OpenClaw bahwa jalur login Claude **OpenClaw** dihitung sebagai penggunaan harness pihak ketiga dan memerlukan **Extra Usage** yang ditagih terpisah dari
+Autentikasi setup-token Anthropic masih tersedia di OpenClaw sebagai
+jalur lama/manual. Docs publik Claude Code milik Anthropic masih membahas
+penggunaan terminal Claude Code langsung di bawah paket Claude, tetapi Anthropic secara terpisah memberi tahu
+pengguna OpenClaw bahwa jalur login Claude **OpenClaw** dihitung sebagai penggunaan harness pihak ketiga
+dan memerlukan **Extra Usage** yang ditagih terpisah dari
 langganan.
 
-Untuk jalur penyiapan yang paling jelas, gunakan kunci API Anthropic atau migrasikan ke Claude CLI
-di host gateway.
+Untuk jalur penyiapan yang paling jelas, gunakan API key Anthropic. Jika Anda harus tetap menggunakan
+jalur Anthropic gaya langganan di OpenClaw, gunakan jalur setup-token lama
+dengan harapan bahwa Anthropic memperlakukannya sebagai **Extra Usage**.
 
-Entri token manual (penyedia apa pun; menulis `auth-profiles.json` + memperbarui config):
+Entri token manual (provider apa pun; menulis `auth-profiles.json` + memperbarui config):
 
 ```bash
 openclaw models auth paste-token --provider openrouter
@@ -85,9 +88,9 @@ openclaw models auth paste-token --provider openrouter
 
 Referensi profil auth juga didukung untuk kredensial statis:
 
-- Kredensial `api_key` dapat menggunakan `keyRef: { source, provider, id }`
-- Kredensial `token` dapat menggunakan `tokenRef: { source, provider, id }`
-- Profil mode OAuth tidak mendukung kredensial SecretRef; jika `auth.profiles.<id>.mode` disetel ke `"oauth"`, input `keyRef`/`tokenRef` berbasis SecretRef untuk profil tersebut akan ditolak.
+- kredensial `api_key` dapat menggunakan `keyRef: { source, provider, id }`
+- kredensial `token` dapat menggunakan `tokenRef: { source, provider, id }`
+- profil mode OAuth tidak mendukung kredensial SecretRef; jika `auth.profiles.<id>.mode` disetel ke `"oauth"`, input `keyRef`/`tokenRef` berbasis SecretRef untuk profil tersebut akan ditolak.
 
 Pemeriksaan yang ramah otomatisasi (keluar `1` saat kedaluwarsa/tidak ada, `2` saat akan kedaluwarsa):
 
@@ -95,7 +98,7 @@ Pemeriksaan yang ramah otomatisasi (keluar `1` saat kedaluwarsa/tidak ada, `2` s
 openclaw models status --check
 ```
 
-Probe autentikasi langsung:
+Probe auth langsung:
 
 ```bash
 openclaw models status --probe
@@ -104,89 +107,65 @@ openclaw models status --probe
 Catatan:
 
 - Baris probe dapat berasal dari profil auth, kredensial env, atau `models.json`.
-- Jika `auth.order.<provider>` eksplisit menghilangkan profil yang tersimpan, probe melaporkan
-  `excluded_by_auth_order` untuk profil tersebut alih-alih mencobanya.
-- Jika autentikasi ada tetapi OpenClaw tidak dapat me-resolve kandidat model yang dapat diprobe untuk
-  penyedia itu, probe melaporkan `status: no_model`.
-- Cooldown rate limit dapat dibatasi pada model. Profil yang sedang cooldown untuk satu
-  model masih dapat digunakan untuk model saudara pada penyedia yang sama.
+- Jika `auth.order.<provider>` eksplisit menghilangkan profil yang tersimpan, laporan probe
+  menampilkan `excluded_by_auth_order` untuk profil tersebut alih-alih mencobanya.
+- Jika auth ada tetapi OpenClaw tidak dapat menyelesaikan kandidat model yang dapat diprobe untuk
+  provider tersebut, probe melaporkan `status: no_model`.
+- Cooldown batas laju dapat bersifat khusus model. Profil yang sedang cooldown untuk satu
+  model masih dapat digunakan untuk model serumpun pada provider yang sama.
 
-Script operasi opsional (systemd/Termux) didokumentasikan di sini:
-[Script pemantauan auth](/help/scripts#auth-monitoring-scripts)
+Skrip opsional ops (systemd/Termux) didokumentasikan di sini:
+[Skrip pemantauan auth](/id/help/scripts#auth-monitoring-scripts)
 
-## Anthropic: migrasi Claude CLI
+## Catatan Anthropic
 
-Jika Claude CLI sudah terinstal dan sudah login di host gateway, Anda dapat
-mengalihkan penyiapan Anthropic yang ada ke backend CLI. Ini adalah
-jalur migrasi OpenClaw yang didukung untuk menggunakan ulang login Claude CLI lokal di
-host tersebut.
+Backend Anthropic `claude-cli` telah dihapus.
 
-Prasyarat:
+- Gunakan API key Anthropic untuk trafik Anthropic di OpenClaw.
+- Setup-token Anthropic tetap menjadi jalur lama/manual dan harus digunakan dengan
+  ekspektasi penagihan Extra Usage yang Anthropic sampaikan kepada pengguna OpenClaw.
+- `openclaw doctor` sekarang mendeteksi status Anthropic Claude CLI lama yang telah dihapus. Jika
+  byte kredensial yang tersimpan masih ada, doctor mengonversinya kembali menjadi
+  profil token/OAuth Anthropic. Jika tidak, doctor menghapus config Claude CLI
+  yang usang dan mengarahkan Anda ke pemulihan API key atau setup-token.
 
-- `claude` terinstal di host gateway
-- Claude CLI sudah login di sana dengan `claude auth login`
-
-```bash
-openclaw models auth login --provider anthropic --method cli --set-default
-```
-
-Ini mempertahankan profil auth Anthropic Anda yang ada untuk rollback, tetapi mengubah
-pemilihan model default menjadi `claude-cli/...` dan menambahkan entri allowlist Claude CLI
-yang sesuai di bawah `agents.defaults.models`.
-
-Verifikasi:
-
-```bash
-openclaw models status
-```
-
-Pintasan onboarding:
-
-```bash
-openclaw onboard --auth-choice anthropic-cli
-```
-
-`openclaw onboard` interaktif dan `openclaw configure` tetap lebih memilih Claude CLI
-untuk Anthropic, tetapi token setup Anthropic kembali tersedia sebagai
-jalur lama/manual dan harus digunakan dengan ekspektasi penagihan Extra Usage.
-
-## Memeriksa status autentikasi model
+## Memeriksa status auth model
 
 ```bash
 openclaw models status
 openclaw doctor
 ```
 
-## Perilaku rotasi kunci API (gateway)
+## Perilaku rotasi API key (gateway)
 
-Beberapa penyedia mendukung percobaan ulang permintaan dengan kunci alternatif ketika panggilan API
-mencapai rate limit penyedia.
+Beberapa provider mendukung percobaan ulang permintaan dengan key alternatif ketika panggilan API
+mencapai batas laju provider.
 
 - Urutan prioritas:
-  - `OPENCLAW_LIVE_<PROVIDER>_KEY` (override tunggal)
+  - `OPENCLAW_LIVE_<PROVIDER>_KEY` (satu override)
   - `<PROVIDER>_API_KEYS`
   - `<PROVIDER>_API_KEY`
   - `<PROVIDER>_API_KEY_*`
-- Penyedia Google juga menyertakan `GOOGLE_API_KEY` sebagai fallback tambahan.
-- Daftar kunci yang sama dihapus duplikasinya sebelum digunakan.
-- OpenClaw mencoba ulang dengan kunci berikutnya hanya untuk kesalahan rate limit (misalnya
+- Provider Google juga menyertakan `GOOGLE_API_KEY` sebagai fallback tambahan.
+- Daftar key yang sama dihapus duplikasinya sebelum digunakan.
+- OpenClaw mencoba ulang dengan key berikutnya hanya untuk error batas laju (misalnya
   `429`, `rate_limit`, `quota`, `resource exhausted`, `Too many concurrent
 requests`, `ThrottlingException`, `concurrency limit reached`, atau
   `workers_ai ... quota limit exceeded`).
-- Kesalahan non-rate-limit tidak dicoba ulang dengan kunci alternatif.
-- Jika semua kunci gagal, kesalahan akhir dari percobaan terakhir akan dikembalikan.
+- Error selain batas laju tidak dicoba ulang dengan key alternatif.
+- Jika semua key gagal, error terakhir dari upaya terakhir akan dikembalikan.
 
-## Mengontrol kredensial yang digunakan
+## Mengontrol kredensial mana yang digunakan
 
 ### Per sesi (perintah chat)
 
-Gunakan `/model <alias-or-id>@<profileId>` untuk menyematkan kredensial penyedia tertentu untuk sesi saat ini (contoh ID profil: `anthropic:default`, `anthropic:work`).
+Gunakan `/model <alias-or-id>@<profileId>` untuk menyematkan kredensial provider tertentu pada sesi saat ini (contoh id profil: `anthropic:default`, `anthropic:work`).
 
-Gunakan `/model` (atau `/model list`) untuk pemilih ringkas; gunakan `/model status` untuk tampilan lengkap (kandidat + profil auth berikutnya, beserta detail endpoint penyedia saat dikonfigurasi).
+Gunakan `/model` (atau `/model list`) untuk pemilih ringkas; gunakan `/model status` untuk tampilan lengkap (kandidat + profil auth berikutnya, serta detail endpoint provider saat dikonfigurasi).
 
 ### Per agen (override CLI)
 
-Setel override urutan profil auth eksplisit untuk suatu agen (disimpan di `auth-profiles.json` milik agen tersebut):
+Setel override urutan profil auth eksplisit untuk sebuah agen (disimpan di `auth-profiles.json` milik agen tersebut):
 
 ```bash
 openclaw models auth order get --provider anthropic
@@ -195,17 +174,17 @@ openclaw models auth order clear --provider anthropic
 ```
 
 Gunakan `--agent <id>` untuk menargetkan agen tertentu; hilangkan untuk menggunakan agen default yang dikonfigurasi.
-Saat Anda men-debug masalah urutan, `openclaw models status --probe` menampilkan profil tersimpan
-yang dihilangkan sebagai `excluded_by_auth_order` alih-alih melewatinya secara diam-diam.
-Saat Anda men-debug masalah cooldown, ingat bahwa cooldown rate limit dapat terkait
-dengan satu ID model, bukan seluruh profil penyedia.
+Saat Anda men-debug masalah urutan, `openclaw models status --probe` menampilkan profil
+tersimpan yang dihilangkan sebagai `excluded_by_auth_order` alih-alih melewatinya secara diam-diam.
+Saat Anda men-debug masalah cooldown, ingat bahwa cooldown batas laju dapat terikat
+ke satu id model, bukan seluruh profil provider.
 
 ## Pemecahan masalah
 
-### "No credentials found"
+### "Kredensial tidak ditemukan"
 
-Jika profil Anthropic tidak ada, migrasikan penyiapan itu ke Claude CLI atau kunci API
-di **host gateway**, lalu periksa kembali:
+Jika profil Anthropic tidak ada, konfigurasikan API key Anthropic di
+**host gateway** atau siapkan jalur setup-token Anthropic lama, lalu periksa kembali:
 
 ```bash
 openclaw models status
@@ -213,12 +192,17 @@ openclaw models status
 
 ### Token akan kedaluwarsa/sudah kedaluwarsa
 
-Jalankan `openclaw models status` untuk memastikan profil mana yang akan kedaluwarsa. Jika profil token Anthropic lama
-tidak ada atau sudah kedaluwarsa, migrasikan penyiapan itu ke Claude CLI
-atau kunci API.
+Jalankan `openclaw models status` untuk mengonfirmasi profil mana yang akan kedaluwarsa. Jika profil token Anthropic
+lama tidak ada atau kedaluwarsa, segarkan penyiapan tersebut melalui
+setup-token atau migrasikan ke API key Anthropic.
 
-## Persyaratan Claude CLI
+Jika mesin masih memiliki status Anthropic Claude CLI lama yang telah dihapus dari build
+sebelumnya, jalankan:
 
-Hanya diperlukan untuk jalur penggunaan ulang Claude CLI Anthropic:
+```bash
+openclaw doctor --yes
+```
 
-- Claude Code CLI terinstal (perintah `claude` tersedia)
+Doctor mengonversi `anthropic:claude-cli` kembali ke token/OAuth Anthropic ketika
+byte kredensial yang tersimpan masih ada. Jika tidak, doctor menghapus referensi
+profil/config/model Claude CLI yang usang dan meninggalkan panduan langkah berikutnya.

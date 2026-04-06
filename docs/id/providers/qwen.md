@@ -1,65 +1,61 @@
 ---
+read_when:
+    - Anda ingin menggunakan Qwen dengan OpenClaw
+    - Anda sebelumnya menggunakan Qwen OAuth
+summary: Gunakan Qwen Cloud melalui provider qwen bawaan OpenClaw
+title: Qwen
 x-i18n:
-    generated_at: "2026-04-05T14:04:05Z"
+    generated_at: "2026-04-06T03:10:43Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 895b701d3a3950ea7482e5e870663ed93e0355e679199ed4622718d588ef18fa
+    source_hash: f175793693ab6a4c3f1f4d42040e673c15faf7603a500757423e9e06977c989d
     source_path: providers/qwen.md
     workflow: 15
----
-
-summary: "Gunakan Qwen Cloud melalui provider qwen bawaan OpenClaw"
-read_when:
-
-- Anda ingin menggunakan Qwen dengan OpenClaw
-- Anda sebelumnya menggunakan Qwen OAuth
-  title: "Qwen"
-
 ---
 
 # Qwen
 
 <Warning>
 
-**Qwen OAuth telah dihapus.** Integrasi OAuth tier gratis
-(`qwen-portal`) yang menggunakan endpoint `portal.qwen.ai` sudah tidak tersedia lagi.
+**Qwen OAuth telah dihapus.** Integrasi OAuth tingkat gratis
+(`qwen-portal`) yang menggunakan endpoint `portal.qwen.ai` tidak lagi tersedia.
 Lihat [Issue #49557](https://github.com/openclaw/openclaw/issues/49557) untuk
-latar belakang.
+latar belakangnya.
 
 </Warning>
 
-## Direkomendasikan: Qwen Cloud
+## Rekomendasi: Qwen Cloud
 
 OpenClaw sekarang memperlakukan Qwen sebagai provider bawaan kelas satu dengan id kanonis
 `qwen`. Provider bawaan ini menargetkan endpoint Qwen Cloud / Alibaba DashScope dan
-Coding Plan serta menjaga agar id `modelstudio` lama tetap berfungsi sebagai
+Coding Plan serta tetap mendukung id `modelstudio` lama sebagai
 alias kompatibilitas.
 
 - Provider: `qwen`
-- Env var yang diutamakan: `QWEN_API_KEY`
+- Variabel env yang disarankan: `QWEN_API_KEY`
 - Juga diterima untuk kompatibilitas: `MODELSTUDIO_API_KEY`, `DASHSCOPE_API_KEY`
 - Gaya API: kompatibel dengan OpenAI
 
-Jika Anda menginginkan `qwen3.6-plus`, utamakan endpoint **Standard (pay-as-you-go)**.
+Jika Anda ingin `qwen3.6-plus`, gunakan endpoint **Standard (pay-as-you-go)**.
 Dukungan Coding Plan dapat tertinggal dari katalog publik.
 
 ```bash
-# Endpoint Global Coding Plan
+# Global Coding Plan endpoint
 openclaw onboard --auth-choice qwen-api-key
 
-# Endpoint China Coding Plan
+# China Coding Plan endpoint
 openclaw onboard --auth-choice qwen-api-key-cn
 
-# Endpoint Global Standard (pay-as-you-go)
+# Global Standard (pay-as-you-go) endpoint
 openclaw onboard --auth-choice qwen-standard-api-key
 
-# Endpoint China Standard (pay-as-you-go)
+# China Standard (pay-as-you-go) endpoint
 openclaw onboard --auth-choice qwen-standard-api-key-cn
 ```
 
-Id `auth-choice` `modelstudio-*` lama dan ref model `modelstudio/...` masih
-berfungsi sebagai alias kompatibilitas, tetapi alur penyiapan baru sebaiknya mengutamakan
-id `auth-choice` `qwen-*` kanonis dan ref model `qwen/...`.
+Id `auth-choice` `modelstudio-*` lama dan referensi model `modelstudio/...` masih
+berfungsi sebagai alias kompatibilitas, tetapi alur penyiapan baru sebaiknya menggunakan
+id `auth-choice` `qwen-*` kanonis dan referensi model `qwen/...`.
 
 Setelah onboarding, tetapkan model default:
 
@@ -73,22 +69,84 @@ Setelah onboarding, tetapkan model default:
 }
 ```
 
+## Jenis paket dan endpoint
+
+| Paket                      | Wilayah | Auth choice                | Endpoint                                         |
+| -------------------------- | ------- | -------------------------- | ------------------------------------------------ |
+| Standard (pay-as-you-go)   | China   | `qwen-standard-api-key-cn` | `dashscope.aliyuncs.com/compatible-mode/v1`      |
+| Standard (pay-as-you-go)   | Global  | `qwen-standard-api-key`    | `dashscope-intl.aliyuncs.com/compatible-mode/v1` |
+| Coding Plan (langganan)    | China   | `qwen-api-key-cn`          | `coding.dashscope.aliyuncs.com/v1`               |
+| Coding Plan (langganan)    | Global  | `qwen-api-key`             | `coding-intl.dashscope.aliyuncs.com/v1`          |
+
+Provider secara otomatis memilih endpoint berdasarkan auth choice Anda. Pilihan
+kanonis menggunakan keluarga `qwen-*`; `modelstudio-*` tetap hanya untuk kompatibilitas.
+Anda dapat menimpa dengan `baseUrl` kustom di config.
+
+Endpoint Model Studio native mengiklankan kompatibilitas penggunaan streaming pada
+transport bersama `openai-completions`. OpenClaw sekarang mengaitkannya berdasarkan
+kapabilitas endpoint, sehingga id provider kustom yang kompatibel dengan DashScope dan menargetkan
+host native yang sama mewarisi perilaku penggunaan streaming yang sama alih-alih
+mewajibkan id provider bawaan `qwen` secara khusus.
+
+## Dapatkan API key Anda
+
+- **Kelola key**: [home.qwencloud.com/api-keys](https://home.qwencloud.com/api-keys)
+- **Dokumentasi**: [docs.qwencloud.com](https://docs.qwencloud.com/developer-guides/getting-started/introduction)
+
+## Katalog bawaan
+
+OpenClaw saat ini menyediakan katalog Qwen bawaan berikut:
+
+| Referensi model            | Input       | Konteks   | Catatan                                            |
+| -------------------------- | ----------- | --------- | -------------------------------------------------- |
+| `qwen/qwen3.5-plus`        | text, image | 1,000,000 | Model default                                      |
+| `qwen/qwen3.6-plus`        | text, image | 1,000,000 | Gunakan endpoint Standard saat memerlukan model ini |
+| `qwen/qwen3-max-2026-01-23`| text        | 262,144   | Lini Qwen Max                                      |
+| `qwen/qwen3-coder-next`    | text        | 262,144   | Coding                                             |
+| `qwen/qwen3-coder-plus`    | text        | 1,000,000 | Coding                                             |
+| `qwen/MiniMax-M2.5`        | text        | 1,000,000 | Reasoning diaktifkan                               |
+| `qwen/glm-5`               | text        | 202,752   | GLM                                                |
+| `qwen/glm-4.7`             | text        | 202,752   | GLM                                                |
+| `qwen/kimi-k2.5`           | text, image | 262,144   | Moonshot AI via Alibaba                            |
+
+Ketersediaan tetap dapat berbeda menurut endpoint dan paket penagihan meskipun suatu model
+ada dalam katalog bawaan.
+
+Kompatibilitas penggunaan native-streaming berlaku untuk host Coding Plan dan
+host Standard yang kompatibel dengan DashScope:
+
+- `https://coding.dashscope.aliyuncs.com/v1`
+- `https://coding-intl.dashscope.aliyuncs.com/v1`
+- `https://dashscope.aliyuncs.com/compatible-mode/v1`
+- `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`
+
+## Ketersediaan Qwen 3.6 Plus
+
+`qwen3.6-plus` tersedia pada endpoint Model Studio Standard (pay-as-you-go):
+
+- China: `dashscope.aliyuncs.com/compatible-mode/v1`
+- Global: `dashscope-intl.aliyuncs.com/compatible-mode/v1`
+
+Jika endpoint Coding Plan mengembalikan error "unsupported model" untuk
+`qwen3.6-plus`, beralihlah ke Standard (pay-as-you-go), bukan pasangan
+endpoint/key Coding Plan.
+
 ## Rencana kapabilitas
 
 Ekstensi `qwen` sedang diposisikan sebagai rumah vendor untuk seluruh permukaan Qwen
 Cloud, bukan hanya model coding/teks.
 
-- Model teks/chat: sudah dibundel sekarang
-- Tool calling, structured output, thinking: diwarisi dari transport yang kompatibel dengan OpenAI
+- Model teks/chat: sudah dibundel
+- Tool calling, output terstruktur, thinking: diwariskan dari transport yang kompatibel dengan OpenAI
 - Pembuatan gambar: direncanakan di lapisan provider-plugin
-- Pemahaman gambar/video: sudah dibundel sekarang pada endpoint Standard
+- Pemahaman gambar/video: sudah dibundel pada endpoint Standard
 - Speech/audio: direncanakan di lapisan provider-plugin
-- Embeddings/reranking memori: direncanakan melalui permukaan adapter embedding
-- Pembuatan video: sudah dibundel sekarang melalui kapabilitas pembuatan video bersama
+- Embedding/reranking memori: direncanakan melalui permukaan adapter embedding
+- Pembuatan video: sudah dibundel melalui kapabilitas video-generation bersama
 
 ## Add-on multimodal
 
-Ekstensi `qwen` kini juga mengekspos:
+Ekstensi `qwen` sekarang juga mengekspos:
 
 - Pemahaman video melalui `qwen-vl-max-latest`
 - Pembuatan video Wan melalui:
@@ -101,19 +159,20 @@ Ekstensi `qwen` kini juga mengekspos:
 Permukaan multimodal ini menggunakan endpoint DashScope **Standard**, bukan
 endpoint Coding Plan.
 
-- Base URL Standard Global/Intl: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`
-- Base URL Standard China: `https://dashscope.aliyuncs.com/compatible-mode/v1`
+- URL dasar Standard Global/Intl: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`
+- URL dasar Standard China: `https://dashscope.aliyuncs.com/compatible-mode/v1`
 
-Untuk pembuatan video, OpenClaw memetakan region Qwen yang dikonfigurasi ke host
-DashScope AIGC yang sesuai sebelum mengirimkan job:
+Untuk pembuatan video, OpenClaw memetakan wilayah Qwen yang dikonfigurasi ke host
+DashScope AIGC regional yang sesuai sebelum mengirim job:
 
 - Global/Intl: `https://dashscope-intl.aliyuncs.com`
 - China: `https://dashscope.aliyuncs.com`
 
-Artinya, `models.providers.qwen.baseUrl` Qwen normal yang menunjuk ke salah satu host
-Coding Plan atau Standard tetap menjaga pembuatan video pada endpoint video DashScope regional yang benar.
+Artinya `models.providers.qwen.baseUrl` normal yang menunjuk ke salah satu host
+Qwen Coding Plan atau Standard tetap menjaga pembuatan video berada pada endpoint video DashScope
+regional yang benar.
 
-Untuk pembuatan video, setel model default secara eksplisit:
+Untuk pembuatan video, tetapkan model default secara eksplisit:
 
 ```json5
 {
@@ -127,11 +186,20 @@ Untuk pembuatan video, setel model default secara eksplisit:
 
 Batas pembuatan video Qwen bawaan saat ini:
 
-- Hingga **1** video output per permintaan
-- Hingga **1** gambar input
-- Hingga **4** video input
-- Durasi hingga **10 detik**
+- Maksimal **1** video output per permintaan
+- Maksimal **1** gambar input
+- Maksimal **4** video input
+- Durasi maksimal **10 detik**
 - Mendukung `size`, `aspectRatio`, `resolution`, `audio`, dan `watermark`
+- Mode gambar/video referensi saat ini mewajibkan **URL http(s) jarak jauh**. Path
+  file lokal ditolak di awal karena endpoint video DashScope tidak
+  menerima buffer lokal yang diunggah untuk referensi tersebut.
 
-Lihat [Qwen / Model Studio](/providers/qwen_modelstudio) untuk detail tingkat endpoint
-dan catatan kompatibilitas.
+Lihat [Video Generation](/tools/video-generation) untuk parameter tool
+bersama, pemilihan provider, dan perilaku failover.
+
+## Catatan environment
+
+Jika Gateway berjalan sebagai daemon (launchd/systemd), pastikan `QWEN_API_KEY`
+tersedia bagi proses tersebut (misalnya, di `~/.openclaw/.env` atau melalui
+`env.shellEnv`).

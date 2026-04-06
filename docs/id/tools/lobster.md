@@ -5,50 +5,50 @@ read_when:
 summary: Runtime alur kerja bertipe untuk OpenClaw dengan gerbang persetujuan yang dapat dilanjutkan.
 title: Lobster
 x-i18n:
-    generated_at: "2026-04-05T14:08:57Z"
+    generated_at: "2026-04-06T03:12:26Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 82718c15d571406ad6f1507de22a528fdab873edfc6aafae10742e500f6a5eda
+    source_hash: c1014945d104ef8fdca0d30be89e35136def1b274c6403b06de29e8502b8124b
     source_path: tools/lobster.md
     workflow: 15
 ---
 
 # Lobster
 
-Lobster adalah shell alur kerja yang memungkinkan OpenClaw menjalankan urutan tool multi-langkah sebagai satu operasi deterministik dengan checkpoint persetujuan yang eksplisit.
+Lobster adalah shell alur kerja yang memungkinkan OpenClaw menjalankan rangkaian alat multi-langkah sebagai satu operasi deterministik dengan checkpoint persetujuan yang eksplisit.
 
-Lobster adalah satu lapisan authoring di atas pekerjaan latar belakang yang terlepas. Untuk orkestrasi alur di atas tugas individual, lihat [Task Flow](/id/automation/taskflow) (`openclaw tasks flow`). Untuk ledger aktivitas tugas, lihat [`openclaw tasks`](/id/automation/tasks).
+Lobster adalah satu lapisan authoring di atas pekerjaan latar belakang terlepas. Untuk orkestrasi alur di atas task individual, lihat [Task Flow](/id/automation/taskflow) (`openclaw tasks flow`). Untuk buku besar aktivitas task, lihat [`openclaw tasks`](/id/automation/tasks).
 
 ## Hook
 
-Asisten Anda dapat membangun tool yang mengelola dirinya sendiri. Minta sebuah alur kerja, dan 30 menit kemudian Anda sudah memiliki CLI plus pipeline yang berjalan sebagai satu panggilan. Lobster adalah bagian yang hilang: pipeline deterministik, persetujuan eksplisit, dan status yang dapat dilanjutkan.
+Asisten Anda dapat membangun alat yang mengelola dirinya sendiri. Minta sebuah alur kerja, dan 30 menit kemudian Anda memiliki CLI plus pipeline yang berjalan sebagai satu panggilan. Lobster adalah bagian yang hilang: pipeline deterministik, persetujuan eksplisit, dan state yang dapat dilanjutkan.
 
 ## Mengapa
 
-Saat ini, alur kerja kompleks memerlukan banyak panggilan tool bolak-balik. Setiap panggilan memakan token, dan LLM harus mengorkestrasi setiap langkah. Lobster memindahkan orkestrasi itu ke runtime bertipe:
+Saat ini, alur kerja yang kompleks memerlukan banyak pemanggilan alat bolak-balik. Setiap panggilan memakan token, dan LLM harus mengorkestrasi setiap langkah. Lobster memindahkan orkestrasi itu ke runtime bertipe:
 
-- **Satu panggilan alih-alih banyak**: OpenClaw menjalankan satu panggilan tool Lobster dan mendapatkan hasil terstruktur.
-- **Persetujuan sudah bawaan**: Efek samping (mengirim email, memposting komentar) menghentikan alur kerja sampai disetujui secara eksplisit.
+- **Satu panggilan, bukan banyak**: OpenClaw menjalankan satu pemanggilan alat Lobster dan mendapatkan hasil terstruktur.
+- **Persetujuan sudah terintegrasi**: Efek samping (kirim email, posting komentar) menghentikan alur kerja sampai disetujui secara eksplisit.
 - **Dapat dilanjutkan**: Alur kerja yang dihentikan mengembalikan token; setujui dan lanjutkan tanpa menjalankan ulang semuanya.
 
 ## Mengapa DSL, bukan program biasa?
 
-Lobster sengaja dibuat kecil. Tujuannya bukan "bahasa baru", melainkan spesifikasi pipeline yang dapat diprediksi dan ramah AI dengan persetujuan kelas satu dan token pelanjutan.
+Lobster sengaja dibuat kecil. Tujuannya bukan "bahasa baru," melainkan spesifikasi pipeline yang dapat diprediksi dan ramah AI dengan persetujuan dan token resume sebagai fitur utama.
 
-- **Setujui/lanjutkan sudah bawaan**: Program biasa dapat meminta input manusia, tetapi tidak dapat _berhenti dan melanjutkan_ dengan token tahan lama tanpa Anda menciptakan runtime itu sendiri.
-- **Determinisme + auditabilitas**: Pipeline adalah data, sehingga mudah dicatat, dibandingkan diff-nya, diputar ulang, dan ditinjau.
-- **Permukaan terbatas untuk AI**: Tata bahasa kecil + piping JSON mengurangi jalur kode “kreatif” dan membuat validasi menjadi realistis.
-- **Kebijakan keamanan tertanam**: Timeout, batas output, pemeriksaan sandbox, dan allowlist ditegakkan oleh runtime, bukan oleh tiap skrip.
+- **Setujui/lanjutkan sudah terintegrasi**: Program biasa dapat meminta manusia, tetapi tidak dapat _menjeda dan melanjutkan_ dengan token yang tahan lama tanpa Anda membangun runtime itu sendiri.
+- **Determinisme + auditabilitas**: Pipeline adalah data, sehingga mudah dicatat, dibandingkan, diputar ulang, dan ditinjau.
+- **Surface terbatas untuk AI**: Tata bahasa kecil + piping JSON mengurangi jalur kode yang “kreatif” dan membuat validasi menjadi realistis.
+- **Kebijakan keamanan tertanam**: Timeout, batas output, pemeriksaan sandbox, dan allowlist ditegakkan oleh runtime, bukan oleh setiap skrip.
 - **Tetap dapat diprogram**: Setiap langkah dapat memanggil CLI atau skrip apa pun. Jika Anda menginginkan JS/TS, hasilkan file `.lobster` dari kode.
 
 ## Cara kerjanya
 
-OpenClaw meluncurkan CLI `lobster` lokal dalam **tool mode** dan mem-parsing envelope JSON dari stdout.
-Jika pipeline dijeda untuk persetujuan, tool mengembalikan `resumeToken` sehingga Anda dapat melanjutkannya nanti.
+OpenClaw menjalankan alur kerja Lobster **in-process** menggunakan embedded runner. Tidak ada subprocess CLI eksternal yang dihasilkan; mesin alur kerja dijalankan di dalam proses gateway dan langsung mengembalikan envelope JSON.
+Jika pipeline berhenti untuk persetujuan, alat mengembalikan `resumeToken` agar Anda dapat melanjutkannya nanti.
 
-## Pola: CLI kecil + pipe JSON + persetujuan
+## Pola: CLI kecil + JSON pipes + persetujuan
 
-Buat perintah kecil yang berbicara JSON, lalu rangkai menjadi satu panggilan Lobster. (Nama perintah contoh di bawah — ganti dengan milik Anda sendiri.)
+Bangun perintah kecil yang berbicara JSON, lalu rangkai menjadi satu panggilan Lobster. (Nama perintah contoh di bawah ini — ganti dengan milik Anda.)
 
 ```bash
 inbox list --json
@@ -64,7 +64,7 @@ inbox apply --json
 }
 ```
 
-Jika pipeline meminta persetujuan, lanjutkan dengan token:
+Jika pipeline meminta persetujuan, lanjutkan dengan token tersebut:
 
 ```json
 {
@@ -74,22 +74,22 @@ Jika pipeline meminta persetujuan, lanjutkan dengan token:
 }
 ```
 
-AI memicu alur kerja; Lobster mengeksekusi langkah-langkahnya. Gerbang persetujuan menjaga efek samping tetap eksplisit dan dapat diaudit.
+AI memicu alur kerja; Lobster menjalankan langkah-langkahnya. Gerbang persetujuan menjaga efek samping tetap eksplisit dan dapat diaudit.
 
-Contoh: petakan item input ke dalam panggilan tool:
+Contoh: memetakan item input menjadi pemanggilan alat:
 
 ```bash
 gog.gmail.search --query 'newer_than:1d' \
   | openclaw.invoke --tool message --action send --each --item-key message --args-json '{"provider":"telegram","to":"..."}'
 ```
 
-## Langkah LLM JSON-saja (llm-task)
+## Langkah LLM khusus JSON (llm-task)
 
-Untuk alur kerja yang membutuhkan **langkah LLM terstruktur**, aktifkan tool plugin opsional
+Untuk alur kerja yang memerlukan **langkah LLM terstruktur**, aktifkan alat plugin opsional
 `llm-task` dan panggil dari Lobster. Ini menjaga alur kerja tetap
 deterministik sambil tetap memungkinkan Anda melakukan klasifikasi/ringkasan/draf dengan model.
 
-Aktifkan tool:
+Aktifkan alat:
 
 ```json
 {
@@ -128,11 +128,11 @@ openclaw.invoke --tool llm-task --action json --args-json '{
 }'
 ```
 
-Lihat [LLM Task](/tools/llm-task) untuk detail dan opsi konfigurasi.
+Lihat [LLM Task](/id/tools/llm-task) untuk detail dan opsi konfigurasi.
 
 ## File alur kerja (.lobster)
 
-Lobster dapat menjalankan file alur kerja YAML/JSON dengan field `name`, `args`, `steps`, `env`, `condition`, dan `approval`. Dalam panggilan tool OpenClaw, setel `pipeline` ke path file tersebut.
+Lobster dapat menjalankan file alur kerja YAML/JSON dengan field `name`, `args`, `steps`, `env`, `condition`, dan `approval`. Dalam pemanggilan alat OpenClaw, tetapkan `pipeline` ke path file.
 
 ```yaml
 name: inbox-triage
@@ -158,17 +158,19 @@ steps:
 Catatan:
 
 - `stdin: $step.stdout` dan `stdin: $step.json` meneruskan output langkah sebelumnya.
-- `condition` (atau `when`) dapat mengendalikan langkah berdasarkan `$step.approved`.
+- `condition` (atau `when`) dapat menggerbang langkah berdasarkan `$step.approved`.
 
 ## Instal Lobster
 
-Instal CLI Lobster pada **host yang sama** yang menjalankan Gateway OpenClaw (lihat [repo Lobster](https://github.com/openclaw/lobster)), dan pastikan `lobster` ada di `PATH`.
+Alur kerja Lobster bawaan berjalan in-process; tidak diperlukan binary `lobster` terpisah. Embedded runner dikirim bersama plugin Lobster.
 
-## Aktifkan tool
+Jika Anda memerlukan CLI Lobster mandiri untuk pengembangan atau pipeline eksternal, instal dari [repo Lobster](https://github.com/openclaw/lobster) dan pastikan `lobster` ada di `PATH`.
 
-Lobster adalah tool plugin **opsional** (tidak aktif secara default).
+## Aktifkan alat
 
-Rekomendasi (aditif, aman):
+Lobster adalah alat plugin **opsional** (tidak diaktifkan secara default).
+
+Disarankan (aditif, aman):
 
 ```json
 {
@@ -178,7 +180,7 @@ Rekomendasi (aditif, aman):
 }
 ```
 
-Atau per agen:
+Atau per-agent:
 
 ```json
 {
@@ -195,13 +197,13 @@ Atau per agen:
 }
 ```
 
-Hindari menggunakan `tools.allow: ["lobster"]` kecuali Anda memang berniat menjalankan mode allowlist yang ketat.
+Hindari menggunakan `tools.allow: ["lobster"]` kecuali Anda memang bermaksud menjalankan mode allowlist yang ketat.
 
 Catatan: allowlist bersifat opt-in untuk plugin opsional. Jika allowlist Anda hanya menyebut
-tool plugin (seperti `lobster`), OpenClaw tetap membiarkan tool inti aktif. Untuk membatasi tool inti,
-sertakan juga tool atau grup inti yang Anda inginkan dalam allowlist.
+alat plugin (seperti `lobster`), OpenClaw tetap mengaktifkan alat core. Untuk membatasi alat core,
+sertakan juga alat core atau grup yang Anda inginkan dalam allowlist.
 
-## Contoh: Triase email
+## Contoh: triase email
 
 Tanpa Lobster:
 
@@ -226,7 +228,7 @@ Dengan Lobster:
 }
 ```
 
-Mengembalikan envelope JSON (terpotong):
+Mengembalikan envelope JSON (dipotong):
 
 ```json
 {
@@ -254,11 +256,11 @@ Pengguna menyetujui → lanjutkan:
 
 Satu alur kerja. Deterministik. Aman.
 
-## Parameter tool
+## Parameter alat
 
 ### `run`
 
-Jalankan pipeline dalam tool mode.
+Jalankan pipeline dalam mode alat.
 
 ```json
 {
@@ -294,9 +296,9 @@ Lanjutkan alur kerja yang dihentikan setelah persetujuan.
 
 ### Input opsional
 
-- `cwd`: Working directory relatif untuk pipeline (harus tetap berada di dalam working directory proses saat ini).
-- `timeoutMs`: Bunuh subprocess jika melebihi durasi ini (default: 20000).
-- `maxStdoutBytes`: Bunuh subprocess jika stdout melebihi ukuran ini (default: 512000).
+- `cwd`: Direktori kerja relatif untuk pipeline (harus tetap berada di dalam direktori kerja gateway).
+- `timeoutMs`: Batalkan alur kerja jika melebihi durasi ini (default: 20000).
+- `maxStdoutBytes`: Batalkan alur kerja jika output melebihi ukuran ini (default: 512000).
 - `argsJson`: String JSON yang diteruskan ke `lobster run --args-json` (khusus file alur kerja).
 
 ## Envelope output
@@ -307,49 +309,49 @@ Lobster mengembalikan envelope JSON dengan salah satu dari tiga status:
 - `needs_approval` → dijeda; `requiresApproval.resumeToken` diperlukan untuk melanjutkan
 - `cancelled` → ditolak atau dibatalkan secara eksplisit
 
-Tool ini menampilkan envelope tersebut di `content` (JSON yang dirapikan) dan `details` (objek mentah).
+Alat menampilkan envelope dalam `content` (JSON yang dirapikan) dan `details` (objek mentah).
 
 ## Persetujuan
 
-Jika `requiresApproval` ada, periksa prompt lalu putuskan:
+Jika `requiresApproval` ada, periksa prompt dan tentukan:
 
 - `approve: true` → lanjutkan dan teruskan efek samping
-- `approve: false` → batalkan dan finalisasi alur kerja
+- `approve: false` → batalkan dan finalkan alur kerja
 
-Gunakan `approve --preview-from-stdin --limit N` untuk melampirkan pratinjau JSON ke permintaan persetujuan tanpa glue `jq`/heredoc kustom. Resume token kini ringkas: Lobster menyimpan status pelanjutan alur kerja di state dir-nya dan mengembalikan token key kecil.
+Gunakan `approve --preview-from-stdin --limit N` untuk melampirkan preview JSON ke permintaan persetujuan tanpa glue `jq`/heredoc kustom. Resume token kini ringkas: Lobster menyimpan state resume alur kerja di bawah state dir miliknya dan mengembalikan kunci token kecil.
 
 ## OpenProse
 
-OpenProse cocok dipasangkan dengan Lobster: gunakan `/prose` untuk mengorkestrasi persiapan multi-agen, lalu jalankan pipeline Lobster untuk persetujuan yang deterministik. Jika program Prose memerlukan Lobster, izinkan tool `lobster` untuk sub-agen melalui `tools.subagents.tools`. Lihat [OpenProse](/id/prose).
+OpenProse cocok dipasangkan dengan Lobster: gunakan `/prose` untuk mengorkestrasi persiapan multi-agent, lalu jalankan pipeline Lobster untuk persetujuan yang deterministik. Jika program Prose memerlukan Lobster, izinkan alat `lobster` untuk sub-agent melalui `tools.subagents.tools`. Lihat [OpenProse](/id/prose).
 
 ## Keamanan
 
-- **Hanya subprocess lokal** — tidak ada panggilan jaringan dari plugin itu sendiri.
-- **Tanpa rahasia** — Lobster tidak mengelola OAuth; ia memanggil tool OpenClaw yang mengelolanya.
-- **Sadar sandbox** — dinonaktifkan ketika konteks tool berada dalam sandbox.
-- **Dikeraskan** — nama executable tetap (`lobster`) di `PATH`; timeout dan batas output ditegakkan.
+- **Hanya lokal in-process** — alur kerja dijalankan di dalam proses gateway; plugin itu sendiri tidak melakukan panggilan jaringan.
+- **Tanpa secret** — Lobster tidak mengelola OAuth; Lobster memanggil alat OpenClaw yang melakukannya.
+- **Sadar sandbox** — dinonaktifkan saat konteks alat berada dalam sandbox.
+- **Diperkeras** — timeout dan batas output ditegakkan oleh embedded runner.
 
 ## Pemecahan masalah
 
-- **`lobster subprocess timed out`** → tingkatkan `timeoutMs`, atau pecah pipeline yang panjang.
+- **`lobster timed out`** → tingkatkan `timeoutMs`, atau pecah pipeline yang panjang.
 - **`lobster output exceeded maxStdoutBytes`** → naikkan `maxStdoutBytes` atau kurangi ukuran output.
-- **`lobster returned invalid JSON`** → pastikan pipeline berjalan dalam tool mode dan hanya mencetak JSON.
-- **`lobster failed (code …)`** → jalankan pipeline yang sama di terminal untuk memeriksa stderr.
+- **`lobster returned invalid JSON`** → pastikan pipeline berjalan dalam mode alat dan hanya mencetak JSON.
+- **`lobster failed`** → periksa log gateway untuk detail error embedded runner.
 
 ## Pelajari lebih lanjut
 
-- [Plugins](/tools/plugin)
-- [Penulisan tool plugin](/id/plugins/building-plugins#registering-agent-tools)
+- [Plugins](/id/tools/plugin)
+- [Authoring alat plugin](/id/plugins/building-plugins#registering-agent-tools)
 
 ## Studi kasus: alur kerja komunitas
 
-Salah satu contoh publik: CLI “second brain” + pipeline Lobster yang mengelola tiga vault Markdown (pribadi, pasangan, bersama). CLI tersebut menghasilkan JSON untuk statistik, daftar inbox, dan pemindaian item usang; Lobster merangkai perintah-perintah itu menjadi alur kerja seperti `weekly-review`, `inbox-triage`, `memory-consolidation`, dan `shared-task-sync`, masing-masing dengan gerbang persetujuan. AI menangani penilaian (kategorisasi) saat tersedia dan fallback ke aturan deterministik saat tidak tersedia.
+Satu contoh publik: CLI “second brain” + pipeline Lobster yang mengelola tiga vault Markdown (pribadi, pasangan, bersama). CLI mengeluarkan JSON untuk statistik, daftar inbox, dan pemindaian item usang; Lobster merangkai perintah-perintah itu menjadi alur kerja seperti `weekly-review`, `inbox-triage`, `memory-consolidation`, dan `shared-task-sync`, masing-masing dengan gerbang persetujuan. AI menangani penilaian (kategorisasi) saat tersedia dan fallback ke aturan deterministik saat tidak.
 
 - Thread: [https://x.com/plattenschieber/status/2014508656335770033](https://x.com/plattenschieber/status/2014508656335770033)
 - Repo: [https://github.com/bloomedai/brain-cli](https://github.com/bloomedai/brain-cli)
 
 ## Terkait
 
-- [Otomatisasi & Tugas](/id/automation) — penjadwalan alur kerja Lobster
-- [Ikhtisar Otomatisasi](/id/automation) — semua mekanisme otomatisasi
-- [Ikhtisar Tool](/tools) — semua tool agen yang tersedia
+- [Automation & Tasks](/id/automation) — menjadwalkan alur kerja Lobster
+- [Ringkasan Automation](/id/automation) — semua mekanisme otomasi
+- [Ringkasan Tools](/id/tools) — semua alat agen yang tersedia

@@ -1,13 +1,13 @@
 ---
 read_when:
     - Запуск або виправлення тестів
-summary: Як запускати тести локально (vitest) і коли використовувати режими force/coverage
+summary: Як локально запускати тести (vitest) і коли використовувати режими force/coverage
 title: Тести
 x-i18n:
-    generated_at: "2026-04-06T15:51:29Z"
+    generated_at: "2026-04-06T16:36:00Z"
     model: gpt-5.4
     provider: openai
-    source_hash: c4655cb43817fc6653a23ced4a02c72903bc35e140ec8a974a36a54e12e2d9e2
+    source_hash: a2a664aed9c2cc37144311d0257320268fe29d36da642775278f29bfc305bdeb
     source_path: reference/test.md
     workflow: 15
 ---
@@ -16,44 +16,45 @@ x-i18n:
 
 - Повний набір для тестування (набори, live, Docker): [Тестування](/uk/help/testing)
 
-- `pnpm test:force`: завершує всі завислі процеси gateway, що утримують типовий control port, а потім запускає повний набір Vitest з ізольованим портом gateway, щоб серверні тести не конфліктували із запущеним екземпляром. Використовуйте це, коли попередній запуск gateway залишив зайнятим порт 18789.
-- `pnpm test:coverage`: запускає набір unit-тестів із покриттям V8 (через `vitest.unit.config.ts`). Глобальні пороги становлять 70% для lines/branches/functions/statements. Із покриття виключено entrypoint-и з важкою integration-логікою (CLI wiring, gateway/telegram bridges, webchat static server), щоб ціль залишалася зосередженою на логіці, придатній для unit-тестування.
-- `pnpm test:coverage:changed`: запускає coverage unit-тестів лише для файлів, змінених відносно `origin/main`.
-- `pnpm test:changed`: розгортає змінені git-шляхи в маршрутизовані lane-и Vitest, коли diff торкається лише routable source/test файлів. Зміни config/setup, як і раніше, повертаються до нативного запуску root projects, щоб за потреби зміни wiring повторно запускали перевірку ширше.
-- `pnpm test`: маршрутизує явні цілі файлів/каталогів через scoped lane-и Vitest, але все одно повертається до нативного запуску root projects, коли ви виконуєте повний нетаргетований прогін.
-- Вибрані тестові файли `plugin-sdk` і `commands` тепер маршрутизуються через окремі полегшені lane-и, які зберігають лише `test/setup.ts`, залишаючи випадки з важким runtime на їхніх наявних lane-ах.
-- Вибрані helper source-файли `plugin-sdk` і `commands` також зіставляють `pnpm test:changed` з явними sibling-тестами в цих полегшених lane-ах, щоб невеликі зміни helper-ів не перезапускали важкі набори, підкріплені runtime.
-- Базова конфігурація Vitest тепер типово використовує `pool: "threads"` і `isolate: false`, зі спільним неізольованим runner, увімкненим у всіх конфігураціях репозиторію.
+- `pnpm test:force`: Завершує будь-який завислий процес gateway, який утримує типовий control port, а потім запускає повний набір Vitest з ізольованим портом gateway, щоб тести сервера не конфліктували із запущеним екземпляром. Використовуйте це, якщо попередній запуск gateway залишив порт 18789 зайнятим.
+- `pnpm test:coverage`: Запускає набір unit-тестів із покриттям V8 (через `vitest.unit.config.ts`). Глобальні пороги становлять 70% для lines/branches/functions/statements. Із покриття виключено entrypoints з великою інтеграційною складовою (CLI wiring, мости gateway/telegram, статичний сервер webchat), щоб зосередити ціль на логіці, придатній для unit-тестування.
+- `pnpm test:coverage:changed`: Запускає unit coverage лише для файлів, змінених відносно `origin/main`.
+- `pnpm test:changed`: розгортає змінені git-шляхи в обмежені lane-и Vitest, коли diff торкається лише routable файлів source/test. Зміни config/setup, як і раніше, повертаються до нативного запуску root projects, щоб у разі потреби зміни wiring запускали ширшу перевірку.
+- `pnpm test`: спрямовує явно вказані цілі файлів/каталогів через обмежені lane-и Vitest. Запуски без цілей тепер виконують п’ять послідовних shard-конфігурацій (`vitest.full-core-unit.config.ts`, `vitest.full-core-runtime.config.ts`, `vitest.full-agentic.config.ts`, `vitest.full-auto-reply.config.ts`, `vitest.full-extensions.config.ts`) замість одного гігантського процесу root-project.
+- Вибрані тестові файли `plugin-sdk` і `commands` тепер спрямовуються через окремі легкі lane-и, які залишають лише `test/setup.ts`, а resource-intensive випадки виконуються у наявних lane-ах.
+- Вибрані допоміжні вихідні файли `plugin-sdk` і `commands` також зіставляють `pnpm test:changed` з явними сусідніми тестами в цих легких lane-ах, тож невеликі зміни в helper-ах не змушують повторно запускати важкі набори з runtime.
+- `auto-reply` тепер також розбито на три окремі конфігурації (`core`, `top-level`, `reply`), щоб harness для reply не домінував над легшими top-level тестами status/token/helper.
+- Базова конфігурація Vitest тепер за замовчуванням використовує `pool: "threads"` і `isolate: false`, а спільний неізольований runner увімкнено в усіх конфігураціях репозиторію.
 - `pnpm test:channels` запускає `vitest.channels.config.ts`.
 - `pnpm test:extensions` запускає `vitest.extensions.config.ts`.
 - `pnpm test:extensions`: запускає набори extension/plugin.
-- `pnpm test:perf:imports`: вмикає звіти Vitest про import-duration та import-breakdown, при цьому все ще використовує маршрутизацію scoped lane для явних цілей файлів/каталогів.
-- `pnpm test:perf:imports:changed`: той самий import profiling, але лише для файлів, змінених відносно `origin/main`.
-- `pnpm test:perf:changed:bench -- --ref <git-ref>` виконує benchmark маршрутизованого шляху changed-mode проти нативного запуску root-project для того самого закоміченого git diff.
-- `pnpm test:perf:changed:bench -- --worktree` виконує benchmark поточного набору змін у worktree без попереднього коміту.
-- `pnpm test:perf:profile:main`: записує CPU profile для головного потоку Vitest (`.artifacts/vitest-main-profile`).
-- `pnpm test:perf:profile:runner`: записує CPU + heap profiles для unit runner (`.artifacts/vitest-runner-profile`).
-- Інтеграція gateway: вмикається через `OPENCLAW_TEST_INCLUDE_GATEWAY=1 pnpm test` або `pnpm test:gateway`.
-- `pnpm test:e2e`: запускає наскрізні smoke-тести gateway (multi-instance WS/HTTP/node pairing). Типово використовує `threads` + `isolate: false` з адаптивною кількістю workers у `vitest.e2e.config.ts`; налаштовуйте через `OPENCLAW_E2E_WORKERS=<n>` і встановлюйте `OPENCLAW_E2E_VERBOSE=1` для докладних логів.
-- `pnpm test:live`: запускає live-тести provider-ів (minimax/zai). Потрібні API-ключі та `LIVE=1` (або специфічний для provider-а `*_LIVE_TEST=1`), щоб зняти пропуск.
-- `pnpm test:docker:openwebui`: запускає Docker-оточення OpenClaw + Open WebUI, входить через Open WebUI, перевіряє `/api/models`, а потім виконує реальний проксійований чат через `/api/chat/completions`. Потребує придатного ключа live-моделі (наприклад, OpenAI у `~/.profile`), завантажує зовнішній образ Open WebUI і не вважається стабільним для CI так само, як звичайні набори unit/e2e.
-- `pnpm test:docker:mcp-channels`: запускає seeded-контейнер Gateway і другий клієнтський контейнер, який підіймає `openclaw mcp serve`, а потім перевіряє routed discovery розмов, читання transcript-ів, метадані вкладень, поведінку live event queue, маршрутизацію вихідного надсилання та сповіщення про channel + permission у стилі Claude через реальний міст stdio. Перевірка сповіщень Claude читає сирі stdio MCP frames напряму, щоб smoke точно відображав те, що міст фактично надсилає.
+- `pnpm test:perf:imports`: вмикає звітність Vitest про тривалість import + import-breakdown, водночас зберігаючи маршрутизацію через обмежені lane-и для явно вказаних цілей файлів/каталогів.
+- `pnpm test:perf:imports:changed`: те саме профілювання import, але лише для файлів, змінених відносно `origin/main`.
+- `pnpm test:perf:changed:bench -- --ref <git-ref>` виконує бенчмарк маршрутизованого шляху changed-mode проти нативного запуску root-project для того самого закоміченого git diff.
+- `pnpm test:perf:changed:bench -- --worktree` виконує бенчмарк поточного набору змін worktree без попереднього коміту.
+- `pnpm test:perf:profile:main`: записує профіль CPU для головного потоку Vitest (`.artifacts/vitest-main-profile`).
+- `pnpm test:perf:profile:runner`: записує профілі CPU + heap для unit runner (`.artifacts/vitest-runner-profile`).
+- Інтеграція gateway: вмикається за запитом через `OPENCLAW_TEST_INCLUDE_GATEWAY=1 pnpm test` або `pnpm test:gateway`.
+- `pnpm test:e2e`: Запускає наскрізні smoke-тести gateway (multi-instance WS/HTTP/node pairing). За замовчуванням використовує `threads` + `isolate: false` з адаптивною кількістю workers у `vitest.e2e.config.ts`; налаштовуйте через `OPENCLAW_E2E_WORKERS=<n>` і встановіть `OPENCLAW_E2E_VERBOSE=1` для докладних логів.
+- `pnpm test:live`: Запускає live-тести provider-ів (minimax/zai). Потрібні API-ключі та `LIVE=1` (або provider-specific `*_LIVE_TEST=1`), щоб зняти пропуск.
+- `pnpm test:docker:openwebui`: Запускає Dockerized OpenClaw + Open WebUI, виконує вхід через Open WebUI, перевіряє `/api/models`, а потім запускає реальний проксійований чат через `/api/chat/completions`. Потребує придатного ключа live model (наприклад, OpenAI у `~/.profile`), завантажує зовнішній образ Open WebUI і не вважається таким стабільним для CI, як звичайні набори unit/e2e.
+- `pnpm test:docker:mcp-channels`: Запускає підготовлений контейнер Gateway і другий клієнтський контейнер, який запускає `openclaw mcp serve`, а потім перевіряє виявлення маршрутизованих розмов, читання transcript, метадані вкладень, поведінку live event queue, маршрутизацію outbound send, а також сповіщення про channel + permission у стилі Claude через реальний міст stdio. Перевірка сповіщень Claude читає необроблені кадри stdio MCP безпосередньо, щоб smoke-тест відображав те, що міст насправді надсилає.
 
 ## Локальний PR gate
 
-Для локальних перевірок PR перед landing/gate запустіть:
+Для локальних перевірок PR land/gate виконайте:
 
 - `pnpm check`
 - `pnpm build`
 - `pnpm test`
 - `pnpm check:docs`
 
-Якщо `pnpm test` дає flaky-збій на завантаженому хості, перезапустіть його один раз, перш ніж вважати це регресією, а потім ізолюйте через `pnpm test <path/to/test>`. Для хостів з обмеженою пам’яттю використовуйте:
+Якщо `pnpm test` дає нестабільний результат на завантаженому хості, перезапустіть його один раз, перш ніж вважати це регресією, а потім ізолюйте проблему за допомогою `pnpm test <path/to/test>`. Для хостів з обмеженою пам’яттю використовуйте:
 
 - `OPENCLAW_VITEST_MAX_WORKERS=1 pnpm test`
 - `OPENCLAW_VITEST_FS_MODULE_CACHE_PATH=/tmp/openclaw-vitest-cache pnpm test:changed`
 
-## Bench затримки моделі (локальні ключі)
+## Бенч затримки моделі (локальні ключі)
 
 Скрипт: [`scripts/bench-model.ts`](https://github.com/openclaw/openclaw/blob/main/scripts/bench-model.ts)
 
@@ -68,7 +69,7 @@ x-i18n:
 - minimax median 1279ms (min 1114, max 2431)
 - opus median 2454ms (min 1224, max 3170)
 
-## Bench запуску CLI
+## Бенч запуску CLI
 
 Скрипт: [`scripts/bench-cli-startup.ts`](https://github.com/openclaw/openclaw/blob/main/scripts/bench-cli-startup.ts)
 
@@ -89,29 +90,29 @@ x-i18n:
 - `pnpm tsx scripts/bench-cli-startup.ts --preset real --cpu-prof-dir .artifacts/cli-cpu`
 - `pnpm tsx scripts/bench-cli-startup.ts --json`
 
-Presets:
+Набори preset-ів:
 
 - `startup`: `--version`, `--help`, `health`, `health --json`, `status --json`, `status`
 - `real`: `health`, `status`, `status --json`, `sessions`, `sessions --json`, `agents list --json`, `gateway status`, `gateway status --json`, `gateway health --json`, `config get gateway.port`
-- `all`: обидва presets
+- `all`: обидва набори preset-ів
 
-Вивід включає `sampleCount`, avg, p50, p95, min/max, розподіл exit-code/signal і зведення max RSS для кожної команди. Необов’язкові `--cpu-prof-dir` / `--heap-prof-dir` записують профілі V8 для кожного запуску, щоб вимірювання часу та збирання профілів використовували той самий harness.
+Вивід містить `sampleCount`, avg, p50, p95, min/max, розподіл exit-code/signal і зведення max RSS для кожної команди. Необов’язковий `--cpu-prof-dir` / `--heap-prof-dir` записує профілі V8 для кожного запуску, тож вимірювання часу та збір профілів використовують один і той самий harness.
 
-Умовності для збереженого виводу:
+Угоди щодо збереженого виводу:
 
-- `pnpm test:startup:bench:smoke` записує цільовий smoke artifact у `.artifacts/cli-startup-bench-smoke.json`
-- `pnpm test:startup:bench:save` записує artifact повного набору в `.artifacts/cli-startup-bench-all.json` з використанням `runs=5` і `warmup=1`
+- `pnpm test:startup:bench:smoke` записує цільовий smoke-артефакт у `.artifacts/cli-startup-bench-smoke.json`
+- `pnpm test:startup:bench:save` записує артефакт повного набору в `.artifacts/cli-startup-bench-all.json` з використанням `runs=5` і `warmup=1`
 - `pnpm test:startup:bench:update` оновлює закомічений baseline fixture у `test/fixtures/cli-startup-bench.json` з використанням `runs=5` і `warmup=1`
 
 Закомічений fixture:
 
 - `test/fixtures/cli-startup-bench.json`
-- Оновіть через `pnpm test:startup:bench:update`
-- Порівняйте поточні результати з fixture через `pnpm test:startup:bench:check`
+- Оновіть за допомогою `pnpm test:startup:bench:update`
+- Порівняйте поточні результати з fixture за допомогою `pnpm test:startup:bench:check`
 
 ## Onboarding E2E (Docker)
 
-Docker необов’язковий; це потрібно лише для containerized smoke-тестів onboarding.
+Docker необов’язковий; це потрібно лише для контейнеризованих smoke-тестів onboarding.
 
 Повний cold-start flow у чистому Linux-контейнері:
 
@@ -119,11 +120,11 @@ Docker необов’язковий; це потрібно лише для cont
 scripts/e2e/onboard-docker.sh
 ```
 
-Цей скрипт керує інтерактивним wizard через pseudo-tty, перевіряє файли config/workspace/session, потім запускає gateway і виконує `openclaw health`.
+Цей скрипт керує інтерактивним wizard через pseudo-tty, перевіряє файли config/workspace/session, а потім запускає gateway і виконує `openclaw health`.
 
-## Smoke перевірка імпорту QR (Docker)
+## Smoke-тест імпорту QR (Docker)
 
-Гарантує, що `qrcode-terminal` завантажується в підтримуваних Docker runtime Node (типово Node 24, сумісний Node 22):
+Гарантує, що `qrcode-terminal` завантажується у підтримуваних Docker runtime Node (типово Node 24, сумісно з Node 22):
 
 ```bash
 pnpm test:docker:qr

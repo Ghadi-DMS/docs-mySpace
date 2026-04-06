@@ -1,15 +1,15 @@
 ---
 read_when:
-    - 스크립트나 CI에서 온보딩을 자동화하는 경우
-    - 특정 프로바이더를 위한 비대화형 예제가 필요한 경우
+    - 스크립트 또는 CI에서 온보딩을 자동화하는 경우
+    - 특정 provider용 비대화형 예시가 필요한 경우
 sidebarTitle: CLI automation
 summary: OpenClaw CLI용 스크립트 기반 온보딩 및 에이전트 설정
 title: CLI 자동화
 x-i18n:
-    generated_at: "2026-04-05T12:55:43Z"
+    generated_at: "2026-04-06T03:12:04Z"
     model: gpt-5.4
     provider: openai
-    source_hash: a757d58df443e5e71f97417aed20e6a80a63b84f69f7dbf0e093319827d37836
+    source_hash: 878ea3fa9f2a75cff9f1a803ccb8a52a1219102e2970883ad18e3aaec5967fd2
     source_path: start/wizard-cli-automation.md
     workflow: 15
 ---
@@ -37,12 +37,12 @@ openclaw onboard --non-interactive \
   --skip-skills
 ```
 
-기계가 읽을 수 있는 요약이 필요하면 `--json`을 추가하세요.
+기계 판독 가능한 요약이 필요하면 `--json`을 추가하세요.
 
-인증 프로필에 일반 텍스트 값 대신 env 기반 ref를 저장하려면 `--secret-input-mode ref`를 사용하세요.
-env ref와 구성된 프로바이더 ref(`file` 또는 `exec`) 사이의 대화형 선택은 온보딩 흐름에서 사용할 수 있습니다.
+일반 텍스트 값 대신 auth 프로필에 env 기반 ref를 저장하려면 `--secret-input-mode ref`를 사용하세요.
+env ref와 구성된 provider ref(`file` 또는 `exec`) 사이의 대화형 선택은 온보딩 흐름에서 사용할 수 있습니다.
 
-비대화형 `ref` 모드에서는 프로바이더 env var가 프로세스 환경에 설정되어 있어야 합니다.
+비대화형 `ref` 모드에서는 provider env vars가 프로세스 환경에 설정되어 있어야 합니다.
 이제 일치하는 env var 없이 인라인 키 플래그를 전달하면 즉시 실패합니다.
 
 예시:
@@ -55,20 +55,18 @@ openclaw onboard --non-interactive \
   --accept-risk
 ```
 
-## 프로바이더별 예시
+## Provider별 예시
 
 <AccordionGroup>
-  <Accordion title="Anthropic Claude CLI 예시">
+  <Accordion title="Anthropic API 키 예시">
     ```bash
     openclaw onboard --non-interactive \
       --mode local \
-      --auth-choice anthropic-cli \
+      --auth-choice apiKey \
+      --anthropic-api-key "$ANTHROPIC_API_KEY" \
       --gateway-port 18789 \
       --gateway-bind loopback
     ```
-
-    Claude CLI가 동일한 Gateway 호스트에 이미 설치되어 있고 로그인되어 있어야 합니다.
-
   </Accordion>
   <Accordion title="Gemini 예시">
     ```bash
@@ -164,7 +162,7 @@ openclaw onboard --non-interactive \
       --gateway-bind loopback
     ```
   </Accordion>
-  <Accordion title="사용자 지정 프로바이더 예시">
+  <Accordion title="커스텀 provider 예시">
     ```bash
     openclaw onboard --non-interactive \
       --mode local \
@@ -201,12 +199,15 @@ openclaw onboard --non-interactive \
   </Accordion>
 </AccordionGroup>
 
-Anthropic setup-token은 레거시/수동 온보딩 경로로 다시 사용할 수 있습니다.
-Anthropic이 OpenClaw 사용자에게 OpenClaw Claude 로그인 경로에는 **Extra Usage**가 필요하다고 안내했다는 점을 전제로 사용하세요. 프로덕션에서는 Anthropic API 키를 우선 사용하세요.
+Anthropic setup-token을 다시 레거시/수동 온보딩 경로로 사용할 수 있습니다.
+Anthropic이 OpenClaw 사용자에게 OpenClaw
+Claude 로그인 경로에는 **Extra Usage**가 필요하다고 안내했다는 점을 감안해 사용하세요. 프로덕션에서는
+Anthropic API 키를 권장합니다.
 
 ## 다른 에이전트 추가
 
-별도의 워크스페이스, 세션 및 인증 프로필을 가진 별도 에이전트를 만들려면 `openclaw agents add <name>`을 사용하세요. `--workspace` 없이 실행하면 마법사가 시작됩니다.
+별도의 워크스페이스,
+세션, auth 프로필을 가진 별도 에이전트를 만들려면 `openclaw agents add <name>`을 사용하세요. `--workspace` 없이 실행하면 마법사가 시작됩니다.
 
 ```bash
 openclaw agents add work \
@@ -226,11 +227,11 @@ openclaw agents add work \
 참고:
 
 - 기본 워크스페이스는 `~/.openclaw/workspace-<agentId>` 형식을 따릅니다.
-- 인바운드 메시지를 라우팅하려면 `bindings`를 추가하세요(마법사로 설정 가능).
+- 인바운드 메시지를 라우팅하려면 `bindings`를 추가하세요(마법사에서 설정 가능).
 - 비대화형 플래그: `--model`, `--agent-dir`, `--bind`, `--non-interactive`.
 
 ## 관련 문서
 
-- 온보딩 허브: [온보딩(CLI)](/ko/start/wizard)
-- 전체 참조: [CLI 설정 참조](/start/wizard-cli-reference)
+- 온보딩 허브: [Onboarding (CLI)](/ko/start/wizard)
+- 전체 참조: [CLI Setup Reference](/ko/start/wizard-cli-reference)
 - 명령 참조: [`openclaw onboard`](/cli/onboard)

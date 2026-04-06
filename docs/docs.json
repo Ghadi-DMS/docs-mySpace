@@ -1250,6 +1250,7 @@
                 "pages": [
                   "providers/alibaba",
                   "providers/anthropic",
+                  "providers/arcee",
                   "providers/bedrock",
                   "providers/bedrock-mantle",
                   "providers/chutes",
@@ -2617,6 +2618,7 @@
                 "pages": [
                   "ja-JP/providers/alibaba",
                   "ja-JP/providers/anthropic",
+                  "ja-JP/providers/arcee",
                   "ja-JP/providers/bedrock",
                   "ja-JP/providers/bedrock-mantle",
                   "ja-JP/providers/chutes",
@@ -3369,6 +3371,7 @@
                 "pages": [
                   "es/providers/alibaba",
                   "es/providers/anthropic",
+                  "es/providers/arcee",
                   "es/providers/bedrock",
                   "es/providers/bedrock-mantle",
                   "es/providers/chutes",
@@ -4121,6 +4124,7 @@
                 "pages": [
                   "pt-BR/providers/alibaba",
                   "pt-BR/providers/anthropic",
+                  "pt-BR/providers/arcee",
                   "pt-BR/providers/bedrock",
                   "pt-BR/providers/bedrock-mantle",
                   "pt-BR/providers/chutes",
@@ -4873,6 +4877,7 @@
                 "pages": [
                   "ko/providers/alibaba",
                   "ko/providers/anthropic",
+                  "ko/providers/arcee",
                   "ko/providers/bedrock",
                   "ko/providers/bedrock-mantle",
                   "ko/providers/chutes",
@@ -5625,6 +5630,7 @@
                 "pages": [
                   "de/providers/alibaba",
                   "de/providers/anthropic",
+                  "de/providers/arcee",
                   "de/providers/bedrock",
                   "de/providers/bedrock-mantle",
                   "de/providers/chutes",
@@ -6377,6 +6383,7 @@
                 "pages": [
                   "fr/providers/alibaba",
                   "fr/providers/anthropic",
+                  "fr/providers/arcee",
                   "fr/providers/bedrock",
                   "fr/providers/bedrock-mantle",
                   "fr/providers/chutes",
@@ -7129,6 +7136,7 @@
                 "pages": [
                   "ar/providers/alibaba",
                   "ar/providers/anthropic",
+                  "ar/providers/arcee",
                   "ar/providers/bedrock",
                   "ar/providers/bedrock-mantle",
                   "ar/providers/chutes",
@@ -7881,6 +7889,7 @@
                 "pages": [
                   "it/providers/alibaba",
                   "it/providers/anthropic",
+                  "it/providers/arcee",
                   "it/providers/bedrock",
                   "it/providers/bedrock-mantle",
                   "it/providers/chutes",
@@ -8633,6 +8642,7 @@
                 "pages": [
                   "tr/providers/alibaba",
                   "tr/providers/anthropic",
+                  "tr/providers/arcee",
                   "tr/providers/bedrock",
                   "tr/providers/bedrock-mantle",
                   "tr/providers/chutes",
@@ -9385,6 +9395,7 @@
                 "pages": [
                   "uk/providers/alibaba",
                   "uk/providers/anthropic",
+                  "uk/providers/arcee",
                   "uk/providers/bedrock",
                   "uk/providers/bedrock-mantle",
                   "uk/providers/chutes",
@@ -10137,6 +10148,7 @@
                 "pages": [
                   "id/providers/alibaba",
                   "id/providers/anthropic",
+                  "id/providers/arcee",
                   "id/providers/bedrock",
                   "id/providers/bedrock-mantle",
                   "id/providers/chutes",
@@ -10889,6 +10901,7 @@
                 "pages": [
                   "pl/providers/alibaba",
                   "pl/providers/anthropic",
+                  "pl/providers/arcee",
                   "pl/providers/bedrock",
                   "pl/providers/bedrock-mantle",
                   "pl/providers/chutes",

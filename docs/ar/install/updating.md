@@ -1,23 +1,23 @@
 ---
 read_when:
     - تحديث OpenClaw
-    - حدث خلل ما بعد التحديث
+    - تعطل شيء ما بعد التحديث
 summary: تحديث OpenClaw بأمان (تثبيت عام أو من المصدر)، بالإضافة إلى استراتيجية التراجع
 title: التحديث
 x-i18n:
-    generated_at: "2026-04-05T12:48:38Z"
+    generated_at: "2026-04-06T03:08:12Z"
     model: gpt-5.4
     provider: openai
-    source_hash: b40429d38ca851be4fdf8063ed425faf4610a4b5772703e0481c5f1fb588ba58
+    source_hash: ca9fff0776b9f5977988b649e58a5d169e5fa3539261cb02779d724d4ca92877
     source_path: install/updating.md
     workflow: 15
 ---
 
 # التحديث
 
-حافظ على OpenClaw محدثًا.
+حافظ على تحديث OpenClaw.
 
-## الموصى به: `openclaw update`
+## موصى به: `openclaw update`
 
 أسرع طريقة للتحديث. يكتشف نوع التثبيت لديك (npm أو git)، ويجلب أحدث إصدار، ويشغّل `openclaw doctor`، ثم يعيد تشغيل البوابة.
 
@@ -30,14 +30,14 @@ openclaw update
 ```bash
 openclaw update --channel beta
 openclaw update --tag main
-openclaw update --dry-run   # preview without applying
+openclaw update --dry-run   # معاينة بدون تطبيق
 ```
 
-يفضّل `--channel beta` قناة beta، لكن وقت التشغيل يرجع إلى stable/latest عندما
-يكون وسم beta مفقودًا أو أقدم من أحدث إصدار stable. استخدم `--tag beta`
-إذا كنت تريد وسم npm beta dist-tag الخام لتحديث حزمة لمرة واحدة.
+يفضّل `--channel beta` قناة beta، لكن وقت التشغيل يعود إلى stable/latest عندما
+تكون علامة beta مفقودة أو أقدم من أحدث إصدار مستقر. استخدم `--tag beta`
+إذا كنت تريد npm beta dist-tag الخام لتحديث حزمة لمرة واحدة.
 
-راجع [قنوات التطوير](/install/development-channels) لمعرفة دلالات القنوات.
+راجع [قنوات التطوير](/ar/install/development-channels) لمعرفة دلالات القنوات.
 
 ## بديل: أعد تشغيل المثبّت
 
@@ -45,7 +45,7 @@ openclaw update --dry-run   # preview without applying
 curl -fsSL https://openclaw.ai/install.sh | bash
 ```
 
-أضف `--no-onboard` لتخطي onboarding. وبالنسبة إلى التثبيتات من المصدر، مرّر `--install-method git --no-onboard`.
+أضف `--no-onboard` لتخطي الإعداد الأولي. بالنسبة إلى التثبيتات من المصدر، مرّر `--install-method git --no-onboard`.
 
 ## بديل: npm أو pnpm أو bun يدويًا
 
@@ -61,9 +61,9 @@ pnpm add -g openclaw@latest
 bun add -g openclaw@latest
 ```
 
-## المُحدِّث التلقائي
+## أداة التحديث التلقائي
 
-يكون المُحدِّث التلقائي متوقفًا افتراضيًا. فعّله في `~/.openclaw/openclaw.json`:
+أداة التحديث التلقائي متوقفة افتراضيًا. فعّلها في `~/.openclaw/openclaw.json`:
 
 ```json5
 {
@@ -79,33 +79,33 @@ bun add -g openclaw@latest
 }
 ```
 
-| القناة | السلوك |
-| ------ | ------ |
-| `stable` | ينتظر `stableDelayHours`، ثم يطبّق مع jitter حتمي عبر `stableJitterHours` (طرح تدريجي موزع). |
-| `beta` | يتحقق كل `betaCheckIntervalHours` (الافتراضي: كل ساعة) ويطبّق فورًا. |
-| `dev` | لا يوجد تطبيق تلقائي. استخدم `openclaw update` يدويًا. |
+| القناة  | السلوك                                                                                                      |
+| -------- | ------------------------------------------------------------------------------------------------------------- |
+| `stable` | ينتظر `stableDelayHours`، ثم يطبّق مع تذبذب حتمي عبر `stableJitterHours` (نشر موزع). |
+| `beta`   | يتحقق كل `betaCheckIntervalHours` (الافتراضي: كل ساعة) ويطبّق فورًا.                              |
+| `dev`    | لا يوجد تطبيق تلقائي. استخدم `openclaw update` يدويًا.                                                           |
 
-كما تسجل البوابة تلميحًا للتحديث عند بدء التشغيل (عطّله عبر `update.checkOnStart: false`).
+تسجل البوابة أيضًا تلميح تحديث عند بدء التشغيل (يمكن تعطيله عبر `update.checkOnStart: false`).
 
 ## بعد التحديث
 
 <Steps>
 
-### شغّل doctor
+### تشغيل doctor
 
 ```bash
 openclaw doctor
 ```
 
-يرحّل الإعدادات، ويدقق سياسات الرسائل الخاصة، ويتحقق من صحة البوابة. التفاصيل: [Doctor](/gateway/doctor)
+يُرحّل الإعدادات، ويدقق سياسات الرسائل المباشرة، ويفحص سلامة البوابة. التفاصيل: [Doctor](/ar/gateway/doctor)
 
-### أعد تشغيل البوابة
+### إعادة تشغيل البوابة
 
 ```bash
 openclaw gateway restart
 ```
 
-### تحقّق
+### التحقق
 
 ```bash
 openclaw health
@@ -125,7 +125,7 @@ openclaw gateway restart
 
 نصيحة: يعرض `npm view openclaw version` الإصدار المنشور الحالي.
 
-### تثبيت commit محدد (من المصدر)
+### تثبيت commit محدد (المصدر)
 
 ```bash
 git fetch origin
@@ -136,14 +136,15 @@ openclaw gateway restart
 
 للعودة إلى الأحدث: `git checkout main && git pull`.
 
-## إذا علقت
+## إذا كنت عالقًا
 
 - شغّل `openclaw doctor` مرة أخرى واقرأ المخرجات بعناية.
-- راجع: [استكشاف الأخطاء وإصلاحها](/gateway/troubleshooting)
+- بالنسبة إلى `openclaw update --channel dev` في checkouts المصدر، يقوم برنامج التحديث بتهيئة `pnpm` تلقائيًا عند الحاجة. إذا رأيت خطأ في تهيئة pnpm/corepack، فثبّت `pnpm` يدويًا (أو أعد تفعيل `corepack`) ثم أعد تشغيل التحديث.
+- تحقق من: [استكشاف الأخطاء وإصلاحها](/ar/gateway/troubleshooting)
 - اسأل في Discord: [https://discord.gg/clawd](https://discord.gg/clawd)
 
 ## ذو صلة
 
-- [نظرة عامة على التثبيت](/install) — جميع طرق التثبيت
-- [Doctor](/gateway/doctor) — فحوصات الصحة بعد التحديثات
-- [الترحيل](/install/migrating) — أدلة الترحيل بين الإصدارات الرئيسية
+- [نظرة عامة على التثبيت](/ar/install) — جميع طرق التثبيت
+- [Doctor](/ar/gateway/doctor) — فحوصات السلامة بعد التحديثات
+- [الترحيل](/ar/install/migrating) — أدلة ترحيل الإصدارات الرئيسية

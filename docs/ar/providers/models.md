@@ -1,27 +1,27 @@
 ---
 read_when:
-    - أنت تريد اختيار موفّر نموذج
-    - أنت تريد أمثلة إعداد سريعة لمصادقة LLM + اختيار النموذج
-summary: موفرو النماذج (LLMs) المدعومون في OpenClaw
-title: البدء السريع لموفري النماذج
+    - تريد اختيار مزوّد نموذج
+    - تريد أمثلة إعداد سريعة لمصادقة LLM + اختيار النموذج
+summary: مزوّدو النماذج (LLMs) الذين يدعمهم OpenClaw
+title: البدء السريع لمزوّد النموذج
 x-i18n:
-    generated_at: "2026-04-05T12:53:22Z"
+    generated_at: "2026-04-06T03:11:30Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 83e372193b476c7cee6eb9f5c443b03563d863043f47c633ac0096bca642cc6f
+    source_hash: c0314fb1c754171e5fc252d30f7ba9bb6acdbb978d97e9249264d90351bac2e7
     source_path: providers/models.md
     workflow: 15
 ---
 
-# موفرو النماذج
+# مزوّدو النماذج
 
-يمكن لـ OpenClaw استخدام العديد من موفري LLM. اختر واحدًا، وصادِق معه، ثم اضبط
+يمكن لـ OpenClaw استخدام العديد من مزوّدي LLM. اختر واحدًا، ثم صادِق عليه، ثم عيّن
 النموذج الافتراضي بصيغة `provider/model`.
 
-## البدء السريع (خطوتان)
+## بداية سريعة (خطوتان)
 
-1. صادِق مع الموفّر (عادةً عبر `openclaw onboard`).
-2. اضبط النموذج الافتراضي:
+1. صادِق مع المزوّد (عادةً عبر `openclaw onboard`).
+2. عيّن النموذج الافتراضي:
 
 ```json5
 {
@@ -29,35 +29,38 @@ x-i18n:
 }
 ```
 
-## الموفّرون المدعومون (مجموعة البداية)
+## المزوّدون المدعومون (المجموعة الأساسية)
 
-- [Anthropic ‏(API + Claude CLI)](/providers/anthropic)
-- [Amazon Bedrock](/providers/bedrock)
-- [BytePlus ‏(دولي)](/concepts/model-providers#byteplus-international)
-- [Chutes](/providers/chutes)
-- [Cloudflare AI Gateway](/providers/cloudflare-ai-gateway)
-- [Fireworks](/providers/fireworks)
-- [نماذج GLM](/providers/glm)
-- [MiniMax](/providers/minimax)
-- [Mistral](/providers/mistral)
-- [Moonshot AI ‏(Kimi + Kimi Coding)](/providers/moonshot)
-- [OpenAI ‏(API + Codex)](/providers/openai)
-- [OpenCode ‏(Zen + Go)](/providers/opencode)
-- [OpenRouter](/providers/openrouter)
-- [Qianfan](/providers/qianfan)
-- [Qwen](/providers/qwen)
-- [StepFun](/providers/stepfun)
-- [Synthetic](/providers/synthetic)
-- [Vercel AI Gateway](/providers/vercel-ai-gateway)
-- [Venice ‏(Venice AI)](/providers/venice)
-- [xAI](/providers/xai)
-- [Z.AI](/providers/zai)
+- [Alibaba Model Studio](/providers/alibaba)
+- [Anthropic (API + Claude CLI)](/ar/providers/anthropic)
+- [Amazon Bedrock](/ar/providers/bedrock)
+- [BytePlus (الدولي)](/ar/concepts/model-providers#byteplus-international)
+- [Chutes](/ar/providers/chutes)
+- [ComfyUI](/providers/comfy)
+- [Cloudflare AI Gateway](/ar/providers/cloudflare-ai-gateway)
+- [fal](/providers/fal)
+- [Fireworks](/ar/providers/fireworks)
+- [GLM models](/ar/providers/glm)
+- [MiniMax](/ar/providers/minimax)
+- [Mistral](/ar/providers/mistral)
+- [Moonshot AI (Kimi + Kimi Coding)](/ar/providers/moonshot)
+- [OpenAI (API + Codex)](/ar/providers/openai)
+- [OpenCode (Zen + Go)](/ar/providers/opencode)
+- [OpenRouter](/ar/providers/openrouter)
+- [Qianfan](/ar/providers/qianfan)
+- [Qwen](/ar/providers/qwen)
+- [Runway](/providers/runway)
+- [StepFun](/ar/providers/stepfun)
+- [Synthetic](/ar/providers/synthetic)
+- [Vercel AI Gateway](/ar/providers/vercel-ai-gateway)
+- [Venice (Venice AI)](/ar/providers/venice)
+- [xAI](/ar/providers/xai)
+- [Z.AI](/ar/providers/zai)
 
-## متغيرات الموفّرين المضمّنة الإضافية
+## متغيرات مزوّدين إضافية مجمّعة
 
-- `anthropic-vertex` - دعم Anthropic على Google Vertex ضمنيًا عندما تكون بيانات اعتماد Vertex متاحة؛ ولا يوجد خيار مصادقة منفصل في الإعداد الأولي
-- `copilot-proxy` - جسر Copilot Proxy محلي لـ VS Code؛ استخدم `openclaw onboard --auth-choice copilot-proxy`
-- `google-gemini-cli` - تدفق OAuth غير رسمي لـ Gemini CLI؛ يتطلب تثبيت `gemini` محليًا (`brew install gemini-cli` أو `npm install -g @google/gemini-cli`)؛ النموذج الافتراضي هو `google-gemini-cli/gemini-3.1-pro-preview`؛ استخدم `openclaw onboard --auth-choice google-gemini-cli` أو `openclaw models auth login --provider google-gemini-cli --set-default`
+- `anthropic-vertex` - دعم Anthropic الضمني على Google Vertex عندما تتوفر بيانات اعتماد Vertex؛ لا يوجد خيار مصادقة منفصل في onboarding
+- `copilot-proxy` - جسر VS Code Copilot Proxy محلي؛ استخدم `openclaw onboard --auth-choice copilot-proxy`
 
-للحصول على كتالوج الموفّرين الكامل (xAI وGroq وMistral وغيرهم) والإعداد المتقدم،
-راجع [موفرو النماذج](/concepts/model-providers).
+للاطلاع على فهرس المزوّدين الكامل (xAI وGroq وMistral وغيرها) والإعدادات المتقدمة،
+راجع [مزوّدو النماذج](/ar/concepts/model-providers).

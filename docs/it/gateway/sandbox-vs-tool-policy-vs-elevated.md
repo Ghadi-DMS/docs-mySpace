@@ -1,23 +1,23 @@
 ---
 read_when: You hit 'sandbox jail' or see a tool/elevated refusal and want the exact config key to change.
 status: active
-summary: 'Perché uno strumento è bloccato: runtime sandbox, policy di autorizzazione/blocco degli strumenti e controlli exec elevati'
-title: Sandbox vs policy degli strumenti vs Elevated
+summary: 'Perché uno strumento è bloccato: runtime sandbox, criteri di allow/deny degli strumenti e gate exec elevati'
+title: Sandbox vs criteri degli strumenti vs Elevated
 x-i18n:
-    generated_at: "2026-04-05T13:53:10Z"
+    generated_at: "2026-04-06T03:07:26Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 8d5ddc1dbf02b89f18d46e5473ff0a29b8a984426fe2db7270c170f2de0cdeac
+    source_hash: 331f5b2f0d5effa1320125d9f29948e16d0deaffa59eb1e4f25a63481cbe22d6
     source_path: gateway/sandbox-vs-tool-policy-vs-elevated.md
     workflow: 15
 ---
 
-# Sandbox vs policy degli strumenti vs Elevated
+# Sandbox vs criteri degli strumenti vs Elevated
 
-OpenClaw ha tre controlli correlati (ma diversi):
+OpenClaw ha tre controlli correlati, ma diversi:
 
-1. **Sandbox** (`agents.defaults.sandbox.*` / `agents.list[].sandbox.*`) decide **dove vengono eseguiti gli strumenti** (Docker vs host).
-2. **Policy degli strumenti** (`tools.*`, `tools.sandbox.tools.*`, `agents.list[].tools.*`) decide **quali strumenti sono disponibili/consentiti**.
+1. **Sandbox** (`agents.defaults.sandbox.*` / `agents.list[].sandbox.*`) decide **dove vengono eseguiti gli strumenti** (Docker o host).
+2. **Criteri degli strumenti** (`tools.*`, `tools.sandbox.tools.*`, `agents.list[].tools.*`) decidono **quali strumenti sono disponibili/consentiti**.
 3. **Elevated** (`tools.elevated.*`, `agents.list[].tools.elevated.*`) è una **via di fuga solo per exec** per eseguire fuori dalla sandbox quando sei in sandbox (`gateway` per impostazione predefinita, oppure `node` quando il target exec è configurato su `node`).
 
 ## Debug rapido
@@ -33,52 +33,52 @@ openclaw sandbox explain --json
 
 Stampa:
 
-- modalità/ambito sandbox/accesso al workspace effettivi
+- modalità/ambito/accesso workspace effettivi della sandbox
 - se la sessione è attualmente in sandbox (main vs non-main)
-- autorizzazione/blocco effettivi degli strumenti sandbox (e se provengono da agent/globale/predefinito)
-- controlli elevated e percorsi chiave per la correzione
+- allow/deny effettivi degli strumenti nella sandbox (e se provengono da agent/global/default)
+- gate elevated e percorsi chiave per la correzione
 
 ## Sandbox: dove vengono eseguiti gli strumenti
 
-Il sandboxing è controllato da `agents.defaults.sandbox.mode`:
+La sandbox è controllata da `agents.defaults.sandbox.mode`:
 
 - `"off"`: tutto viene eseguito sull'host.
-- `"non-main"`: solo le sessioni non-main sono in sandbox (comune “sorpresa” per gruppi/canali).
+- `"non-main"`: solo le sessioni non-main sono in sandbox (la comune “sorpresa” per gruppi/canali).
 - `"all"`: tutto è in sandbox.
 
-Vedi [Sandboxing](/gateway/sandboxing) per la matrice completa (ambito, mount del workspace, immagini).
+Vedi [Sandboxing](/it/gateway/sandboxing) per la matrice completa (ambito, mount del workspace, immagini).
 
 ### Bind mount (controllo rapido di sicurezza)
 
-- `docker.binds` _buca_ il filesystem sandbox: tutto ciò che monti è visibile all'interno del container con la modalità impostata (`:ro` o `:rw`).
-- Il valore predefinito è lettura-scrittura se ometti la modalità; preferisci `:ro` per sorgenti/segreti.
-- `scope: "shared"` ignora i bind per agente (si applicano solo i bind globali).
-- OpenClaw valida due volte le sorgenti dei bind: prima sul percorso sorgente normalizzato, poi di nuovo dopo la risoluzione attraverso l'antenato esistente più profondo. Le escape tramite symlink del genitore non aggirano i controlli di percorso bloccato o root consentita.
-- I percorsi leaf inesistenti vengono comunque controllati in sicurezza. Se `/workspace/alias-out/new-file` si risolve tramite un genitore con symlink verso un percorso bloccato o fuori dalle root consentite configurate, il bind viene rifiutato.
-- Montare `/var/run/docker.sock` consegna di fatto il controllo dell'host alla sandbox; fallo solo intenzionalmente.
-- L'accesso al workspace (`workspaceAccess: "ro"`/`"rw"`) è indipendente dalle modalità dei bind.
+- `docker.binds` _buca_ il filesystem della sandbox: tutto ciò che monti è visibile all'interno del container con la modalità che imposti (`:ro` o `:rw`).
+- Il valore predefinito è lettura-scrittura se ometti la modalità; preferisci `:ro` per codice sorgente/segreti.
+- `scope: "shared"` ignora i bind per-agent (si applicano solo i bind globali).
+- OpenClaw convalida le sorgenti bind due volte: prima sul percorso sorgente normalizzato, poi di nuovo dopo la risoluzione tramite l'antenato esistente più profondo. Le evasioni tramite symlink-parent non aggirano i controlli dei percorsi bloccati o delle radici consentite.
+- I percorsi leaf inesistenti vengono comunque controllati in modo sicuro. Se `/workspace/alias-out/new-file` viene risolto tramite un parent con symlink verso un percorso bloccato o fuori dalle radici consentite configurate, il bind viene rifiutato.
+- Fare bind di `/var/run/docker.sock` consegna di fatto il controllo dell'host alla sandbox; fallo solo intenzionalmente.
+- L'accesso al workspace (`workspaceAccess: "ro"`/`"rw"`) è indipendente dalle modalità di bind.
 
-## Policy degli strumenti: quali strumenti esistono/sono richiamabili
+## Criteri degli strumenti: quali strumenti esistono/sono invocabili
 
 Contano due livelli:
 
 - **Profilo strumenti**: `tools.profile` e `agents.list[].tools.profile` (allowlist di base)
 - **Profilo strumenti del provider**: `tools.byProvider[provider].profile` e `agents.list[].tools.byProvider[provider].profile`
-- **Policy strumenti globale/per agente**: `tools.allow`/`tools.deny` e `agents.list[].tools.allow`/`agents.list[].tools.deny`
-- **Policy strumenti del provider**: `tools.byProvider[provider].allow/deny` e `agents.list[].tools.byProvider[provider].allow/deny`
-- **Policy strumenti sandbox** (si applica solo quando si è in sandbox): `tools.sandbox.tools.allow`/`tools.sandbox.tools.deny` e `agents.list[].tools.sandbox.tools.*`
+- **Criteri strumenti globali/per-agent**: `tools.allow`/`tools.deny` e `agents.list[].tools.allow`/`agents.list[].tools.deny`
+- **Criteri strumenti del provider**: `tools.byProvider[provider].allow/deny` e `agents.list[].tools.byProvider[provider].allow/deny`
+- **Criteri strumenti della sandbox** (si applicano solo in sandbox): `tools.sandbox.tools.allow`/`tools.sandbox.tools.deny` e `agents.list[].tools.sandbox.tools.*`
 
 Regole pratiche:
 
 - `deny` vince sempre.
 - Se `allow` non è vuoto, tutto il resto viene trattato come bloccato.
-- La policy degli strumenti è il blocco definitivo: `/exec` non può sovrascrivere uno strumento `exec` negato.
-- `/exec` cambia solo i valori predefiniti della sessione per mittenti autorizzati; non concede accesso agli strumenti.
-  Le chiavi degli strumenti provider accettano sia `provider` (ad es. `google-antigravity`) sia `provider/model` (ad es. `openai/gpt-5.4`).
+- I criteri degli strumenti sono il blocco rigido: `/exec` non può aggirare uno strumento `exec` negato.
+- `/exec` cambia solo i valori predefiniti della sessione per i mittenti autorizzati; non concede accesso agli strumenti.
+  Le chiavi degli strumenti del provider accettano sia `provider` (ad esempio `google-antigravity`) sia `provider/model` (ad esempio `openai/gpt-5.4`).
 
-### Gruppi di strumenti (abbreviazioni)
+### Gruppi di strumenti (shorthand)
 
-Le policy degli strumenti (globali, per agente, sandbox) supportano voci `group:*` che si espandono in più strumenti:
+I criteri degli strumenti (globali, agent, sandbox) supportano voci `group:*` che si espandono in più strumenti:
 
 ```json5
 {
@@ -94,7 +94,8 @@ Le policy degli strumenti (globali, per agente, sandbox) supportano voci `group:
 
 Gruppi disponibili:
 
-- `group:runtime`: `exec`, `process`, `code_execution` (`bash` è accettato come alias di `exec`)
+- `group:runtime`: `exec`, `process`, `code_execution` (`bash` è accettato come
+  alias di `exec`)
 - `group:fs`: `read`, `write`, `edit`, `apply_patch`
 - `group:sessions`: `sessions_list`, `sessions_history`, `sessions_send`, `sessions_spawn`, `sessions_yield`, `subagents`, `session_status`
 - `group:memory`: `memory_search`, `memory_get`
@@ -104,44 +105,44 @@ Gruppi disponibili:
 - `group:messaging`: `message`
 - `group:nodes`: `nodes`
 - `group:agents`: `agents_list`
-- `group:media`: `image`, `image_generate`, `tts`
+- `group:media`: `image`, `image_generate`, `video_generate`, `tts`
 - `group:openclaw`: tutti gli strumenti OpenClaw integrati (esclude i plugin provider)
 
 ## Elevated: "esegui sull'host" solo per exec
 
 Elevated **non** concede strumenti aggiuntivi; influisce solo su `exec`.
 
-- Se sei in sandbox, `/elevated on` (o `exec` con `elevated: true`) esegue fuori dalla sandbox (potrebbero comunque applicarsi approvazioni).
+- Se sei in sandbox, `/elevated on` (o `exec` con `elevated: true`) viene eseguito fuori dalla sandbox (le approvazioni possono comunque applicarsi).
 - Usa `/elevated full` per saltare le approvazioni exec per la sessione.
-- Se stai già eseguendo in modo diretto, elevated è di fatto una no-op (comunque soggetta a controlli).
-- Elevated **non** è limitato alle Skills e **non** sovrascrive allow/deny degli strumenti.
-- Elevated non concede override arbitrari cross-host da `host=auto`; segue le normali regole del target exec e preserva `node` solo quando il target configurato/della sessione è già `node`.
+- Se stai già eseguendo direttamente, elevated è di fatto un no-op (comunque soggetto a gate).
+- Elevated **non** è limitato allo scope delle Skills e **non** sovrascrive allow/deny degli strumenti.
+- Elevated non concede override arbitrari cross-host da `host=auto`; segue le normali regole del target exec e preserva `node` solo quando il target configurato/di sessione è già `node`.
 - `/exec` è separato da elevated. Regola solo i valori predefiniti exec per sessione per i mittenti autorizzati.
 
-Controlli:
+Gate:
 
 - Abilitazione: `tools.elevated.enabled` (e facoltativamente `agents.list[].tools.elevated.enabled`)
-- Allowlist dei mittenti: `tools.elevated.allowFrom.<provider>` (e facoltativamente `agents.list[].tools.elevated.allowFrom.<provider>`)
+- Allowlist mittenti: `tools.elevated.allowFrom.<provider>` (e facoltativamente `agents.list[].tools.elevated.allowFrom.<provider>`)
 
-Vedi [Elevated Mode](/tools/elevated).
+Vedi [Elevated Mode](/it/tools/elevated).
 
-## Correzioni comuni della "prigione sandbox"
+## Correzioni comuni per la "prigione della sandbox"
 
-### "Strumento X bloccato dalla policy strumenti sandbox"
+### "Lo strumento X è bloccato dai criteri degli strumenti della sandbox"
 
 Chiavi di correzione (scegline una):
 
-- Disabilita sandbox: `agents.defaults.sandbox.mode=off` (o per agente `agents.list[].sandbox.mode=off`)
-- Consenti lo strumento nella sandbox:
-  - rimuovilo da `tools.sandbox.tools.deny` (o per agente `agents.list[].tools.sandbox.tools.deny`)
-  - oppure aggiungilo a `tools.sandbox.tools.allow` (o all'allow per agente)
+- Disabilita la sandbox: `agents.defaults.sandbox.mode=off` (o per-agent `agents.list[].sandbox.mode=off`)
+- Consenti lo strumento all'interno della sandbox:
+  - rimuovilo da `tools.sandbox.tools.deny` (o per-agent `agents.list[].tools.sandbox.tools.deny`)
+  - oppure aggiungilo a `tools.sandbox.tools.allow` (o all'allow per-agent)
 
-### "Pensavo che questo fosse main, perché è in sandbox?"
+### "Pensavo che fosse main, perché è in sandbox?"
 
-In modalità `"non-main"`, le chiavi di gruppo/canale _non_ sono main. Usa la chiave della sessione main (mostrata da `sandbox explain`) o cambia la modalità in `"off"`.
+In modalità `"non-main"`, le chiavi gruppo/canale _non_ sono main. Usa la chiave della sessione main (mostrata da `sandbox explain`) oppure cambia la modalità in `"off"`.
 
 ## Vedi anche
 
-- [Sandboxing](/gateway/sandboxing) -- riferimento completo della sandbox (modalità, ambiti, backend, immagini)
-- [Sandbox e strumenti multi-agente](/tools/multi-agent-sandbox-tools) -- override per agente e precedenza
-- [Elevated Mode](/tools/elevated)
+- [Sandboxing](/it/gateway/sandboxing) -- riferimento completo della sandbox (modalità, ambiti, backend, immagini)
+- [Sandbox e strumenti multi-agent](/it/tools/multi-agent-sandbox-tools) -- override per-agent e precedenza
+- [Elevated Mode](/it/tools/elevated)

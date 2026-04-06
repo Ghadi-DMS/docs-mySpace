@@ -1,14 +1,14 @@
 ---
 read_when:
     - Vuoi scegliere un provider di modelli
-    - Vuoi esempi rapidi di configurazione per autenticazione LLM + selezione del modello
+    - Vuoi esempi di configurazione rapida per auth LLM + selezione del modello
 summary: Provider di modelli (LLM) supportati da OpenClaw
 title: Guida rapida ai provider di modelli
 x-i18n:
-    generated_at: "2026-04-05T14:01:38Z"
+    generated_at: "2026-04-06T03:11:03Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 83e372193b476c7cee6eb9f5c443b03563d863043f47c633ac0096bca642cc6f
+    source_hash: c0314fb1c754171e5fc252d30f7ba9bb6acdbb978d97e9249264d90351bac2e7
     source_path: providers/models.md
     workflow: 15
 ---
@@ -31,33 +31,36 @@ come `provider/model`.
 
 ## Provider supportati (set iniziale)
 
-- [Anthropic (API + Claude CLI)](/providers/anthropic)
-- [Amazon Bedrock](/providers/bedrock)
-- [BytePlus (internazionale)](/concepts/model-providers#byteplus-international)
-- [Chutes](/providers/chutes)
-- [Cloudflare AI Gateway](/providers/cloudflare-ai-gateway)
-- [Fireworks](/providers/fireworks)
-- [Modelli GLM](/providers/glm)
-- [MiniMax](/providers/minimax)
-- [Mistral](/providers/mistral)
-- [Moonshot AI (Kimi + Kimi Coding)](/providers/moonshot)
-- [OpenAI (API + Codex)](/providers/openai)
-- [OpenCode (Zen + Go)](/providers/opencode)
-- [OpenRouter](/providers/openrouter)
-- [Qianfan](/providers/qianfan)
-- [Qwen](/providers/qwen)
-- [StepFun](/providers/stepfun)
-- [Synthetic](/providers/synthetic)
-- [Vercel AI Gateway](/providers/vercel-ai-gateway)
-- [Venice (Venice AI)](/providers/venice)
-- [xAI](/providers/xai)
-- [Z.AI](/providers/zai)
+- [Alibaba Model Studio](/providers/alibaba)
+- [Anthropic (API + Claude CLI)](/it/providers/anthropic)
+- [Amazon Bedrock](/it/providers/bedrock)
+- [BytePlus (International)](/it/concepts/model-providers#byteplus-international)
+- [Chutes](/it/providers/chutes)
+- [ComfyUI](/providers/comfy)
+- [Cloudflare AI Gateway](/it/providers/cloudflare-ai-gateway)
+- [fal](/providers/fal)
+- [Fireworks](/it/providers/fireworks)
+- [Modelli GLM](/it/providers/glm)
+- [MiniMax](/it/providers/minimax)
+- [Mistral](/it/providers/mistral)
+- [Moonshot AI (Kimi + Kimi Coding)](/it/providers/moonshot)
+- [OpenAI (API + Codex)](/it/providers/openai)
+- [OpenCode (Zen + Go)](/it/providers/opencode)
+- [OpenRouter](/it/providers/openrouter)
+- [Qianfan](/it/providers/qianfan)
+- [Qwen](/it/providers/qwen)
+- [Runway](/providers/runway)
+- [StepFun](/it/providers/stepfun)
+- [Synthetic](/it/providers/synthetic)
+- [Vercel AI Gateway](/it/providers/vercel-ai-gateway)
+- [Venice (Venice AI)](/it/providers/venice)
+- [xAI](/it/providers/xai)
+- [Z.AI](/it/providers/zai)
 
-## Varianti aggiuntive di provider inclusi
+## Varianti aggiuntive dei provider integrati
 
 - `anthropic-vertex` - supporto Anthropic implicito su Google Vertex quando sono disponibili credenziali Vertex; nessuna scelta di autenticazione onboarding separata
 - `copilot-proxy` - bridge locale VS Code Copilot Proxy; usa `openclaw onboard --auth-choice copilot-proxy`
-- `google-gemini-cli` - flusso OAuth non ufficiale di Gemini CLI; richiede un'installazione locale di `gemini` (`brew install gemini-cli` o `npm install -g @google/gemini-cli`); modello predefinito `google-gemini-cli/gemini-3.1-pro-preview`; usa `openclaw onboard --auth-choice google-gemini-cli` oppure `openclaw models auth login --provider google-gemini-cli --set-default`
 
 Per il catalogo completo dei provider (xAI, Groq, Mistral, ecc.) e la configurazione avanzata,
-vedi [Provider di modelli](/concepts/model-providers).
+vedi [Provider di modelli](/it/concepts/model-providers).

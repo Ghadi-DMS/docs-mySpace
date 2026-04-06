@@ -1,14 +1,14 @@
 ---
 read_when:
-    - Stai aggiornando OpenClaw
+    - Aggiornamento di OpenClaw
     - Qualcosa si rompe dopo un aggiornamento
-summary: Aggiornare OpenClaw in sicurezza (installazione globale o dal sorgente), più strategia di rollback
+summary: Aggiornare OpenClaw in modo sicuro (installazione globale o da sorgente), più strategia di rollback
 title: Aggiornamento
 x-i18n:
-    generated_at: "2026-04-05T13:56:56Z"
+    generated_at: "2026-04-06T03:08:09Z"
     model: gpt-5.4
     provider: openai
-    source_hash: b40429d38ca851be4fdf8063ed425faf4610a4b5772703e0481c5f1fb588ba58
+    source_hash: ca9fff0776b9f5977988b649e58a5d169e5fa3539261cb02779d724d4ca92877
     source_path: install/updating.md
     workflow: 15
 ---
@@ -19,13 +19,13 @@ Mantieni OpenClaw aggiornato.
 
 ## Consigliato: `openclaw update`
 
-Il modo più rapido per aggiornare. Rileva il tuo tipo di installazione (npm o git), recupera l'ultima versione, esegue `openclaw doctor` e riavvia il gateway.
+Il modo più rapido per aggiornare. Rileva il tipo di installazione (npm o git), recupera la versione più recente, esegue `openclaw doctor` e riavvia il gateway.
 
 ```bash
 openclaw update
 ```
 
-Per cambiare canale o puntare a una versione specifica:
+Per cambiare canale o scegliere una versione specifica:
 
 ```bash
 openclaw update --channel beta
@@ -33,19 +33,19 @@ openclaw update --tag main
 openclaw update --dry-run   # anteprima senza applicare
 ```
 
-`--channel beta` preferisce beta, ma il runtime ripiega su stable/latest quando
-il tag beta è assente o più vecchio dell'ultima release stable. Usa `--tag beta`
+`--channel beta` preferisce beta, ma il runtime torna a stable/latest quando
+il tag beta manca o è più vecchio dell'ultima release stable. Usa `--tag beta`
 se vuoi il dist-tag npm beta grezzo per un aggiornamento una tantum del pacchetto.
 
-Vedi [Canali di sviluppo](/install/development-channels) per la semantica dei canali.
+Vedi [Development channels](/it/install/development-channels) per la semantica dei canali.
 
-## Alternativa: rieseguire l'installer
+## Alternativa: esegui di nuovo l'installer
 
 ```bash
 curl -fsSL https://openclaw.ai/install.sh | bash
 ```
 
-Aggiungi `--no-onboard` per saltare l'onboarding. Per le installazioni dal sorgente, passa `--install-method git --no-onboard`.
+Aggiungi `--no-onboard` per saltare l'onboarding. Per le installazioni da sorgente, passa `--install-method git --no-onboard`.
 
 ## Alternativa: npm, pnpm o bun manuale
 
@@ -61,9 +61,9 @@ pnpm add -g openclaw@latest
 bun add -g openclaw@latest
 ```
 
-## Auto-updater
+## Aggiornatore automatico
 
-L'auto-updater è disattivato per impostazione predefinita. Abilitalo in `~/.openclaw/openclaw.json`:
+L'aggiornatore automatico è disattivato per impostazione predefinita. Abilitalo in `~/.openclaw/openclaw.json`:
 
 ```json5
 {
@@ -79,13 +79,13 @@ L'auto-updater è disattivato per impostazione predefinita. Abilitalo in `~/.ope
 }
 ```
 
-| Canale   | Comportamento                                                                                                      |
-| -------- | ------------------------------------------------------------------------------------------------------------------ |
-| `stable` | Attende `stableDelayHours`, poi applica con jitter deterministico distribuito su `stableJitterHours` (rilascio distribuito). |
-| `beta`   | Controlla ogni `betaCheckIntervalHours` (predefinito: ogni ora) e applica immediatamente.                         |
-| `dev`    | Nessuna applicazione automatica. Usa `openclaw update` manualmente.                                                |
+| Canale   | Comportamento                                                                                                   |
+| -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `stable` | Attende `stableDelayHours`, poi applica con jitter deterministico su `stableJitterHours` (rollout distribuito). |
+| `beta`   | Controlla ogni `betaCheckIntervalHours` (predefinito: ogni ora) e applica immediatamente.                       |
+| `dev`    | Nessuna applicazione automatica. Usa `openclaw update` manualmente.                                              |
 
-Il gateway registra anche un suggerimento di aggiornamento all'avvio (disabilitalo con `update.checkOnStart: false`).
+Il gateway registra anche un suggerimento di aggiornamento all'avvio (disabilita con `update.checkOnStart: false`).
 
 ## Dopo l'aggiornamento
 
@@ -97,7 +97,7 @@ Il gateway registra anche un suggerimento di aggiornamento all'avvio (disabilita
 openclaw doctor
 ```
 
-Migra la configurazione, verifica le policy DM e controlla lo stato del gateway. Dettagli: [Doctor](/gateway/doctor)
+Migra la config, controlla le policy DM ed esamina lo stato del gateway. Dettagli: [Doctor](/it/gateway/doctor)
 
 ### Riavvia il gateway
 
@@ -134,16 +134,17 @@ pnpm install && pnpm build
 openclaw gateway restart
 ```
 
-Per tornare all'ultima versione: `git checkout main && git pull`.
+Per tornare alla versione più recente: `git checkout main && git pull`.
 
 ## Se sei bloccato
 
 - Esegui di nuovo `openclaw doctor` e leggi attentamente l'output.
-- Controlla: [Risoluzione dei problemi](/gateway/troubleshooting)
+- Per `openclaw update --channel dev` su checkout da sorgente, l'updater esegue automaticamente il bootstrap di `pnpm` quando necessario. Se vedi un errore di bootstrap di pnpm/corepack, installa `pnpm` manualmente (o riabilita `corepack`) ed esegui di nuovo l'aggiornamento.
+- Controlla: [Troubleshooting](/it/gateway/troubleshooting)
 - Chiedi su Discord: [https://discord.gg/clawd](https://discord.gg/clawd)
 
 ## Correlati
 
-- [Panoramica dell'installazione](/install) — tutti i metodi di installazione
-- [Doctor](/gateway/doctor) — controlli di stato dopo gli aggiornamenti
-- [Migrazione](/install/migrating) — guide alla migrazione delle versioni principali
+- [Install Overview](/it/install) — tutti i metodi di installazione
+- [Doctor](/it/gateway/doctor) — controlli di stato dopo gli aggiornamenti
+- [Migrating](/it/install/migrating) — guide di migrazione delle versioni principali

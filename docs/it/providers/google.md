@@ -1,14 +1,14 @@
 ---
 read_when:
     - Vuoi usare i modelli Google Gemini con OpenClaw
-    - Hai bisogno del flusso di autenticazione con chiave API o OAuth
-summary: Configurazione di Google Gemini (chiave API + OAuth, generazione di immagini, comprensione dei media, ricerca web)
+    - Hai bisogno del flusso di autenticazione con chiave API
+summary: Configurazione di Google Gemini (chiave API, generazione di immagini, comprensione dei media, web search)
 title: Google (Gemini)
 x-i18n:
-    generated_at: "2026-04-05T14:01:28Z"
+    generated_at: "2026-04-06T03:11:06Z"
     model: gpt-5.4
     provider: openai
-    source_hash: fa3c4326e83fad277ae4c2cb9501b6e89457afcfa7e3e1d57ae01c9c0c6846e2
+    source_hash: 358d33a68275b01ebd916a3621dd651619cb9a1d062e2fb6196a7f3c501c015a
     source_path: providers/google.md
     workflow: 15
 ---
@@ -16,15 +16,14 @@ x-i18n:
 # Google (Gemini)
 
 Il plugin Google fornisce accesso ai modelli Gemini tramite Google AI Studio, oltre a
-generazione di immagini, comprensione dei media (immagini/audio/video) e ricerca web tramite
+generazione di immagini, comprensione dei media (immagine/audio/video) e web search tramite
 Gemini Grounding.
 
 - Provider: `google`
-- Auth: `GEMINI_API_KEY` o `GOOGLE_API_KEY`
+- Autenticazione: `GEMINI_API_KEY` o `GOOGLE_API_KEY`
 - API: Google Gemini API
-- Provider alternativo: `google-gemini-cli` (OAuth)
 
-## Guida rapida
+## Avvio rapido
 
 1. Imposta la chiave API:
 
@@ -53,68 +52,29 @@ openclaw onboard --non-interactive \
   --gemini-api-key "$GEMINI_API_KEY"
 ```
 
-## OAuth (Gemini CLI)
+## Capability
 
-Un provider alternativo `google-gemini-cli` usa PKCE OAuth invece di una chiave API.
-Si tratta di un'integrazione non ufficiale; alcuni utenti segnalano
-limitazioni dell'account. Usala a tuo rischio.
-
-- Modello predefinito: `google-gemini-cli/gemini-3.1-pro-preview`
-- Alias: `gemini-cli`
-- Prerequisito di installazione: Gemini CLI locale disponibile come `gemini`
-  - Homebrew: `brew install gemini-cli`
-  - npm: `npm install -g @google/gemini-cli`
-- Login:
-
-```bash
-openclaw models auth login --provider google-gemini-cli --set-default
-```
-
-Variabili d'ambiente:
-
-- `OPENCLAW_GEMINI_OAUTH_CLIENT_ID`
-- `OPENCLAW_GEMINI_OAUTH_CLIENT_SECRET`
-
-(O le varianti `GEMINI_CLI_*`.)
-
-Se le richieste OAuth di Gemini CLI falliscono dopo il login, imposta
-`GOOGLE_CLOUD_PROJECT` o `GOOGLE_CLOUD_PROJECT_ID` sull'host del gateway e
-riprova.
-
-Se il login fallisce prima dell'avvio del flusso nel browser, assicurati che il comando locale `gemini`
-sia installato e presente in `PATH`. OpenClaw supporta sia le installazioni Homebrew
-sia le installazioni npm globali, inclusi i layout comuni Windows/npm.
-
-Note sull'utilizzo JSON di Gemini CLI:
-
-- Il testo della risposta proviene dal campo JSON `response` della CLI.
-- L'utilizzo usa `stats` come fallback quando la CLI lascia `usage` vuoto.
-- `stats.cached` viene normalizzato in OpenClaw `cacheRead`.
-- Se `stats.input` manca, OpenClaw ricava i token di input da
-  `stats.input_tokens - stats.cached`.
-
-## Capacità
-
-| Capacità               | Supportato        |
+| Capability             | Supportata        |
 | ---------------------- | ----------------- |
-| Completamenti chat     | Sì                |
+| Chat completions       | Sì                |
 | Generazione di immagini | Sì               |
+| Generazione musicale   | Sì                |
 | Comprensione delle immagini | Sì           |
 | Trascrizione audio     | Sì                |
 | Comprensione video     | Sì                |
-| Ricerca web (Grounding) | Sì               |
+| Web search (Grounding) | Sì                |
 | Thinking/reasoning     | Sì (Gemini 3.1+)  |
 
 ## Riutilizzo diretto della cache Gemini
 
 Per le esecuzioni dirette dell'API Gemini (`api: "google-generative-ai"`), OpenClaw ora
-passa alle richieste Gemini un handle `cachedContent` configurato.
+passa un handle `cachedContent` configurato alle richieste Gemini.
 
-- Configura parametri per modello o globali usando
-  `cachedContent` oppure il legacy `cached_content`
-- Se entrambi sono presenti, `cachedContent` ha la precedenza
+- Configura i parametri per modello o globali con
+  `cachedContent` oppure con il legacy `cached_content`
+- Se sono presenti entrambi, `cachedContent` ha la precedenza
 - Valore di esempio: `cachedContents/prebuilt-context`
-- L'utilizzo dei cache hit di Gemini viene normalizzato in OpenClaw `cacheRead` da
+- L'uso del cache-hit Gemini viene normalizzato in OpenClaw `cacheRead` a partire da
   `cachedContentTokenCount` upstream
 
 Esempio:
@@ -137,7 +97,7 @@ Esempio:
 
 ## Generazione di immagini
 
-Il provider di image generation `google` incluso usa come predefinito
+Il provider bundled `google` per la generazione di immagini usa per impostazione predefinita
 `google/gemini-3.1-flash-image-preview`.
 
 - Supporta anche `google/gemini-3-pro-image-preview`
@@ -145,12 +105,84 @@ Il provider di image generation `google` incluso usa come predefinito
 - Modalità modifica: abilitata, fino a 5 immagini di input
 - Controlli geometrici: `size`, `aspectRatio` e `resolution`
 
-Il provider `google-gemini-cli`, solo OAuth, è una superficie separata
-di inferenza testuale. La generazione di immagini, la comprensione dei media e Gemini Grounding restano sul
-provider id `google`.
+La generazione di immagini, la comprensione dei media e Gemini Grounding restano tutte sul
+provider con ID `google`.
+
+Per usare Google come provider di immagini predefinito:
+
+```json5
+{
+  agents: {
+    defaults: {
+      imageGenerationModel: {
+        primary: "google/gemini-3.1-flash-image-preview",
+      },
+    },
+  },
+}
+```
+
+Vedi [Generazione di immagini](/it/tools/image-generation) per i parametri
+condivisi dello strumento, la selezione del provider e il comportamento di failover.
+
+## Generazione video
+
+Il plugin bundled `google` registra anche la generazione video tramite lo strumento condiviso
+`video_generate`.
+
+- Modello video predefinito: `google/veo-3.1-fast-generate-preview`
+- Modalità: text-to-video, image-to-video e flussi di riferimento con singolo video
+- Supporta `aspectRatio`, `resolution` e `audio`
+- Limite attuale della durata: **da 4 a 8 secondi**
+
+Per usare Google come provider video predefinito:
+
+```json5
+{
+  agents: {
+    defaults: {
+      videoGenerationModel: {
+        primary: "google/veo-3.1-fast-generate-preview",
+      },
+    },
+  },
+}
+```
+
+Vedi [Generazione video](/tools/video-generation) per i parametri
+condivisi dello strumento, la selezione del provider e il comportamento di failover.
+
+## Generazione musicale
+
+Il plugin bundled `google` registra anche la generazione musicale tramite lo strumento condiviso
+`music_generate`.
+
+- Modello musicale predefinito: `google/lyria-3-clip-preview`
+- Supporta anche `google/lyria-3-pro-preview`
+- Controlli del prompt: `lyrics` e `instrumental`
+- Formato di output: `mp3` per impostazione predefinita, più `wav` su `google/lyria-3-pro-preview`
+- Input di riferimento: fino a 10 immagini
+- Le esecuzioni supportate da sessione vengono scollegate tramite il flusso condiviso task/status, incluso `action: "status"`
+
+Per usare Google come provider musicale predefinito:
+
+```json5
+{
+  agents: {
+    defaults: {
+      musicGenerationModel: {
+        primary: "google/lyria-3-clip-preview",
+      },
+    },
+  },
+}
+```
+
+Vedi [Generazione musicale](/tools/music-generation) per i parametri
+condivisi dello strumento, la selezione del provider e il comportamento di failover.
 
 ## Nota sull'ambiente
 
 Se il Gateway viene eseguito come daemon (launchd/systemd), assicurati che `GEMINI_API_KEY`
-sia disponibile a quel processo (ad esempio in `~/.openclaw/.env` oppure tramite
+sia disponibile per quel processo (ad esempio in `~/.openclaw/.env` o tramite
 `env.shellEnv`).

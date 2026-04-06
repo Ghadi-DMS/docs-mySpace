@@ -1,36 +1,36 @@
 ---
 read_when:
-    - Vuoi capire come funziona memory_search
+    - Vuoi capire come funziona `memory_search`
     - Vuoi scegliere un provider di embedding
     - Vuoi ottimizzare la qualità della ricerca
-summary: Come memory search trova note rilevanti usando embedding e recupero ibrido
-title: Ricerca nella memory
+summary: Come la ricerca della memoria trova note pertinenti usando embeddings e recupero ibrido
+title: Memory Search
 x-i18n:
-    generated_at: "2026-04-05T13:49:44Z"
+    generated_at: "2026-04-06T03:06:32Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 87b1cb3469c7805f95bca5e77a02919d1e06d626ad3633bbc5465f6ab9db12a2
+    source_hash: b6541cd702bff41f9a468dad75ea438b70c44db7c65a4b793cbacaf9e583c7e9
     source_path: concepts/memory-search.md
     workflow: 15
 ---
 
-# Ricerca nella memory
+# Memory Search
 
-`memory_search` trova note rilevanti dai tuoi file di memory, anche quando la
-formulazione è diversa dal testo originale. Funziona indicizzando la memory in piccoli
-blocchi e cercandoli usando embedding, parole chiave o entrambi.
+`memory_search` trova note pertinenti nei tuoi file di memoria, anche quando la
+formulazione è diversa dal testo originale. Funziona indicizzando la memoria in piccoli
+blocchi e cercandoli usando embeddings, parole chiave o entrambi.
 
 ## Avvio rapido
 
-Se hai configurato una chiave API OpenAI, Gemini, Voyage o Mistral, la ricerca nella memory
-funziona automaticamente. Per impostare esplicitamente un provider:
+Se hai configurato una chiave API OpenAI, Gemini, Voyage o Mistral, la ricerca
+della memoria funziona automaticamente. Per impostare esplicitamente un provider:
 
 ```json5
 {
   agents: {
     defaults: {
       memorySearch: {
-        provider: "openai", // or "gemini", "local", "ollama", etc.
+        provider: "openai", // oppure "gemini", "local", "ollama", ecc.
       },
     },
   },
@@ -42,18 +42,19 @@ node-llama-cpp).
 
 ## Provider supportati
 
-| Provider | ID        | Richiede chiave API | Note                          |
-| -------- | --------- | ------------------- | ----------------------------- |
-| OpenAI   | `openai`  | Sì                  | Rilevato automaticamente, veloce |
-| Gemini   | `gemini`  | Sì                  | Supporta l'indicizzazione di immagini/audio |
-| Voyage   | `voyage`  | Sì                  | Rilevato automaticamente      |
-| Mistral  | `mistral` | Sì                  | Rilevato automaticamente      |
-| Ollama   | `ollama`  | No                  | Locale, va impostato esplicitamente |
-| Local    | `local`   | No                  | Modello GGUF, download di ~0.6 GB |
+| Provider | ID        | Richiede una chiave API | Note                                                 |
+| -------- | --------- | ----------------------- | ---------------------------------------------------- |
+| OpenAI   | `openai`  | Sì                      | Rilevato automaticamente, veloce                     |
+| Gemini   | `gemini`  | Sì                      | Supporta l'indicizzazione di immagini/audio          |
+| Voyage   | `voyage`  | Sì                      | Rilevato automaticamente                             |
+| Mistral  | `mistral` | Sì                      | Rilevato automaticamente                             |
+| Bedrock  | `bedrock` | No                      | Rilevato automaticamente quando la catena di credenziali AWS viene risolta |
+| Ollama   | `ollama`  | No                      | Locale, deve essere impostato esplicitamente         |
+| Local    | `local`   | No                      | Modello GGUF, download di circa 0,6 GB               |
 
 ## Come funziona la ricerca
 
-OpenClaw esegue in parallelo due percorsi di recupero e unisce i risultati:
+OpenClaw esegue in parallelo due percorsi di recupero e ne unisce i risultati:
 
 ```mermaid
 flowchart LR
@@ -67,25 +68,25 @@ flowchart LR
 ```
 
 - **Ricerca vettoriale** trova note con significato simile ("gateway host" corrisponde a
-  "the machine running OpenClaw").
-- **Ricerca per parole chiave BM25** trova corrispondenze esatte (ID, stringhe di errore, chiavi di
-  configurazione).
+  "la macchina che esegue OpenClaw").
+- **Ricerca per parole chiave BM25** trova corrispondenze esatte (ID, stringhe di errore, chiavi
+  di configurazione).
 
-Se è disponibile un solo percorso (niente embedding o niente FTS), viene eseguito solo l'altro.
+Se è disponibile un solo percorso (niente embeddings o niente FTS), viene eseguito solo l'altro.
 
 ## Migliorare la qualità della ricerca
 
-Due funzionalità facoltative aiutano quando hai una grande cronologia di note:
+Due funzionalità facoltative aiutano quando hai una cronologia ampia di note:
 
 ### Decadimento temporale
 
 Le note vecchie perdono gradualmente peso nel ranking, così le informazioni recenti emergono per prime.
-Con l'half-life predefinita di 30 giorni, una nota del mese scorso ottiene il 50% del
-suo peso originale. I file evergreen come `MEMORY.md` non decadono mai.
+Con l'emivita predefinita di 30 giorni, una nota del mese scorso ottiene il 50% del
+suo peso originale. I file sempreverdi come `MEMORY.md` non subiscono mai decadimento.
 
 <Tip>
-Abilita il decadimento temporale se il tuo agente ha mesi di note quotidiane e le
-informazioni obsolete continuano a classificarsi sopra il contesto recente.
+Abilita il decadimento temporale se il tuo agente ha mesi di note giornaliere e informazioni obsolete
+continuano a superare nel ranking il contesto recente.
 </Tip>
 
 ### MMR (diversità)
@@ -95,10 +96,10 @@ garantisce che i risultati principali coprano argomenti diversi invece di ripete
 
 <Tip>
 Abilita MMR se `memory_search` continua a restituire snippet quasi duplicati da
-diverse note quotidiane.
+note giornaliere diverse.
 </Tip>
 
-### Abilitare entrambi
+### Abilita entrambi
 
 ```json5
 {
@@ -117,18 +118,18 @@ diverse note quotidiane.
 }
 ```
 
-## Memory multimodale
+## Memoria multimodale
 
-Con Gemini Embedding 2, puoi indicizzare immagini e file audio insieme al
-Markdown. Le query di ricerca restano testuali, ma trovano corrispondenze con contenuti visivi e audio. Vedi il [riferimento di configurazione della memory](/reference/memory-config) per la
-configurazione.
+Con Gemini Embedding 2, puoi indicizzare file di immagini e audio insieme al
+Markdown. Le query di ricerca restano testuali, ma corrispondono a contenuti visivi e audio.
+Per la configurazione, vedi il [Riferimento della configurazione della memoria](/it/reference/memory-config).
 
-## Ricerca nella memory della sessione
+## Ricerca nella memoria della sessione
 
-Puoi facoltativamente indicizzare le trascrizioni delle sessioni in modo che `memory_search` possa richiamare
-conversazioni precedenti. Questa funzionalità è attivabile tramite
+Puoi facoltativamente indicizzare le trascrizioni delle sessioni in modo che `memory_search` possa recuperare
+conversazioni precedenti. Questa funzionalità è opt-in tramite
 `memorySearch.experimental.sessionMemory`. Vedi il
-[riferimento di configurazione](/reference/memory-config) per i dettagli.
+[riferimento della configurazione](/it/reference/memory-config) per i dettagli.
 
 ## Risoluzione dei problemi
 
@@ -141,7 +142,7 @@ conversazioni precedenti. Questa funzionalità è attivabile tramite
 **Testo CJK non trovato?** Ricostruisci l'indice FTS con
 `openclaw memory index --force`.
 
-## Approfondimenti
+## Ulteriori letture
 
-- [Memory](/concepts/memory) -- layout dei file, backend, strumenti
-- [Riferimento di configurazione della memory](/reference/memory-config) -- tutti i parametri di configurazione
+- [Memory](/it/concepts/memory) -- layout dei file, backend, strumenti
+- [Riferimento della configurazione della memoria](/it/reference/memory-config) -- tutte le opzioni di configurazione

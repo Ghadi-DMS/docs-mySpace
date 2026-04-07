@@ -1,70 +1,75 @@
 ---
 read_when:
-    - Exécution ou correction des tests
-summary: Comment exécuter les tests localement (vitest) et quand utiliser les modes force/coverage
+    - Exécuter ou corriger des tests
+summary: Comment exécuter les tests localement (vitest) et quand utiliser les modes force/couverture
 title: Tests
 x-i18n:
-    generated_at: "2026-04-05T12:54:05Z"
+    generated_at: "2026-04-07T06:54:38Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 78390107a9ac2bdc4294d4d0204467c5efdd98faebaf308f3a4597ab966a6d26
+    source_hash: a25236a707860307cc324f32752ad13a53e448bee9341d8df2e11655561e841c
     source_path: reference/test.md
     workflow: 15
 ---
 
 # Tests
 
-- Kit complet de tests (suites, live, Docker) : [Testing](/help/testing)
+- Kit de test complet (suites, live, Docker) : [Tests](/fr/help/testing)
 
-- `pnpm test:force` : tue tout processus de passerelle persistant qui retient le port de contrôle par défaut, puis exécute la suite Vitest complète avec un port de passerelle isolé afin que les tests serveur n’entrent pas en collision avec une instance en cours d’exécution. Utilisez cette commande lorsqu’une précédente exécution de la passerelle a laissé le port 18789 occupé.
-- `pnpm test:coverage` : exécute la suite unitaire avec couverture V8 (via `vitest.unit.config.ts`). Les seuils globaux sont de 70 % pour les lignes/branches/fonctions/instructions. La couverture exclut les points d’entrée riches en intégration (câblage CLI, bridges gateway/telegram, serveur statique webchat) afin de garder la cible centrée sur une logique testable unitairement.
+- `pnpm test:force` : tue tout processus gateway persistant qui occupe le port de contrôle par défaut, puis exécute la suite Vitest complète avec un port gateway isolé afin que les tests serveur n’entrent pas en collision avec une instance en cours d’exécution. Utilisez-le lorsqu’une exécution précédente de la gateway a laissé le port 18789 occupé.
+- `pnpm test:coverage` : exécute la suite unitaire avec la couverture V8 (via `vitest.unit.config.ts`). Les seuils globaux sont de 70 % pour les lignes/branches/fonctions/instructions. La couverture exclut les points d’entrée à forte intégration (câblage CLI, ponts gateway/telegram, serveur statique webchat) afin de garder la cible centrée sur la logique testable unitairement.
 - `pnpm test:coverage:changed` : exécute la couverture unitaire uniquement pour les fichiers modifiés depuis `origin/main`.
-- `pnpm test:changed` : exécute la configuration native des projets Vitest avec `--changed origin/main`. La configuration de base traite les fichiers de projets/configuration comme des `forceRerunTriggers`, de sorte que les changements de câblage relancent toujours largement quand nécessaire.
-- `pnpm test` : exécute directement la configuration native des projets racine Vitest. Les filtres de fichiers fonctionnent nativement sur les projets configurés.
-- La configuration Vitest de base utilise désormais par défaut `pool: "threads"` et `isolate: false`, avec le runner partagé non isolé activé dans toute la configuration du dépôt.
+- `pnpm test:changed` : étend les chemins git modifiés en voies Vitest ciblées lorsque le diff ne touche que des fichiers source/test routables. Les modifications de config/setup reviennent toujours à l’exécution native des projets racine afin que les modifications de câblage soient relancées largement si nécessaire.
+- `pnpm test` : achemine les cibles explicites de fichier/répertoire via des voies Vitest ciblées. Les exécutions sans cible exécutent désormais dix configurations de fragments séquentielles (`vitest.full-core-unit-src.config.ts`, `vitest.full-core-unit-security.config.ts`, `vitest.full-core-unit-ui.config.ts`, `vitest.full-core-unit-support.config.ts`, `vitest.full-core-contracts.config.ts`, `vitest.full-core-bundled.config.ts`, `vitest.full-core-runtime.config.ts`, `vitest.full-agentic.config.ts`, `vitest.full-auto-reply.config.ts`, `vitest.full-extensions.config.ts`) au lieu d’un unique énorme processus de projet racine.
+- Certains fichiers de test `plugin-sdk` et `commands` passent désormais par des voies dédiées légères qui ne conservent que `test/setup.ts`, en laissant les cas à runtime lourd sur leurs voies existantes.
+- Certains fichiers source d’assistance `plugin-sdk` et `commands` mappent aussi `pnpm test:changed` vers des tests frères explicites dans ces voies légères, afin que de petites modifications d’helpers évitent de relancer les suites lourdes adossées au runtime.
+- `auto-reply` est désormais aussi réparti en trois configurations dédiées (`core`, `top-level`, `reply`) afin que le harness reply ne domine pas les tests plus légers de statut/token/helper au niveau supérieur.
+- La configuration Vitest de base utilise désormais par défaut `pool: "threads"` et `isolate: false`, avec l’exécuteur partagé non isolé activé sur les configs du dépôt.
 - `pnpm test:channels` exécute `vitest.channels.config.ts`.
 - `pnpm test:extensions` exécute `vitest.extensions.config.ts`.
 - `pnpm test:extensions` : exécute les suites extension/plugin.
-- `pnpm test:perf:imports` : active le rapport de durée des imports + détail des imports de Vitest pour l’exécution native des projets racine.
-- `pnpm test:perf:imports:changed` : même profilage d’imports, mais uniquement pour les fichiers modifiés depuis `origin/main`.
-- `pnpm test:perf:profile:main` : écrit un profil CPU pour le thread principal Vitest (`.artifacts/vitest-main-profile`).
-- `pnpm test:perf:profile:runner` : écrit des profils CPU + heap pour le runner unitaire (`.artifacts/vitest-runner-profile`).
-- Intégration de la passerelle : opt-in via `OPENCLAW_TEST_INCLUDE_GATEWAY=1 pnpm test` ou `pnpm test:gateway`.
-- `pnpm test:e2e` : exécute les tests smoke end-to-end de la passerelle (pairage WS/HTTP/nœud multi-instances). Utilise par défaut `threads` + `isolate: false` avec workers adaptatifs dans `vitest.e2e.config.ts` ; ajustez avec `OPENCLAW_E2E_WORKERS=<n>` et définissez `OPENCLAW_E2E_VERBOSE=1` pour des journaux verbeux.
-- `pnpm test:live` : exécute les tests live des fournisseurs (minimax/zai). Nécessite des clés API et `LIVE=1` (ou `*_LIVE_TEST=1` spécifique au fournisseur) pour retirer le skip.
-- `pnpm test:docker:openwebui` : démarre OpenClaw + Open WebUI dans Docker, se connecte via Open WebUI, vérifie `/api/models`, puis exécute un vrai chat proxifié via `/api/chat/completions`. Nécessite une clé live de modèle utilisable (par exemple OpenAI dans `~/.profile`), télécharge une image externe Open WebUI, et n’est pas censé être aussi stable en CI que les suites unitaires/e2e normales.
-- `pnpm test:docker:mcp-channels` : démarre un conteneur Gateway amorcé et un second conteneur client qui lance `openclaw mcp serve`, puis vérifie la découverte des conversations routées, les lectures de transcription, les métadonnées de pièces jointes, le comportement de file d’événements en direct, le routage des envois sortants, et les notifications de type Claude sur les canaux + autorisations via le vrai bridge stdio. L’assertion de notification Claude lit directement les trames stdio MCP brutes afin que le smoke reflète ce que le bridge émet réellement.
+- `pnpm test:perf:imports` : active le rapport de durée d’import + la ventilation des imports de Vitest, tout en continuant à utiliser le routage par voies ciblées pour les cibles explicites de fichier/répertoire.
+- `pnpm test:perf:imports:changed` : même profilage des imports, mais uniquement pour les fichiers modifiés depuis `origin/main`.
+- `pnpm test:perf:changed:bench -- --ref <git-ref>` mesure le chemin changed-mode routé par rapport à l’exécution native du projet racine pour le même diff git validé.
+- `pnpm test:perf:changed:bench -- --worktree` mesure l’ensemble de modifications du worktree courant sans effectuer de commit au préalable.
+- `pnpm test:perf:profile:main` : écrit un profil CPU pour le thread principal de Vitest (`.artifacts/vitest-main-profile`).
+- `pnpm test:perf:profile:runner` : écrit des profils CPU + heap pour l’exécuteur unitaire (`.artifacts/vitest-runner-profile`).
+- Intégration gateway : opt-in via `OPENCLAW_TEST_INCLUDE_GATEWAY=1 pnpm test` ou `pnpm test:gateway`.
+- `pnpm test:e2e` : exécute les tests smoke end-to-end de la gateway (WS/HTTP multi-instances/appairage de nœuds). Utilise par défaut `threads` + `isolate: false` avec des workers adaptatifs dans `vitest.e2e.config.ts` ; ajustez avec `OPENCLAW_E2E_WORKERS=<n>` et définissez `OPENCLAW_E2E_VERBOSE=1` pour des logs détaillés.
+- `pnpm test:live` : exécute les tests live des fournisseurs (minimax/zai). Nécessite des clés API et `LIVE=1` (ou `*_LIVE_TEST=1` spécifique au fournisseur) pour ne plus les ignorer.
+- `pnpm test:docker:openwebui` : démarre OpenClaw + Open WebUI sous Docker, se connecte via Open WebUI, vérifie `/api/models`, puis exécute un vrai chat proxyfié via `/api/chat/completions`. Nécessite une clé de modèle live utilisable (par exemple OpenAI dans `~/.profile`), télécharge une image Open WebUI externe et n’est pas censé être stable en CI comme les suites unitaires/e2e normales.
+- `pnpm test:docker:mcp-channels` : démarre un conteneur Gateway initialisé et un second conteneur client qui lance `openclaw mcp serve`, puis vérifie la découverte de conversation routée, les lectures de transcription, les métadonnées de pièces jointes, le comportement de la file d’événements live, le routage d’envoi sortant et les notifications de canal + permissions de style Claude sur le véritable pont stdio. L’assertion de notification Claude lit directement les trames MCP stdio brutes afin que le smoke reflète ce que le pont émet réellement.
 
-## Porte locale de PR
+## Barrière locale de PR
 
-Pour les vérifications locales de PR avant atterrissage/validation, exécutez :
+Pour les vérifications locales de validation/atterrissage de PR, exécutez :
 
 - `pnpm check`
 - `pnpm build`
 - `pnpm test`
 - `pnpm check:docs`
 
-Si `pnpm test` est flaky sur un hôte chargé, relancez une fois avant de considérer cela comme une régression, puis isolez avec `pnpm test <path/to/test>`. Pour les hôtes à mémoire contrainte, utilisez :
+Si `pnpm test` est instable sur un hôte chargé, relancez-le une fois avant de le traiter comme une régression, puis isolez avec `pnpm test <path/to/test>`. Pour les hôtes à mémoire contrainte, utilisez :
 
 - `OPENCLAW_VITEST_MAX_WORKERS=1 pnpm test`
 - `OPENCLAW_VITEST_FS_MODULE_CACHE_PATH=/tmp/openclaw-vitest-cache pnpm test:changed`
 
-## Bench de latence modèle (clés locales)
+## Benchmark de latence des modèles (clés locales)
 
 Script : [`scripts/bench-model.ts`](https://github.com/openclaw/openclaw/blob/main/scripts/bench-model.ts)
 
 Utilisation :
 
 - `source ~/.profile && pnpm tsx scripts/bench-model.ts --runs 10`
-- Env facultatif : `MINIMAX_API_KEY`, `MINIMAX_BASE_URL`, `MINIMAX_MODEL`, `ANTHROPIC_API_KEY`
-- Invite par défaut : « Reply with a single word: ok. No punctuation or extra text. »
+- Variables d’environnement facultatives : `MINIMAX_API_KEY`, `MINIMAX_BASE_URL`, `MINIMAX_MODEL`, `ANTHROPIC_API_KEY`
+- Prompt par défaut : « Répondez avec un seul mot : ok. Pas de ponctuation ni de texte supplémentaire. »
 
 Dernière exécution (2025-12-31, 20 exécutions) :
 
 - minimax médiane 1279ms (min 1114, max 2431)
 - opus médiane 2454ms (min 1224, max 3170)
 
-## Bench de démarrage CLI
+## Benchmark de démarrage CLI
 
 Script : [`scripts/bench-cli-startup.ts`](https://github.com/openclaw/openclaw/blob/main/scripts/bench-cli-startup.ts)
 
@@ -85,29 +90,29 @@ Utilisation :
 - `pnpm tsx scripts/bench-cli-startup.ts --preset real --cpu-prof-dir .artifacts/cli-cpu`
 - `pnpm tsx scripts/bench-cli-startup.ts --json`
 
-Préréglages :
+Presets :
 
 - `startup` : `--version`, `--help`, `health`, `health --json`, `status --json`, `status`
 - `real` : `health`, `status`, `status --json`, `sessions`, `sessions --json`, `agents list --json`, `gateway status`, `gateway status --json`, `gateway health --json`, `config get gateway.port`
-- `all` : les deux préréglages
+- `all` : les deux presets
 
-La sortie inclut `sampleCount`, moyenne, p50, p95, min/max, distribution code de sortie/signal, et résumés max RSS pour chaque commande. Les options `--cpu-prof-dir` / `--heap-prof-dir` écrivent des profils V8 par exécution afin que le chronométrage et la capture de profil utilisent le même harnais.
+La sortie inclut `sampleCount`, avg, p50, p95, min/max, la distribution des codes de sortie/signaux et des résumés de RSS maximal pour chaque commande. Les options facultatives `--cpu-prof-dir` / `--heap-prof-dir` écrivent des profils V8 par exécution afin que la mesure temporelle et la capture de profils utilisent le même harness.
 
-Conventions de sortie enregistrée :
+Conventions de sortie sauvegardée :
 
 - `pnpm test:startup:bench:smoke` écrit l’artefact smoke ciblé dans `.artifacts/cli-startup-bench-smoke.json`
 - `pnpm test:startup:bench:save` écrit l’artefact de la suite complète dans `.artifacts/cli-startup-bench-all.json` avec `runs=5` et `warmup=1`
-- `pnpm test:startup:bench:update` actualise la fixture de référence versionnée dans `test/fixtures/cli-startup-bench.json` avec `runs=5` et `warmup=1`
+- `pnpm test:startup:bench:update` rafraîchit la fixture de référence versionnée dans `test/fixtures/cli-startup-bench.json` avec `runs=5` et `warmup=1`
 
 Fixture versionnée :
 
 - `test/fixtures/cli-startup-bench.json`
-- Actualisez-la avec `pnpm test:startup:bench:update`
-- Comparez les résultats courants à la fixture avec `pnpm test:startup:bench:check`
+- Rafraîchissez-la avec `pnpm test:startup:bench:update`
+- Comparez les résultats courants avec la fixture via `pnpm test:startup:bench:check`
 
 ## Onboarding E2E (Docker)
 
-Docker est facultatif ; ce n’est nécessaire que pour les tests smoke d’onboarding conteneurisés.
+Docker est facultatif ; cela n’est nécessaire que pour les tests smoke d’onboarding conteneurisés.
 
 Flux complet de démarrage à froid dans un conteneur Linux propre :
 
@@ -115,7 +120,7 @@ Flux complet de démarrage à froid dans un conteneur Linux propre :
 scripts/e2e/onboard-docker.sh
 ```
 
-Ce script pilote l’assistant interactif via un pseudo-TTY, vérifie les fichiers config/workspace/session, puis démarre la passerelle et exécute `openclaw health`.
+Ce script pilote l’assistant interactif via un pseudo-TTY, vérifie les fichiers de config/espace de travail/session, puis démarre la gateway et exécute `openclaw health`.
 
 ## Smoke d’import QR (Docker)
 

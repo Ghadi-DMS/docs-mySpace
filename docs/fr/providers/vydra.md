@@ -1,25 +1,25 @@
 ---
 read_when:
-    - Vous voulez utiliser la génération multimédia Vydra dans OpenClaw
-    - Vous avez besoin d’instructions pour configurer la clé API Vydra
-summary: Utiliser l’image, la vidéo et la voix Vydra dans OpenClaw
+    - Vous voulez la génération de médias Vydra dans OpenClaw
+    - Vous avez besoin d'instructions pour configurer la clé API Vydra
+summary: Utiliser la génération d'images, de vidéos et la synthèse vocale Vydra dans OpenClaw
 title: Vydra
 x-i18n:
-    generated_at: "2026-04-06T03:11:19Z"
+    generated_at: "2026-04-07T06:53:40Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 0fe999e8a5414b8a31a6d7d127bc6bcfc3b4492b8f438ab17dfa9680c5b079b7
+    source_hash: 24006a687ed6f9792e7b2b10927cc7ad71c735462a92ce03d5fa7c2b2ee2fcc2
     source_path: providers/vydra.md
     workflow: 15
 ---
 
 # Vydra
 
-Le plugin Vydra intégré ajoute :
+Le plugin Vydra intégré ajoute :
 
-- la génération d’images via `vydra/grok-imagine`
+- la génération d'images via `vydra/grok-imagine`
 - la génération de vidéos via `vydra/veo3` et `vydra/kling`
-- la synthèse vocale via la route TTS de Vydra adossée à ElevenLabs
+- la synthèse vocale via la route TTS de Vydra basée sur ElevenLabs
 
 OpenClaw utilise la même `VYDRA_API_KEY` pour ces trois capacités.
 
@@ -27,29 +27,29 @@ OpenClaw utilise la même `VYDRA_API_KEY` pour ces trois capacités.
 
 Utilisez `https://www.vydra.ai/api/v1`.
 
-L’hôte racine de Vydra (`https://vydra.ai/api/v1`) redirige actuellement vers `www`. Certains clients HTTP suppriment `Authorization` lors de cette redirection inter-hôte, ce qui transforme une clé API valide en échec d’authentification trompeur. Le plugin intégré utilise directement l’URL de base `www` pour éviter cela.
+L'hôte apex de Vydra (`https://vydra.ai/api/v1`) redirige actuellement vers `www`. Certains clients HTTP abandonnent `Authorization` lors de cette redirection inter-hôtes, ce qui transforme une clé API valide en échec d'authentification trompeur. Le plugin intégré utilise directement l'URL de base `www` pour éviter cela.
 
 ## Configuration
 
-Onboarding interactif :
+Onboarding interactif :
 
 ```bash
 openclaw onboard --auth-choice vydra-api-key
 ```
 
-Ou définissez directement la variable d’environnement :
+Ou définissez directement la variable d'environnement :
 
 ```bash
 export VYDRA_API_KEY="vydra_live_..."
 ```
 
-## Génération d’images
+## Génération d'images
 
-Modèle d’image par défaut :
+Modèle d'image par défaut :
 
 - `vydra/grok-imagine`
 
-Définissez-le comme fournisseur d’images par défaut :
+Définissez-le comme fournisseur d'images par défaut :
 
 ```json5
 {
@@ -63,18 +63,18 @@ Définissez-le comme fournisseur d’images par défaut :
 }
 ```
 
-La prise en charge intégrée actuelle se limite au texte vers image. Les routes d’édition hébergées de Vydra attendent des URL d’image distantes, et OpenClaw n’ajoute pas encore de pont d’upload spécifique à Vydra dans le plugin intégré.
+La prise en charge intégrée actuelle se limite au texte-vers-image. Les routes d'édition hébergées de Vydra attendent des URL d'image distantes, et OpenClaw n'ajoute pas encore de pont de téléversement spécifique à Vydra dans le plugin intégré.
 
-Voir [Génération d’images](/fr/tools/image-generation) pour le comportement partagé de l’outil.
+Voir [Génération d'images](/fr/tools/image-generation) pour le comportement partagé de l'outil.
 
 ## Génération de vidéos
 
-Modèles vidéo enregistrés :
+Modèles vidéo enregistrés :
 
-- `vydra/veo3` pour le texte vers vidéo
-- `vydra/kling` pour l’image vers vidéo
+- `vydra/veo3` pour le texte-vers-vidéo
+- `vydra/kling` pour l'image-vers-vidéo
 
-Définissez Vydra comme fournisseur vidéo par défaut :
+Définissez Vydra comme fournisseur vidéo par défaut :
 
 ```json5
 {
@@ -88,17 +88,37 @@ Définissez Vydra comme fournisseur vidéo par défaut :
 }
 ```
 
-Remarques :
+Remarques :
 
-- `vydra/veo3` est intégré uniquement en mode texte vers vidéo.
-- `vydra/kling` exige actuellement une URL d’image distante comme référence. Les uploads de fichiers locaux sont rejetés d’emblée.
-- Le plugin intégré reste conservateur et ne transmet pas des options de style non documentées comme le ratio d’aspect, la résolution, le filigrane ou l’audio généré.
+- `vydra/veo3` est intégré uniquement en mode texte-vers-vidéo.
+- `vydra/kling` exige actuellement une référence d'URL d'image distante. Les téléversements de fichiers locaux sont rejetés immédiatement.
+- La route HTTP `kling` actuelle de Vydra a été incohérente quant au fait d'exiger `image_url` ou `video_url` ; le fournisseur intégré mappe la même URL d'image distante vers les deux champs.
+- Le plugin intégré reste prudent et ne transmet pas de paramètres de style non documentés tels que le ratio d'aspect, la résolution, le filigrane ou l'audio généré.
 
-Voir [Génération de vidéos](/tools/video-generation) pour le comportement partagé de l’outil.
+Couverture live spécifique au fournisseur :
+
+```bash
+OPENCLAW_LIVE_TEST=1 \
+OPENCLAW_LIVE_VYDRA_VIDEO=1 \
+pnpm test:live -- extensions/vydra/vydra.live.test.ts
+```
+
+Le fichier live Vydra intégré couvre maintenant :
+
+- `vydra/veo3` texte-vers-vidéo
+- `vydra/kling` image-vers-vidéo à l'aide d'une URL d'image distante
+
+Remplacez la fixture d'image distante si nécessaire :
+
+```bash
+export OPENCLAW_LIVE_VYDRA_KLING_IMAGE_URL="https://example.com/reference.png"
+```
+
+Voir [Génération de vidéos](/fr/tools/video-generation) pour le comportement partagé de l'outil.
 
 ## Synthèse vocale
 
-Définissez Vydra comme fournisseur vocal :
+Définissez Vydra comme fournisseur de parole :
 
 ```json5
 {
@@ -116,15 +136,15 @@ Définissez Vydra comme fournisseur vocal :
 }
 ```
 
-Valeurs par défaut :
+Valeurs par défaut :
 
-- modèle : `elevenlabs/tts`
-- id de voix : `21m00Tcm4TlvDq8ikWAM`
+- modèle : `elevenlabs/tts`
+- ID de voix : `21m00Tcm4TlvDq8ikWAM`
 
 Le plugin intégré expose actuellement une seule voix par défaut connue comme fiable et renvoie des fichiers audio MP3.
 
 ## Liens associés
 
 - [Répertoire des fournisseurs](/fr/providers/index)
-- [Génération d’images](/fr/tools/image-generation)
-- [Génération de vidéos](/tools/video-generation)
+- [Génération d'images](/fr/tools/image-generation)
+- [Génération de vidéos](/fr/tools/video-generation)

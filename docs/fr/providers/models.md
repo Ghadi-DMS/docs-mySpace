@@ -5,17 +5,17 @@ read_when:
 summary: Fournisseurs de modèles (LLM) pris en charge par OpenClaw
 title: Démarrage rapide des fournisseurs de modèles
 x-i18n:
-    generated_at: "2026-04-06T03:11:01Z"
+    generated_at: "2026-04-07T06:53:33Z"
     model: gpt-5.4
     provider: openai
-    source_hash: c0314fb1c754171e5fc252d30f7ba9bb6acdbb978d97e9249264d90351bac2e7
+    source_hash: 500191bfe853241096f97928ced2327a13b6f7f62003cb7452b24886c272e6ba
     source_path: providers/models.md
     workflow: 15
 ---
 
 # Fournisseurs de modèles
 
-OpenClaw peut utiliser de nombreux fournisseurs LLM. Choisissez-en un, authentifiez-vous, puis définissez le
+OpenClaw peut utiliser de nombreux fournisseurs de LLM. Choisissez-en un, authentifiez-vous, puis définissez le
 modèle par défaut sous la forme `provider/model`.
 
 ## Démarrage rapide (deux étapes)
@@ -31,16 +31,16 @@ modèle par défaut sous la forme `provider/model`.
 
 ## Fournisseurs pris en charge (ensemble de départ)
 
-- [Alibaba Model Studio](/providers/alibaba)
+- [Alibaba Model Studio](/fr/providers/alibaba)
 - [Anthropic (API + Claude CLI)](/fr/providers/anthropic)
 - [Amazon Bedrock](/fr/providers/bedrock)
 - [BytePlus (International)](/fr/concepts/model-providers#byteplus-international)
 - [Chutes](/fr/providers/chutes)
-- [ComfyUI](/providers/comfy)
+- [ComfyUI](/fr/providers/comfy)
 - [Cloudflare AI Gateway](/fr/providers/cloudflare-ai-gateway)
-- [fal](/providers/fal)
+- [fal](/fr/providers/fal)
 - [Fireworks](/fr/providers/fireworks)
-- [Modèles GLM](/fr/providers/glm)
+- [GLM models](/fr/providers/glm)
 - [MiniMax](/fr/providers/minimax)
 - [Mistral](/fr/providers/mistral)
 - [Moonshot AI (Kimi + Kimi Coding)](/fr/providers/moonshot)
@@ -49,7 +49,7 @@ modèle par défaut sous la forme `provider/model`.
 - [OpenRouter](/fr/providers/openrouter)
 - [Qianfan](/fr/providers/qianfan)
 - [Qwen](/fr/providers/qwen)
-- [Runway](/providers/runway)
+- [Runway](/fr/providers/runway)
 - [StepFun](/fr/providers/stepfun)
 - [Synthetic](/fr/providers/synthetic)
 - [Vercel AI Gateway](/fr/providers/vercel-ai-gateway)
@@ -61,6 +61,7 @@ modèle par défaut sous la forme `provider/model`.
 
 - `anthropic-vertex` - prise en charge implicite d’Anthropic sur Google Vertex lorsque des identifiants Vertex sont disponibles ; aucun choix d’authentification d’onboarding séparé
 - `copilot-proxy` - pont proxy local VS Code Copilot ; utilisez `openclaw onboard --auth-choice copilot-proxy`
+- `google-gemini-cli` - flux OAuth non officiel de Gemini CLI ; nécessite une installation locale de `gemini` (`brew install gemini-cli` ou `npm install -g @google/gemini-cli`) ; modèle par défaut `google-gemini-cli/gemini-3.1-pro-preview` ; utilisez `openclaw onboard --auth-choice google-gemini-cli` ou `openclaw models auth login --provider google-gemini-cli --set-default`
 
 Pour le catalogue complet des fournisseurs (xAI, Groq, Mistral, etc.) et la configuration avancée,
 voir [Fournisseurs de modèles](/fr/concepts/model-providers).

@@ -1,34 +1,34 @@
 ---
 read_when:
-    - Реалізація або оновлення WS-клієнтів gateway
+    - Реалізація або оновлення gateway WS-клієнтів
     - Налагодження невідповідностей протоколу або збоїв підключення
     - Повторна генерація схеми/моделей протоколу
 summary: 'Протокол Gateway WebSocket: рукостискання, фрейми, версіонування'
 title: Протокол Gateway
 x-i18n:
-    generated_at: "2026-04-05T22:13:31Z"
+    generated_at: "2026-04-07T19:40:42Z"
     model: gpt-5.4
     provider: openai
-    source_hash: c37f5b686562dda3ba3516ac6982ad87b2f01d8148233284e9917099c6e96d87
+    source_hash: 8635e3ac1dd311dbd3a770b088868aa1495a8d53b3ebc1eae0dfda3b2bf4694a
     source_path: gateway/protocol.md
     workflow: 15
 ---
 
 # Протокол Gateway (WebSocket)
 
-Протокол Gateway WS — це **єдина control plane + node transport** для
-OpenClaw. Усі клієнти (CLI, веб-UI, застосунок macOS, iOS/Android nodes, headless
-nodes) підключаються через WebSocket і оголошують свою **role** + **scope** під
-час рукостискання.
+Протокол Gateway WS — це **єдина контрольна площина + транспорт вузлів** для
+OpenClaw. Усі клієнти (CLI, веб-інтерфейс, застосунок macOS, вузли iOS/Android, headless
+вузли) підключаються через WebSocket і оголошують свою **роль** + **область**
+під час рукостискання.
 
 ## Транспорт
 
-- WebSocket, текстові фрейми з JSON-повідомленнями.
+- WebSocket, текстові фрейми з JSON-навантаженнями.
 - Першим фреймом **має** бути запит `connect`.
 
 ## Рукостискання (connect)
 
-Gateway → Client (виклик до підключення):
+Gateway → Client (передпідключний challenge):
 
 ```json
 {
@@ -96,7 +96,7 @@ Gateway → Client:
 }
 ```
 
-Під час передавання в trusted bootstrap `hello-ok.auth` також може містити додаткові
+Під час передавання довіреного bootstrap `hello-ok.auth` також може містити додаткові
 обмежені записи ролей у `deviceTokens`:
 
 ```json
@@ -116,12 +116,13 @@ Gateway → Client:
 }
 ```
 
-Для вбудованого потоку bootstrap node/operator основний токен node
-залишається `scopes: []`, а будь-який переданий токен operator залишається обмеженим
-списком дозволів bootstrap operator (`operator.approvals`, `operator.read`,
-`operator.talk.secrets`, `operator.write`). Перевірки scope для bootstrap
-залишаються прив’язаними до префікса ролі: записи operator задовольняють лише запити operator, а ролям, що не є operator,
-усе одно потрібні scopes під префіксом їхньої власної ролі.
+Для вбудованого bootstrap-процесу node/operator основний токен вузла зберігає
+`scopes: []`, а будь-який переданий токен оператора залишається обмеженим
+списком дозволів bootstrap-оператора (`operator.approvals`, `operator.read`,
+`operator.talk.secrets`, `operator.write`). Перевірки області bootstrap
+залишаються префіксованими роллю: записи оператора задовольняють лише запити
+оператора, а ролям, що не є оператором, як і раніше потрібні області під їхнім
+власним префіксом ролі.
 
 ### Приклад node
 
@@ -160,22 +161,22 @@ Gateway → Client:
 
 ## Форматування фреймів
 
-- **Запит**: `{type:"req", id, method, params}`
-- **Відповідь**: `{type:"res", id, ok, payload|error}`
-- **Подія**: `{type:"event", event, payload, seq?, stateVersion?}`
+- **Request**: `{type:"req", id, method, params}`
+- **Response**: `{type:"res", id, ok, payload|error}`
+- **Event**: `{type:"event", event, payload, seq?, stateVersion?}`
 
-Методи з побічними ефектами потребують **ключів ідемпотентності** (див. схему).
+Методи з побічними ефектами потребують **ключів ідемпотентності** (див. schema).
 
-## Roles + scopes
+## Ролі + області
 
-### Roles
+### Ролі
 
-- `operator` = клієнт control plane (CLI/UI/автоматизація).
+- `operator` = клієнт контрольної площини (CLI/UI/автоматизація).
 - `node` = хост можливостей (camera/screen/canvas/system.run).
 
-### Scopes (operator)
+### Області (operator)
 
-Поширені scopes:
+Поширені області:
 
 - `operator.read`
 - `operator.write`
@@ -184,219 +185,222 @@ Gateway → Client:
 - `operator.pairing`
 - `operator.talk.secrets`
 
-Для `talk.config` з `includeSecrets: true` потрібен `operator.talk.secrets`
+`talk.config` з `includeSecrets: true` потребує `operator.talk.secrets`
 (або `operator.admin`).
 
-RPC-методи gateway, зареєстровані плагінами, можуть запитувати власний scope operator, але
-зарезервовані префікси core admin (`config.*`, `exec.approvals.*`, `wizard.*`,
+RPC-методи Gateway, зареєстровані plugin, можуть запитувати власну область
+оператора, але зарезервовані префікси core admin (`config.*`, `exec.approvals.*`, `wizard.*`,
 `update.*`) завжди зіставляються з `operator.admin`.
 
-Scope методу — це лише перший рівень перевірки. Деякі slash-команди, до яких звертаються через
-`chat.send`, додатково застосовують суворіші перевірки на рівні команд. Наприклад, постійні
-записи `/config set` і `/config unset` потребують `operator.admin`.
+Область методу — це лише перший рівень перевірки. Деякі slash-команди,
+викликані через `chat.send`, додатково застосовують суворіші перевірки на рівні команди.
+Наприклад, постійні записи `/config set` і `/config unset` потребують `operator.admin`.
 
-`node.pair.approve` також має додаткову перевірку scope під час схвалення поверх
-базового scope методу:
+`node.pair.approve` також має додаткову перевірку області під час схвалення понад
+базову область методу:
 
-- запити без команд: `operator.pairing`
-- запити з командами node, що не є exec: `operator.pairing` + `operator.write`
-- запити, що включають `system.run`, `system.run.prepare` або `system.which`:
+- запити без команди: `operator.pairing`
+- запити з командами вузла без exec: `operator.pairing` + `operator.write`
+- запити, що містять `system.run`, `system.run.prepare` або `system.which`:
   `operator.pairing` + `operator.admin`
 
 ### Caps/commands/permissions (node)
 
-Nodes оголошують заявлені можливості під час підключення:
+Вузли оголошують заявлені можливості під час підключення:
 
 - `caps`: високорівневі категорії можливостей.
-- `commands`: allowlist команд для invoke.
+- `commands`: список дозволених команд для invoke.
 - `permissions`: детальні перемикачі (наприклад, `screen.record`, `camera.capture`).
 
-Gateway трактує це як **заявлені можливості** та застосовує allowlist на боці сервера.
+Gateway розглядає це як **заяви** і застосовує серверні allowlist.
 
-## Presence
+## Присутність
 
-- `system-presence` повертає записи, згруповані за ідентичністю пристрою.
-- Записи присутності містять `deviceId`, `roles` і `scopes`, щоб UI могли показувати один рядок на пристрій
+- `system-presence` повертає записи з ключами за ідентичністю пристрою.
+- Записи присутності містять `deviceId`, `roles` і `scopes`, щоб UI міг показувати один рядок на пристрій
   навіть коли він підключається і як **operator**, і як **node**.
 
 ## Поширені сімейства RPC-методів
 
-Ця сторінка не є згенерованим повним дампом, але публічна WS-поверхня ширша
-за наведені вище приклади рукостискання/автентифікації. Ось основні сімейства методів, які
-Gateway надає сьогодні.
+Ця сторінка не є згенерованим повним дампом, але публічна поверхня WS ширша,
+ніж наведені вище приклади рукостискання/автентифікації. Це основні сімейства методів,
+які сьогодні надає Gateway.
 
-`hello-ok.features.methods` — це консервативний список виявлення, зібраний із
-`src/gateway/server-methods-list.ts` плюс експортів методів завантажених плагінів/каналів.
-Розглядайте його як механізм виявлення можливостей, а не як згенерований дамп кожного викликуваного helper,
+`hello-ok.features.methods` — це консервативний список виявлення, побудований з
+`src/gateway/server-methods-list.ts` плюс експортів методів завантажених plugin/channel.
+Сприймайте його як виявлення можливостей, а не як згенерований дамп кожного допоміжного виклику,
 реалізованого в `src/gateway/server-methods/*.ts`.
 
-### Система та ідентичність
+### System and identity
 
 - `health` повертає кешований або щойно перевірений знімок стану gateway.
 - `status` повертає зведення gateway у стилі `/status`; чутливі поля
-  включаються лише для operator-клієнтів з admin scope.
-- `gateway.identity.get` повертає ідентичність пристрою gateway, що використовується в relay та
-  потоках pairing.
+  включаються лише для operator-клієнтів з admin-областю.
+- `gateway.identity.get` повертає ідентичність пристрою gateway, що використовується relay і
+  потоками pairing.
 - `system-presence` повертає поточний знімок присутності для підключених
   пристроїв operator/node.
 - `system-event` додає системну подію та може оновлювати/транслювати контекст
   присутності.
-- `last-heartbeat` повертає останню збережену heartbeat-подію.
+- `last-heartbeat` повертає останню збережену подію heartbeat.
 - `set-heartbeats` перемикає обробку heartbeat на gateway.
 
-### Моделі та використання
+### Models and usage
 
-- `models.list` повертає каталог моделей, дозволених у runtime.
-- `usage.status` повертає зведення вікон використання постачальників/залишку квоти.
-- `usage.cost` повертає агреговані зведення витрат за діапазон дат.
+- `models.list` повертає каталог моделей, дозволених під час виконання.
+- `usage.status` повертає зведення вікон використання постачальника/залишку квоти.
+- `usage.cost` повертає агреговані зведення вартості використання за діапазон дат.
 - `doctor.memory.status` повертає готовність vector-memory / embedding для
   активного робочого простору агента за замовчуванням.
 - `sessions.usage` повертає зведення використання по сесіях.
 - `sessions.usage.timeseries` повертає часовий ряд використання для однієї сесії.
 - `sessions.usage.logs` повертає записи журналу використання для однієї сесії.
 
-### Канали та helper-и входу
+### Channels and login helpers
 
-- `channels.status` повертає зведення стану вбудованих і bundled каналів/плагінів.
-- `channels.logout` виконує вихід із конкретного каналу/акаунта, якщо канал
+- `channels.status` повертає зведення стану вбудованих і bundled channel/plugin.
+- `channels.logout` виконує вихід для конкретного channel/account, де channel
   підтримує вихід.
-- `web.login.start` запускає потік входу за QR/вебом для поточного веб-провайдера каналу
-  з підтримкою QR.
-- `web.login.wait` очікує завершення цього потоку входу за QR/вебом і запускає
-  канал у разі успіху.
-- `push.test` надсилає тестовий APNs push до зареєстрованого iOS node.
+- `web.login.start` запускає потік входу QR/web для поточного QR-сумісного веб-
+  провайдера channel.
+- `web.login.wait` очікує завершення цього потоку входу QR/web і запускає
+  channel у разі успіху.
+- `push.test` надсилає тестовий APNs push до зареєстрованого вузла iOS.
 - `voicewake.get` повертає збережені тригери wake-word.
 - `voicewake.set` оновлює тригери wake-word і транслює зміну.
 
-### Повідомлення та журнали
+### Messaging and logs
 
-- `send` — це прямий RPC outbound-delivery для надсилання в канал/акаунт/гілку
-  поза chat runner.
-- `logs.tail` повертає tail налаштованого файлового журналу gateway з cursor/limit і
-  обмеженнями max-byte.
+- `send` — це RPC прямої вихідної доставки для channel/account/thread-орієнтованих
+  надсилань поза chat runner.
+- `logs.tail` повертає налаштований tail файлового журналу gateway з cursor/limit і
+  елементами керування max-byte.
 
-### Talk і TTS
+### Talk and TTS
 
-- `talk.config` повертає ефективний payload конфігурації Talk; `includeSecrets`
+- `talk.config` повертає ефективне конфігураційне навантаження Talk; `includeSecrets`
   потребує `operator.talk.secrets` (або `operator.admin`).
 - `talk.mode` встановлює/транслює поточний стан режиму Talk для клієнтів WebChat/Control UI.
-- `talk.speak` синтезує мовлення через активного постачальника мовлення Talk.
-- `tts.status` повертає стан увімкнення TTS, активного постачальника, резервних постачальників
-  і стан конфігурації постачальника.
-- `tts.providers` повертає видимий інвентар постачальників TTS.
+- `talk.speak` синтезує мовлення через активного speech-провайдера Talk.
+- `tts.status` повертає стан увімкнення TTS, активного провайдера, резервних провайдерів
+  і стан конфігурації провайдера.
+- `tts.providers` повертає видимий інвентар TTS-провайдерів.
 - `tts.enable` і `tts.disable` перемикають стан налаштувань TTS.
-- `tts.setProvider` оновлює бажаного постачальника TTS.
+- `tts.setProvider` оновлює бажаного TTS-провайдера.
 - `tts.convert` виконує одноразове перетворення text-to-speech.
 
-### Секрети, конфігурація, оновлення та wizard
+### Secrets, config, update, and wizard
 
-- `secrets.reload` повторно розв’язує активні SecretRef і замінює runtime-стан секретів
+- `secrets.reload` повторно розв’язує активні SecretRef і замінює стан секретів під час виконання
   лише за повного успіху.
-- `secrets.resolve` розв’язує призначення секретів для конкретного
+- `secrets.resolve` розв’язує призначення секретів цільовій команді для конкретного
   набору command/target.
-- `config.get` повертає поточний знімок конфігурації та хеш.
-- `config.set` записує валідований payload конфігурації.
-- `config.patch` об’єднує часткове оновлення конфігурації.
-- `config.apply` перевіряє та замінює повний payload конфігурації.
-- `config.schema` повертає payload актуальної схеми конфігурації, який використовують Control UI і
-  інструменти CLI: schema, `uiHints`, версію та метадані генерації, включно з
-  метаданими схем plugin + channel, коли runtime може їх завантажити. Схема
-  містить метадані полів `title` / `description`, отримані з тих самих підписів
-  і довідкового тексту, що використовує UI, включно з вкладеними object, wildcard, array-item
-  та гілками композиції `anyOf` / `oneOf` / `allOf`, коли є відповідна
-  документація поля.
-- `config.schema.lookup` повертає payload пошуку в межах шляху для одного шляху конфігурації:
-  нормалізований шлях, поверхневий вузол схеми, відповідний hint + `hintPath` та
+- `config.get` повертає поточний знімок config і hash.
+- `config.set` записує перевірене навантаження config.
+- `config.patch` об’єднує часткове оновлення config.
+- `config.apply` перевіряє й замінює повне навантаження config.
+- `config.schema` повертає живе навантаження схеми config, що використовується Control UI і
+  інструментами CLI: schema, `uiHints`, версію та метадані генерації, включно з
+  метаданими схем plugin + channel, коли середовище виконання може їх завантажити. Схема
+  містить метадані полів `title` / `description`, похідні від тих самих міток
+  і тексту довідки, які використовує UI, включно з вкладеними object, wildcard,
+  array-item і гілками композиції `anyOf` / `oneOf` / `allOf`, коли існує
+  відповідна документація поля.
+- `config.schema.lookup` повертає навантаження пошуку з обмеженням шляхом для одного шляху config:
+  нормалізований шлях, неглибокий вузол schema, зіставлені hint + `hintPath` і
   зведення безпосередніх дочірніх елементів для деталізації в UI/CLI.
-  - Вузли схеми lookup зберігають орієнтовану на користувача документацію та поширені поля валідації:
+  - Вузли схеми пошуку зберігають орієнтовану на користувача документацію та поширені поля валідації:
     `title`, `description`, `type`, `enum`, `const`, `format`, `pattern`,
     числові/рядкові/масивні/об’єктні межі та булеві прапорці, як-от
     `additionalProperties`, `deprecated`, `readOnly`, `writeOnly`.
-  - Зведення дочірніх елементів містять `key`, нормалізований `path`, `type`, `required`,
-    `hasChildren`, а також відповідні `hint` / `hintPath`.
+  - Зведення дочірніх елементів показують `key`, нормалізований `path`, `type`, `required`,
+    `hasChildren`, а також зіставлені `hint` / `hintPath`.
 - `update.run` запускає потік оновлення gateway і планує перезапуск лише тоді,
   коли саме оновлення було успішним.
 - `wizard.start`, `wizard.next`, `wizard.status` і `wizard.cancel` надають
-  onboarding wizard через WS RPC.
+  wizard онбордингу через WS RPC.
 
-### Наявні основні сімейства
+### Existing major families
 
-#### Helper-и агента та робочого простору
+#### Agent and workspace helpers
 
 - `agents.list` повертає налаштовані записи агентів.
 - `agents.create`, `agents.update` і `agents.delete` керують записами агентів і
-  прив’язкою робочого простору.
+  підключенням робочих просторів.
 - `agents.files.list`, `agents.files.get` і `agents.files.set` керують файлами
-  робочого простору bootstrap, доступними для агента.
-- `agent.identity.get` повертає ефективну ідентичність помічника для агента або
+  bootstrap-робочого простору, доступними для агента.
+- `agent.identity.get` повертає ефективну ідентичність асистента для агента або
   сесії.
-- `agent.wait` очікує завершення запуску та повертає термінальний знімок, коли
-  він доступний.
+- `agent.wait` очікує завершення запуску та повертає фінальний знімок, коли він
+  доступний.
 
-#### Керування сесіями
+#### Session control
 
 - `sessions.list` повертає поточний індекс сесій.
 - `sessions.subscribe` і `sessions.unsubscribe` перемикають підписки на події змін сесій
   для поточного WS-клієнта.
 - `sessions.messages.subscribe` і `sessions.messages.unsubscribe` перемикають
-  підписки на події транскрипту/повідомлень для однієї сесії.
-- `sessions.preview` повертає обмежені попередні перегляди транскриптів для вказаних
+  підписки на події transcript/message для однієї сесії.
+- `sessions.preview` повертає обмежені попередні перегляди transcript для конкретних
   ключів сесій.
 - `sessions.resolve` розв’язує або канонізує ціль сесії.
 - `sessions.create` створює новий запис сесії.
 - `sessions.send` надсилає повідомлення в наявну сесію.
-- `sessions.steer` — це варіант переривання і перенаправлення для активної сесії.
+- `sessions.steer` — це варіант переривання й спрямування для активної сесії.
 - `sessions.abort` перериває активну роботу для сесії.
 - `sessions.patch` оновлює метадані/перевизначення сесії.
-- `sessions.reset`, `sessions.delete` і `sessions.compact` виконують обслуговування сесій.
+- `sessions.reset`, `sessions.delete` і `sessions.compact` виконують обслуговування сесії.
 - `sessions.get` повертає повний збережений рядок сесії.
 - виконання chat, як і раніше, використовує `chat.history`, `chat.send`, `chat.abort` і
   `chat.inject`.
-- `chat.history` нормалізується для відображення для UI-клієнтів: вбудовані теги директив прибираються з видимого тексту, plain-text XML-повідомлення викликів інструментів (включно з
+- `chat.history` нормалізується для відображення для UI-клієнтів: вбудовані теги директив
+  видаляються з видимого тексту, XML-навантаження виклику інструментів у простому тексті (включно з
   `<tool_call>...</tool_call>`, `<function_call>...</function_call>`,
-  `<tool_calls>...</tool_calls>`, `<function_calls>...</function_calls>` та
-  обрізаними блоками викликів інструментів) і витіклі ASCII/full-width control tokens моделі
-  видаляються, чисті рядки помічника з silent-token, такі як точні `NO_REPLY` /
-  `no_reply`, опускаються, а надто великі рядки можуть бути замінені placeholder-ами.
+  `<tool_calls>...</tool_calls>`, `<function_calls>...</function_calls>` і
+  обрізаними блоками виклику інструментів) та витеклі ASCII/повноширинні токени керування моделі
+  видаляються, суто беззвучні рядки асистента, як-от точні `NO_REPLY` /
+  `no_reply`, пропускаються, а надто великі рядки можуть замінюватися заповнювачами.
 
-#### Pairing пристроїв і токени пристроїв
+#### Device pairing and device tokens
 
-- `device.pair.list` повертає очікувальні та схвалені paired-пристрої.
+- `device.pair.list` повертає очікуючі й схвалені спарені пристрої.
 - `device.pair.approve`, `device.pair.reject` і `device.pair.remove` керують
-  записами pairing пристроїв.
-- `device.token.rotate` обертає токен paired-пристрою в межах його схваленої ролі
-  та дозволених scopes.
-- `device.token.revoke` відкликає токен paired-пристрою.
+  записами спарювання пристроїв.
+- `device.token.rotate` ротатує токен спареного пристрою в межах схвалених ролей
+  і областей.
+- `device.token.revoke` відкликає токен пристрою.
 
-#### Pairing node, invoke і відкладена робота
+#### Node pairing, invoke, and pending work
 
 - `node.pair.request`, `node.pair.list`, `node.pair.approve`,
-  `node.pair.reject` і `node.pair.verify` охоплюють pairing node і bootstrap
-  verification.
-- `node.list` і `node.describe` повертають стан відомих/підключених nodes.
-- `node.rename` оновлює мітку paired node.
-- `node.invoke` пересилає команду до підключеного node.
+  `node.pair.reject` і `node.pair.verify` охоплюють спарювання вузлів і bootstrap-
+  перевірку.
+- `node.list` і `node.describe` повертають стан відомих/підключених вузлів.
+- `node.rename` оновлює мітку спареного вузла.
+- `node.invoke` пересилає команду підключеному вузлу.
 - `node.invoke.result` повертає результат для запиту invoke.
-- `node.event` переносить події, що походять від node, назад у gateway.
-- `node.canvas.capability.refresh` оновлює токени canvas-capability з обмеженою областю дії.
-- `node.pending.pull` і `node.pending.ack` — це API черги для підключених nodes.
+- `node.event` переносить події, ініційовані вузлом, назад у gateway.
+- `node.canvas.capability.refresh` оновлює scoped-токени можливостей canvas.
+- `node.pending.pull` і `node.pending.ack` — це API черги підключених вузлів.
 - `node.pending.enqueue` і `node.pending.drain` керують довговічною відкладеною роботою
-  для offline/disconnected nodes.
+  для офлайн/відключених вузлів.
 
-#### Сімейства approvals
+#### Approval families
 
-- `exec.approval.request` і `exec.approval.resolve` охоплюють одноразові
-  запити approval для exec.
-- `exec.approval.waitDecision` очікує на одне pending approval для exec і повертає
-  остаточне рішення (або `null` у разі тайм-ауту).
-- `exec.approvals.get` і `exec.approvals.set` керують знімками політики
-  approvals для exec у gateway.
-- `exec.approvals.node.get` і `exec.approvals.node.set` керують локальною політикою approvals для exec у node
-  через команди relay node.
-- `plugin.approval.request`, `plugin.approval.waitDecision` і
-  `plugin.approval.resolve` охоплюють потоки approval, визначені плагінами.
+- `exec.approval.request`, `exec.approval.get`, `exec.approval.list` і
+  `exec.approval.resolve` охоплюють одноразові запити на схвалення exec плюс
+  пошук/повторення очікуючих схвалень.
+- `exec.approval.waitDecision` очікує рішення щодо одного очікуючого схвалення exec і повертає
+  фінальне рішення (або `null` у разі тайм-ауту).
+- `exec.approvals.get` і `exec.approvals.set` керують знімками політики схвалення exec
+  gateway.
+- `exec.approvals.node.get` і `exec.approvals.node.set` керують локальною для вузла exec-
+  політикою схвалення через relay-команди вузла.
+- `plugin.approval.request`, `plugin.approval.list`,
+  `plugin.approval.waitDecision` і `plugin.approval.resolve` охоплюють
+  потоки схвалення, визначені plugin.
 
-#### Інші основні сімейства
+#### Other major families
 
 - automation:
   - `wake` планує негайне або на наступний heartbeat введення тексту пробудження
@@ -406,83 +410,85 @@ Gateway надає сьогодні.
 
 ### Поширені сімейства подій
 
-- `chat`: оновлення UI chat, такі як `chat.inject`, та інші події chat лише для транскрипту.
-- `session.message` і `session.tool`: оновлення транскрипту/потоку подій для
+- `chat`: оновлення chat у UI, такі як `chat.inject` та інші події chat,
+  пов’язані лише з transcript.
+- `session.message` і `session.tool`: оновлення transcript/потоку подій для
   підписаної сесії.
-- `sessions.changed`: змінився індекс сесій або їхні метадані.
+- `sessions.changed`: змінився індекс сесій або метадані.
 - `presence`: оновлення знімка системної присутності.
 - `tick`: періодична подія keepalive / liveness.
 - `health`: оновлення знімка стану gateway.
-- `heartbeat`: оновлення потоку heartbeat-подій.
+- `heartbeat`: оновлення потоку подій heartbeat.
 - `cron`: подія зміни запуску/завдання cron.
 - `shutdown`: сповіщення про вимкнення gateway.
-- `node.pair.requested` / `node.pair.resolved`: життєвий цикл pairing node.
-- `node.invoke.request`: трансляція запиту invoke node.
-- `device.pair.requested` / `device.pair.resolved`: життєвий цикл paired-пристрою.
-- `voicewake.changed`: змінено конфігурацію тригерів wake-word.
+- `node.pair.requested` / `node.pair.resolved`: життєвий цикл спарювання вузлів.
+- `node.invoke.request`: трансляція запиту invoke вузла.
+- `device.pair.requested` / `device.pair.resolved`: життєвий цикл спареного пристрою.
+- `voicewake.changed`: змінилася конфігурація тригерів wake-word.
 - `exec.approval.requested` / `exec.approval.resolved`: життєвий цикл
-  approval для exec.
-- `plugin.approval.requested` / `plugin.approval.resolved`: життєвий цикл approval плагіна.
+  схвалення exec.
+- `plugin.approval.requested` / `plugin.approval.resolved`: життєвий цикл схвалення
+  plugin.
 
-### Helper-методи node
+### Допоміжні методи node
 
-- Nodes можуть викликати `skills.bins`, щоб отримати поточний список виконуваних файлів skill
-  для перевірок auto-allow.
+- Вузли можуть викликати `skills.bins`, щоб отримати поточний список виконуваних файлів skill
+  для автоматичних перевірок allow.
 
-### Helper-методи operator
+### Допоміжні методи operator
 
-- Operators можуть викликати `tools.catalog` (`operator.read`), щоб отримати runtime-каталог інструментів для
-  агента. Відповідь містить згруповані інструменти та метадані походження:
+- Оператори можуть викликати `tools.catalog` (`operator.read`), щоб отримати каталог runtime tools для
+  агента. Відповідь містить згруповані tools і метадані походження:
   - `source`: `core` або `plugin`
   - `pluginId`: власник plugin, коли `source="plugin"`
   - `optional`: чи є інструмент plugin необов’язковим
-- Operators можуть викликати `tools.effective` (`operator.read`), щоб отримати runtime-ефективний
-  інвентар інструментів для сесії.
+- Оператори можуть викликати `tools.effective` (`operator.read`), щоб отримати runtime-effective
+  інвентар tools для сесії.
   - `sessionKey` є обов’язковим.
-  - Gateway виводить trusted runtime-контекст із сесії на боці сервера замість прийняття
-    контексту auth або доставки, наданого викликачем.
-  - Відповідь обмежена сесією і відображає те, що активна розмова може використовувати просто зараз,
+  - Gateway виводить довірений контекст runtime із сесії на боці сервера, а не приймає
+    auth або контекст доставки, надані викликачем.
+  - Відповідь має область сесії та відображає те, що активна розмова може використовувати просто зараз,
     включно з core, plugin і channel tools.
-- Operators можуть викликати `skills.status` (`operator.read`), щоб отримати видимий
-  інвентар skills для агента.
-  - `agentId` необов’язковий; не вказуйте його, щоб читати робочий простір агента за замовчуванням.
-  - Відповідь містить eligibility, відсутні вимоги, перевірки конфігурації та
-    санітизовані параметри встановлення без розкриття сирих значень секретів.
-- Operators можуть викликати `skills.search` і `skills.detail` (`operator.read`) для
+- Оператори можуть викликати `skills.status` (`operator.read`), щоб отримати видимий
+  інвентар Skills для агента.
+  - `agentId` необов’язковий; пропустіть його, щоб читати робочий простір агента за замовчуванням.
+  - Відповідь містить право на використання, відсутні вимоги, перевірки config і
+    очищені параметри встановлення без розкриття сирих значень секретів.
+- Оператори можуть викликати `skills.search` і `skills.detail` (`operator.read`) для
   метаданих виявлення ClawHub.
-- Operators можуть викликати `skills.install` (`operator.admin`) у двох режимах:
-  - Режим ClawHub: `{ source: "clawhub", slug, version?, force? }` встановлює
-    папку skill до каталогу `skills/` робочого простору агента за замовчуванням.
+- Оператори можуть викликати `skills.install` (`operator.admin`) у двох режимах:
+  - Режим ClawHub: `{ source: "clawhub", slug, version?, force? }` установлює
+    теку skill у каталог `skills/` робочого простору агента за замовчуванням.
   - Режим інсталятора gateway: `{ name, installId, dangerouslyForceUnsafeInstall?, timeoutMs? }`
     запускає оголошену дію `metadata.openclaw.install` на хості gateway.
-- Operators можуть викликати `skills.update` (`operator.admin`) у двох режимах:
-  - Режим ClawHub оновлює один відстежуваний slug або всі відстежувані встановлення ClawHub у
+- Оператори можуть викликати `skills.update` (`operator.admin`) у двох режимах:
+  - Режим ClawHub оновлює один відстежуваний slug або всі відстежувані інсталяції ClawHub у
     робочому просторі агента за замовчуванням.
   - Режим Config патчить значення `skills.entries.<skillKey>`, такі як `enabled`,
     `apiKey` і `env`.
 
-## Approvals для exec
+## Схвалення exec
 
-- Коли запит exec потребує approval, gateway транслює `exec.approval.requested`.
-- Клієнти operator завершують це викликом `exec.approval.resolve` (потребує scope `operator.approvals`).
+- Коли запит exec потребує схвалення, gateway транслює `exec.approval.requested`.
+- Клієнти operator виконують розв’язання, викликаючи `exec.approval.resolve` (потребує області `operator.approvals`).
 - Для `host=node` `exec.approval.request` має містити `systemRunPlan` (канонічні `argv`/`cwd`/`rawCommand`/метадані сесії). Запити без `systemRunPlan` відхиляються.
-- Після approval переслані виклики `node.invoke system.run` повторно використовують цей канонічний
+- Після схвалення переслані виклики `node.invoke system.run` повторно використовують цей канонічний
   `systemRunPlan` як авторитетний контекст команди/cwd/сесії.
 - Якщо викликач змінює `command`, `rawCommand`, `cwd`, `agentId` або
-  `sessionKey` між prepare і фінальним затвердженим пересиланням `system.run`,
-  gateway відхиляє запуск замість довіри до зміненого payload.
+  `sessionKey` між підготовкою та фінальним пересланням схваленого `system.run`, gateway
+  відхиляє запуск замість довіри до зміненого навантаження.
 
 ## Резервна доставка агента
 
-- Запити `agent` можуть включати `deliver=true`, щоб запросити outbound delivery.
-- `bestEffortDeliver=false` зберігає сувору поведінку: нерозв’язані або лише внутрішні цілі доставки повертають `INVALID_REQUEST`.
-- `bestEffortDeliver=true` дозволяє резервний перехід до виконання лише в межах сесії, коли неможливо визначити зовнішній маршрут доставки (наприклад, internal/webchat sessions або неоднозначні багатоканальні конфігурації).
+- Запити `agent` можуть включати `deliver=true`, щоб запросити вихідну доставку.
+- `bestEffortDeliver=false` зберігає строгий режим: нерозв’язані або лише внутрішні цілі доставки повертають `INVALID_REQUEST`.
+- `bestEffortDeliver=true` дозволяє резервне виконання лише в межах сесії, коли не вдається розв’язати жоден зовнішній маршрут доставки (наприклад, для internal/webchat-сесій або неоднозначних конфігурацій багатьох channel).
 
 ## Версіонування
 
-- `PROTOCOL_VERSION` розміщено в `src/gateway/protocol/schema.ts`.
+- `PROTOCOL_VERSION` розташований у `src/gateway/protocol/schema.ts`.
 - Клієнти надсилають `minProtocol` + `maxProtocol`; сервер відхиляє невідповідності.
-- Схеми + моделі генеруються з визначень TypeBox:
+- Schema + models генеруються з визначень TypeBox:
   - `pnpm protocol:gen`
   - `pnpm protocol:gen:swift`
   - `pnpm protocol:check`
@@ -491,96 +497,97 @@ Gateway надає сьогодні.
 
 - Автентифікація gateway за спільним секретом використовує `connect.params.auth.token` або
   `connect.params.auth.password` залежно від налаштованого режиму auth.
-- Режими з передаванням ідентичності, як-от Tailscale Serve
-  (`gateway.auth.allowTailscale: true`) або не-loopback
-  `gateway.auth.mode: "trusted-proxy"`, задовольняють перевірку auth для connect через
-  заголовки запиту замість `connect.params.auth.*`.
-- Режим приватного ingress `gateway.auth.mode: "none"` повністю пропускає shared-secret connect auth; не відкривайте цей режим у публічному/ненадійному ingress.
-- Після pairing Gateway видає **токен пристрою**, обмежений роллю + scopes
+- Режими з носієм ідентичності, такі як Tailscale Serve
+  (`gateway.auth.allowTailscale: true`) або non-loopback
+  `gateway.auth.mode: "trusted-proxy"`, задовольняють перевірку auth під час connect з
+  заголовків запиту замість `connect.params.auth.*`.
+- `gateway.auth.mode: "none"` для private-ingress повністю пропускає shared-secret connect auth; не відкривайте цей режим для публічного/недовіреного ingress.
+- Після pairing Gateway видає **токен пристрою**, прив’язаний до ролі + областей
   підключення. Він повертається в `hello-ok.auth.deviceToken` і має
   зберігатися клієнтом для майбутніх підключень.
-- Клієнти мають зберігати основний `hello-ok.auth.deviceToken` після будь-якого
-  успішного connect.
-- Повторне підключення з цим **збереженим** токеном пристрою також має повторно використовувати
-  збережений схвалений набір scope для цього токена. Це зберігає вже наданий
-  доступ на читання/перевірку/статус і не дає повторним підключенням непомітно
-  звузитися до вужчого неявного admin-only scope.
-- Звичайний пріоритет auth для connect: спочатку явний shared token/password, потім
-  явний `deviceToken`, потім збережений токен для пристрою, потім bootstrap token.
+- Клієнти повинні зберігати основний `hello-ok.auth.deviceToken` після будь-якого
+  успішного підключення.
+- Повторне підключення з цим **збереженим** токеном пристрою також повинно повторно використовувати
+  збережений схвалений набір областей для цього токена. Це зберігає вже наданий
+  доступ на читання/перевірку/статус і запобігає непомітному звуженню повторних підключень до
+  вужчої неявної admin-only області.
+- Звичайний пріоритет auth під час connect: спочатку явний спільний token/password, потім
+  явний `deviceToken`, потім збережений токен для пристрою, потім bootstrap-токен.
 - Додаткові записи `hello-ok.auth.deviceTokens` — це токени передавання bootstrap.
-  Зберігайте їх лише тоді, коли connect використовував bootstrap auth на trusted transport,
-  як-от `wss://` або loopback/local pairing.
+  Зберігайте їх лише тоді, коли підключення використовувало bootstrap auth через довірений транспорт,
+  такий як `wss://` або loopback/local pairing.
 - Якщо клієнт передає **явний** `deviceToken` або явні `scopes`, цей
-  набір scopes, запитаний викликачем, залишається авторитетним; кешовані scopes повторно
-  використовуються лише тоді, коли клієнт повторно використовує збережений токен для пристрою.
-- Токени пристрою можна обертати/відкликати через `device.token.rotate` і
-  `device.token.revoke` (потребує scope `operator.pairing`).
+  запитаний викликачем набір областей залишається авторитетним; кешовані області повторно використовуються
+  лише тоді, коли клієнт повторно використовує збережений токен для пристрою.
+- Токени пристроїв можна ротувати/відкликати через `device.token.rotate` і
+  `device.token.revoke` (потребує області `operator.pairing`).
 - Видача/ротація токенів залишається обмеженою схваленим набором ролей, записаним у
   записі pairing цього пристрою; ротація токена не може розширити пристрій до
-  ролі, яку ніколи не було надано під час схвалення pairing.
-- Для paired-device token sessions керування пристроями обмежується самим пристроєм, якщо
-  викликач також не має `operator.admin`: викликачі без admin можуть видаляти/відкликати/обертати
+  ролі, яку схвалення pairing ніколи не надавало.
+- Для paired-device сеансів токенів керування пристроями має власну область, якщо
+  викликач також не має `operator.admin`: викликачі без admin можуть видаляти/відкликати/ротувати
   лише **власний** запис пристрою.
-- `device.token.rotate` також перевіряє запитаний набір scope operator щодо
-  поточних scopes сесії викликача. Викликачі без admin не можуть обернути токен у
-  ширший набір scope operator, ніж той, який вони вже мають.
-- Збої auth містять `error.details.code` плюс підказки для відновлення:
+- `device.token.rotate` також перевіряє запитаний набір областей оператора відносно
+  поточних областей сеансу викликача. Викликачі без admin не можуть ротувати токен до
+  ширшого набору областей оператора, ніж той, який вони вже мають.
+- Помилки auth містять `error.details.code` плюс підказки щодо відновлення:
   - `error.details.canRetryWithDeviceToken` (boolean)
   - `error.details.recommendedNextStep` (`retry_with_device_token`, `update_auth_configuration`, `update_auth_credentials`, `wait_then_retry`, `review_auth_configuration`)
 - Поведінка клієнта для `AUTH_TOKEN_MISMATCH`:
-  - Trusted-клієнти можуть виконати одну обмежену повторну спробу з кешованим токеном для пристрою.
-  - Якщо ця повторна спроба не вдається, клієнти мають припинити автоматичні цикли перепідключення та показати оператору вказівки щодо подальших дій.
+  - Довірені клієнти можуть виконати одну обмежену повторну спробу з кешованим токеном для пристрою.
+  - Якщо ця повторна спроба не вдається, клієнти повинні припинити автоматичні цикли повторного підключення й показати оператору вказівки щодо потрібних дій.
 
 ## Ідентичність пристрою + pairing
 
-- Nodes мають включати стабільну ідентичність пристрою (`device.id`), похідну від
-  відбитка keypair.
-- Gateways видають токени на кожен пристрій + роль.
-- Для нових `device.id` потрібні схвалення pairing, якщо не ввімкнено локальне авто-схвалення.
-- Авто-схвалення pairing зосереджене на прямих локальних loopback-підключеннях.
-- OpenClaw також має вузький шлях self-connect для trusted shared-secret helper flows у локальному backend/container.
-- Підключення з tailnet або LAN на тому самому хості все одно вважаються віддаленими для pairing і
+- Вузли повинні включати стабільну ідентичність пристрою (`device.id`), похідну від
+  відбитка fingerprint keypair.
+- Gateway видає токени для кожного пристрою + ролі.
+- Для нових `device.id` потрібні схвалення pairing, якщо не ввімкнено локальне автосхвалення.
+- Автосхвалення pairing зосереджене на прямих локальних loopback-підключеннях.
+- OpenClaw також має вузький шлях самопідключення backend/container-local для
+  довірених helper-потоків зі спільним секретом.
+- Підключення tailnet або LAN на тому ж хості все одно вважаються віддаленими для pairing і
   потребують схвалення.
-- Усі WS-клієнти мають включати ідентичність `device` під час `connect` (operator + node).
+- Усі WS-клієнти повинні включати ідентичність `device` під час `connect` (operator + node).
   Control UI може пропускати її лише в таких режимах:
-  - `gateway.controlUi.allowInsecureAuth=true` для сумісності з небезпечним HTTP лише на localhost.
-  - успішна auth operator Control UI з `gateway.auth.mode: "trusted-proxy"`.
-  - `gateway.controlUi.dangerouslyDisableDeviceAuth=true` (аварійний режим, критичне зниження безпеки).
-- Усі підключення мають підписувати наданий сервером nonce `connect.challenge`.
+  - `gateway.controlUi.allowInsecureAuth=true` для сумісності з небезпечним HTTP лише для localhost.
+  - успішна auth Control UI оператора з `gateway.auth.mode: "trusted-proxy"`.
+  - `gateway.controlUi.dangerouslyDisableDeviceAuth=true` (аварійний режим, серйозне зниження безпеки).
+- Усі підключення повинні підписувати наданий сервером nonce `connect.challenge`.
 
-### Діагностика міграції auth пристрою
+### Діагностика міграції автентифікації пристрою
 
 Для застарілих клієнтів, які все ще використовують поведінку підпису до challenge, `connect` тепер повертає
 коди деталей `DEVICE_AUTH_*` у `error.details.code` зі стабільним `error.details.reason`.
 
 Поширені збої міграції:
 
-| Повідомлення                | details.code                     | details.reason           | Значення                                           |
+| Message                     | details.code                     | details.reason           | Meaning                                            |
 | --------------------------- | -------------------------------- | ------------------------ | -------------------------------------------------- |
-| `device nonce required`     | `DEVICE_AUTH_NONCE_REQUIRED`     | `device-nonce-missing`   | Клієнт не вказав `device.nonce` (або надіслав порожнє значення). |
-| `device nonce mismatch`     | `DEVICE_AUTH_NONCE_MISMATCH`     | `device-nonce-mismatch`  | Клієнт підписав застарілим/неправильним nonce.     |
-| `device signature invalid`  | `DEVICE_AUTH_SIGNATURE_INVALID`  | `device-signature`       | Payload підпису не відповідає payload версії v2.   |
-| `device signature expired`  | `DEVICE_AUTH_SIGNATURE_EXPIRED`  | `device-signature-stale` | Підписана часова позначка виходить за допустиме зміщення. |
-| `device identity mismatch`  | `DEVICE_AUTH_DEVICE_ID_MISMATCH` | `device-id-mismatch`     | `device.id` не відповідає відбитку публічного ключа. |
-| `device public key invalid` | `DEVICE_AUTH_PUBLIC_KEY_INVALID` | `device-public-key`      | Не вдалося обробити формат/канонізацію публічного ключа. |
+| `device nonce required`     | `DEVICE_AUTH_NONCE_REQUIRED`     | `device-nonce-missing`   | Клієнт пропустив `device.nonce` (або надіслав порожнє значення). |
+| `device nonce mismatch`     | `DEVICE_AUTH_NONCE_MISMATCH`     | `device-nonce-mismatch`  | Клієнт підписав застарілим/неправильним nonce.            |
+| `device signature invalid`  | `DEVICE_AUTH_SIGNATURE_INVALID`  | `device-signature`       | Навантаження підпису не відповідає навантаженню v2.       |
+| `device signature expired`  | `DEVICE_AUTH_SIGNATURE_EXPIRED`  | `device-signature-stale` | Підписана позначка часу поза дозволеним зсувом.          |
+| `device identity mismatch`  | `DEVICE_AUTH_DEVICE_ID_MISMATCH` | `device-id-mismatch`     | `device.id` не відповідає відбитку public key. |
+| `device public key invalid` | `DEVICE_AUTH_PUBLIC_KEY_INVALID` | `device-public-key`      | Не вдалося виконати формат/канонізацію public key.         |
 
 Ціль міграції:
 
 - Завжди очікуйте `connect.challenge`.
-- Підписуйте payload v2, який містить nonce сервера.
+- Підписуйте навантаження v2, яке містить server nonce.
 - Надсилайте той самий nonce у `connect.params.device.nonce`.
-- Бажаний payload підпису — `v3`, який прив’язує `platform` і `deviceFamily`
-  додатково до полів device/client/role/scopes/token/nonce.
+- Бажане навантаження підпису — `v3`, яке прив’язує `platform` і `deviceFamily`
+  на додачу до полів device/client/role/scopes/token/nonce.
 - Застарілі підписи `v2` залишаються прийнятними для сумісності, але прив’язка метаданих
-  paired-пристрою все одно керує політикою команд під час повторного підключення.
+  paired-device усе одно керує політикою команд під час повторного підключення.
 
 ## TLS + pinning
 
 - Для WS-підключень підтримується TLS.
-- Клієнти можуть за бажанням прив’язувати відбиток сертифіката gateway (див. конфігурацію `gateway.tls`
-  плюс `gateway.remote.tlsFingerprint` або прапорець CLI `--tls-fingerprint`).
+- Клієнти можуть за бажанням закріпити відбиток сертифіката gateway (див. config `gateway.tls`
+  плюс `gateway.remote.tlsFingerprint` або CLI `--tls-fingerprint`).
 
-## Обсяг
+## Область застосування
 
 Цей протокол надає **повний API gateway** (status, channels, models, chat,
 agent, sessions, nodes, approvals тощо). Точна поверхня визначається

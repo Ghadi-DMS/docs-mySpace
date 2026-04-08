@@ -1,35 +1,35 @@
 ---
 read_when:
-    - أنت تريد استخدام نماذج NVIDIA في OpenClaw
-    - أنت تحتاج إلى إعداد NVIDIA_API_KEY
-summary: استخدم API المتوافقة مع OpenAI من NVIDIA في OpenClaw
+    - أنت تريد استخدام النماذج المفتوحة في OpenClaw مجانًا
+    - تحتاج إلى إعداد NVIDIA_API_KEY
+summary: استخدم API المتوافق مع OpenAI من NVIDIA في OpenClaw
 title: NVIDIA
 x-i18n:
-    generated_at: "2026-04-05T12:53:27Z"
+    generated_at: "2026-04-08T02:18:31Z"
     model: gpt-5.4
     provider: openai
-    source_hash: a24c5e46c0cf0fbc63bf09c772b486dd7f8f4b52e687d3b835bb54a1176b28da
+    source_hash: b00f8cedaf223a33ba9f6a6dd8cf066d88cebeea52d391b871e435026182228a
     source_path: providers/nvidia.md
     workflow: 15
 ---
 
 # NVIDIA
 
-توفر NVIDIA واجهة API متوافقة مع OpenAI عند `https://integrate.api.nvidia.com/v1` لنماذج Nemotron وNeMo. قم بالمصادقة باستخدام مفتاح API من [NVIDIA NGC](https://catalog.ngc.nvidia.com/).
+توفر NVIDIA واجهة API متوافقة مع OpenAI على `https://integrate.api.nvidia.com/v1` للنماذج المفتوحة مجانًا. قم بالمصادقة باستخدام مفتاح API من [build.nvidia.com](https://build.nvidia.com/settings/api-keys).
 
 ## إعداد CLI
 
-قم بتصدير المفتاح مرة واحدة، ثم شغّل onboarding واضبط نموذج NVIDIA:
+صدّر المفتاح مرة واحدة، ثم شغّل التهيئة واضبط نموذج NVIDIA:
 
 ```bash
 export NVIDIA_API_KEY="nvapi-..."
 openclaw onboard --auth-choice skip
-openclaw models set nvidia/nvidia/llama-3.1-nemotron-70b-instruct
+openclaw models set nvidia/nvidia/nemotron-3-super-120b-a12b
 ```
 
-إذا كنت لا تزال تمرر `--token`، فتذكر أنه سيظهر في سجل shell ومخرجات `ps`؛ لذا فضّل متغير البيئة عندما يكون ذلك ممكنًا.
+إذا كنت ما تزال تمرر `--token`، فتذكر أنه يُحفَظ في سجل الصدفة ومخرجات `ps`؛ ويفضل استخدام متغير البيئة عند الإمكان.
 
-## مقتطف إعدادات
+## مقتطف التكوين
 
 ```json5
 {
@@ -44,7 +44,7 @@ openclaw models set nvidia/nvidia/llama-3.1-nemotron-70b-instruct
   },
   agents: {
     defaults: {
-      model: { primary: "nvidia/nvidia/llama-3.1-nemotron-70b-instruct" },
+      model: { primary: "nvidia/nvidia/nemotron-3-super-120b-a12b" },
     },
   },
 }
@@ -52,14 +52,15 @@ openclaw models set nvidia/nvidia/llama-3.1-nemotron-70b-instruct
 
 ## معرّفات النماذج
 
-| مرجع النموذج                                          | الاسم                                      | السياق  | الحد الأقصى للخرج |
-| ---------------------------------------------------- | ----------------------------------------- | ------- | ----------------- |
-| `nvidia/nvidia/llama-3.1-nemotron-70b-instruct`      | NVIDIA Llama 3.1 Nemotron 70B Instruct    | 131,072 | 4,096             |
-| `nvidia/meta/llama-3.3-70b-instruct`                 | Meta Llama 3.3 70B Instruct               | 131,072 | 4,096             |
-| `nvidia/nvidia/mistral-nemo-minitron-8b-8k-instruct` | NVIDIA Mistral NeMo Minitron 8B Instruct  | 8,192   | 2,048             |
+| مرجع النموذج | الاسم | السياق | الحد الأقصى للإخراج |
+| ------------------------------------------ | ---------------------------- | ------- | ---------- |
+| `nvidia/nvidia/nemotron-3-super-120b-a12b` | NVIDIA Nemotron 3 Super 120B | 262,144 | 8,192      |
+| `nvidia/moonshotai/kimi-k2.5`              | Kimi K2.5                    | 262,144 | 8,192      |
+| `nvidia/minimaxai/minimax-m2.5`            | Minimax M2.5                 | 196,608 | 8,192      |
+| `nvidia/z-ai/glm5`                         | GLM 5                        | 202,752 | 8,192      |
 
 ## ملاحظات
 
-- نقطة نهاية `/v1` متوافقة مع OpenAI؛ استخدم مفتاح API من NVIDIA NGC.
-- يتم تمكين المزوّد تلقائيًا عند ضبط `NVIDIA_API_KEY`.
-- يكون الفهرس المضمّن ثابتًا؛ وتكون التكاليف الافتراضية في المصدر هي `0`.
+- نقطة نهاية `/v1` متوافقة مع OpenAI؛ استخدم مفتاح API من [build.nvidia.com](https://build.nvidia.com/).
+- يتم تمكين الموفّر تلقائيًا عند تعيين `NVIDIA_API_KEY`.
+- الفهرس المجمّع ثابت؛ وتكون التكاليف مضبوطة افتراضيًا على `0` في المصدر.

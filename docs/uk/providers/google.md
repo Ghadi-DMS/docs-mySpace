@@ -1,14 +1,14 @@
 ---
 read_when:
     - Ви хочете використовувати моделі Google Gemini з OpenClaw
-    - Вам потрібен API-ключ або потік автентифікації OAuth
-summary: Налаштування Google Gemini (API-ключ + OAuth, генерація зображень, розуміння медіа, вебпошук)
+    - Вам потрібен потік автентифікації API key або OAuth
+summary: Налаштування Google Gemini (API key + OAuth, генерація зображень, розуміння медіа, вебпошук)
 title: Google (Gemini)
 x-i18n:
-    generated_at: "2026-04-07T09:37:43Z"
+    generated_at: "2026-04-08T06:28:55Z"
     model: gpt-5.4
     provider: openai
-    source_hash: e9e558f5ce35c853e0240350be9a1890460c5f7f7fd30b05813a656497dee516
+    source_hash: fad2ff68987301bd86145fa6e10de8c7b38d5bd5dbcd13db9c883f7f5b9a4e01
     source_path: providers/google.md
     workflow: 15
 ---
@@ -26,7 +26,7 @@ Gemini Grounding.
 
 ## Швидкий старт
 
-1. Установіть API-ключ:
+1. Установіть API key:
 
 ```bash
 openclaw onboard --auth-choice gemini-api-key
@@ -55,13 +55,13 @@ openclaw onboard --non-interactive \
 
 ## OAuth (Gemini CLI)
 
-Альтернативний провайдер `google-gemini-cli` використовує PKCE OAuth замість API-ключа.
-Це неофіційна інтеграція; деякі користувачі повідомляють про обмеження
-облікового запису. Використовуйте на власний ризик.
+Альтернативний провайдер `google-gemini-cli` використовує PKCE OAuth замість API
+key. Це неофіційна інтеграція; деякі користувачі повідомляють про обмеження
+облікових записів. Використовуйте на власний ризик.
 
 - Модель за замовчуванням: `google-gemini-cli/gemini-3-flash-preview`
-- Аліас: `gemini-cli`
-- Необхідна умова для встановлення: локальний Gemini CLI доступний як `gemini`
+- Псевдонім: `gemini-cli`
+- Обов’язкова умова для встановлення: локальний Gemini CLI, доступний як `gemini`
   - Homebrew: `brew install gemini-cli`
   - npm: `npm install -g @google/gemini-cli`
 - Вхід:
@@ -77,20 +77,21 @@ openclaw models auth login --provider google-gemini-cli --set-default
 
 (Або варіанти `GEMINI_CLI_*`.)
 
-Якщо запити Gemini CLI OAuth не вдаються після входу, установіть
-`GOOGLE_CLOUD_PROJECT` або `GOOGLE_CLOUD_PROJECT_ID` на хості шлюзу й
+Якщо OAuth-запити Gemini CLI не вдаються після входу, установіть
+`GOOGLE_CLOUD_PROJECT` або `GOOGLE_CLOUD_PROJECT_ID` на хості gateway і
 повторіть спробу.
 
-Якщо вхід не вдається до запуску потоку в браузері, переконайтеся, що локальна команда `gemini`
-установлена та доступна в `PATH`. OpenClaw підтримує як установлення через Homebrew,
-так і глобальні встановлення через npm, включно з поширеними макетами Windows/npm.
+Якщо вхід не вдається ще до запуску потоку в браузері, переконайтеся, що
+локальну команду `gemini` встановлено й вона доступна в `PATH`. OpenClaw
+підтримує як встановлення через Homebrew, так і глобальні встановлення npm,
+зокрема поширені схеми Windows/npm.
 
 Нотатки щодо використання JSON у Gemini CLI:
 
 - Текст відповіді береться з поля CLI JSON `response`.
-- Використання повертається до `stats`, якщо CLI залишає `usage` порожнім.
-- `stats.cached` нормалізується в OpenClaw `cacheRead`.
-- Якщо `stats.input` відсутній, OpenClaw виводить кількість вхідних токенів із
+- Показники використання беруться з резервного поля `stats`, якщо CLI залишає `usage` порожнім.
+- `stats.cached` нормалізується в `cacheRead` OpenClaw.
+- Якщо `stats.input` відсутній, OpenClaw обчислює вхідні токени з
   `stats.input_tokens - stats.cached`.
 
 ## Можливості
@@ -104,19 +105,22 @@ openclaw models auth login --provider google-gemini-cli --set-default
 | Транскрибування аудіо  | Так               |
 | Розуміння відео        | Так               |
 | Вебпошук (Grounding)   | Так               |
-| Thinking/reasoning     | Так (Gemini 3.1+) |
+| Мислення/міркування    | Так (Gemini 3.1+) |
+| Моделі Gemma 4         | Так               |
+
+Моделі Gemma 4 (наприклад, `gemma-4-26b-a4b-it`) підтримують режим thinking. OpenClaw переписує `thinkingBudget` у підтримуваний Google `thinkingLevel` для Gemma 4. Установлення thinking в `off` зберігає його вимкненим замість зіставлення з `MINIMAL`.
 
 ## Пряме повторне використання кешу Gemini
 
 Для прямих запусків Gemini API (`api: "google-generative-ai"`) OpenClaw тепер
 передає налаштований дескриптор `cachedContent` у запити Gemini.
 
-- Налаштовуйте параметри для моделі або глобальні параметри через
+- Налаштовуйте параметри для моделі або глобально через
   `cachedContent` або застарілий `cached_content`
 - Якщо присутні обидва, пріоритет має `cachedContent`
 - Приклад значення: `cachedContents/prebuilt-context`
-- Використання при влучанні в кеш Gemini нормалізується в OpenClaw `cacheRead` із
-  висхідного `cachedContentTokenCount`
+- Використання cache-hit у Gemini нормалізується в `cacheRead` OpenClaw з
+  вихідного `cachedContentTokenCount`
 
 Приклад:
 
@@ -146,11 +150,11 @@ openclaw models auth login --provider google-gemini-cli --set-default
 - Режим редагування: увімкнено, до 5 вхідних зображень
 - Керування геометрією: `size`, `aspectRatio` і `resolution`
 
-Провайдер `google-gemini-cli`, що працює лише через OAuth, є окремою поверхнею
-текстового виведення. Генерація зображень, розуміння медіа та Gemini Grounding залишаються на
-ідентифікаторі провайдера `google`.
+Провайдер `google-gemini-cli`, який працює лише через OAuth, є окремою
+поверхнею для текстового inference. Генерація зображень, розуміння медіа та
+Gemini Grounding залишаються на ідентифікаторі провайдера `google`.
 
-Щоб використовувати Google як провайдер зображень за замовчуванням:
+Щоб використовувати Google як провайдера зображень за замовчуванням:
 
 ```json5
 {
@@ -164,8 +168,8 @@ openclaw models auth login --provider google-gemini-cli --set-default
 }
 ```
 
-Див. [Генерація зображень](/uk/tools/image-generation), щоб дізнатися про спільні
-параметри інструмента, вибір провайдера та поведінку перемикання при збої.
+Перегляньте [Генерація зображень](/uk/tools/image-generation), щоб дізнатися про
+спільні параметри інструмента, вибір провайдера та поведінку failover.
 
 ## Генерація відео
 
@@ -173,11 +177,11 @@ openclaw models auth login --provider google-gemini-cli --set-default
 інструмент `video_generate`.
 
 - Модель відео за замовчуванням: `google/veo-3.1-fast-generate-preview`
-- Режими: text-to-video, image-to-video та потоки з одним референсним відео
+- Режими: text-to-video, image-to-video і потоки з посиланням на одне відео
 - Підтримує `aspectRatio`, `resolution` і `audio`
 - Поточне обмеження тривалості: **від 4 до 8 секунд**
 
-Щоб використовувати Google як провайдер відео за замовчуванням:
+Щоб використовувати Google як провайдера відео за замовчуванням:
 
 ```json5
 {
@@ -191,8 +195,8 @@ openclaw models auth login --provider google-gemini-cli --set-default
 }
 ```
 
-Див. [Генерація відео](/uk/tools/video-generation), щоб дізнатися про спільні
-параметри інструмента, вибір провайдера та поведінку перемикання при збої.
+Перегляньте [Генерація відео](/uk/tools/video-generation), щоб дізнатися про
+спільні параметри інструмента, вибір провайдера та поведінку failover.
 
 ## Генерація музики
 
@@ -203,10 +207,10 @@ openclaw models auth login --provider google-gemini-cli --set-default
 - Також підтримує `google/lyria-3-pro-preview`
 - Керування підказкою: `lyrics` і `instrumental`
 - Формат виводу: `mp3` за замовчуванням, а також `wav` у `google/lyria-3-pro-preview`
-- Референсні входи: до 10 зображень
-- Запуски з підтримкою сесій від'єднуються через спільний потік завдань/статусу, включно з `action: "status"`
+- Вхідні дані-посилання: до 10 зображень
+- Запуски з підтримкою сесій від’єднуються через спільний потік завдань/статусу, зокрема `action: "status"`
 
-Щоб використовувати Google як музичний провайдер за замовчуванням:
+Щоб використовувати Google як провайдера музики за замовчуванням:
 
 ```json5
 {
@@ -220,8 +224,8 @@ openclaw models auth login --provider google-gemini-cli --set-default
 }
 ```
 
-Див. [Генерація музики](/uk/tools/music-generation), щоб дізнатися про спільні
-параметри інструмента, вибір провайдера та поведінку перемикання при збої.
+Перегляньте [Генерація музики](/uk/tools/music-generation), щоб дізнатися про
+спільні параметри інструмента, вибір провайдера та поведінку failover.
 
 ## Примітка щодо середовища
 

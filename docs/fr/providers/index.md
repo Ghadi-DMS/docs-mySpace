@@ -5,10 +5,10 @@ read_when:
 summary: Fournisseurs de modèles (LLM) pris en charge par OpenClaw
 title: Répertoire des fournisseurs
 x-i18n:
-    generated_at: "2026-04-07T06:53:23Z"
+    generated_at: "2026-04-08T02:17:30Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 39d9ace35fd9452a4fb510fd980d251b6e51480e4647f051020bee2f1f2222e1
+    source_hash: e7bee5528b7fc9a982b3d0eaa4930cb77f7bded19a47aec00572b6fcbd823a70
     source_path: providers/index.md
     workflow: 15
 ---
@@ -37,7 +37,7 @@ Vous cherchez la documentation des canaux de discussion (WhatsApp/Telegram/Disco
 - [Amazon Bedrock](/fr/providers/bedrock)
 - [Anthropic (API + Claude CLI)](/fr/providers/anthropic)
 - [Arcee AI (modèles Trinity)](/fr/providers/arcee)
-- [BytePlus (international)](/fr/concepts/model-providers#byteplus-international)
+- [BytePlus (International)](/fr/concepts/model-providers#byteplus-international)
 - [Chutes](/fr/providers/chutes)
 - [ComfyUI](/fr/providers/comfy)
 - [Cloudflare AI Gateway](/fr/providers/cloudflare-ai-gateway)
@@ -49,13 +49,14 @@ Vous cherchez la documentation des canaux de discussion (WhatsApp/Telegram/Disco
 - [Google (Gemini)](/fr/providers/google)
 - [Groq (inférence LPU)](/fr/providers/groq)
 - [Hugging Face (inférence)](/fr/providers/huggingface)
+- [inferrs (modèles locaux)](/fr/providers/inferrs)
 - [Kilocode](/fr/providers/kilocode)
 - [LiteLLM (passerelle unifiée)](/fr/providers/litellm)
 - [MiniMax](/fr/providers/minimax)
 - [Mistral](/fr/providers/mistral)
 - [Moonshot AI (Kimi + Kimi Coding)](/fr/providers/moonshot)
 - [NVIDIA](/fr/providers/nvidia)
-- [Ollama (modèles cloud + locaux)](/fr/providers/ollama)
+- [Ollama (cloud + modèles locaux)](/fr/providers/ollama)
 - [OpenAI (API + Codex)](/fr/providers/openai)
 - [OpenCode](/fr/providers/opencode)
 - [OpenCode Go](/fr/providers/opencode-go)
@@ -79,10 +80,10 @@ Vous cherchez la documentation des canaux de discussion (WhatsApp/Telegram/Disco
 
 ## Pages d'ensemble partagées
 
-- [Variantes groupées supplémentaires](/fr/providers/models#additional-bundled-provider-variants) - Anthropic Vertex, Copilot Proxy et authentification OAuth Gemini CLI
-- [Génération d'images](/fr/tools/image-generation) - Outil partagé `image_generate`, sélection du fournisseur et basculement
-- [Génération de musique](/fr/tools/music-generation) - Outil partagé `music_generate`, sélection du fournisseur et basculement
-- [Génération de vidéo](/fr/tools/video-generation) - Outil partagé `video_generate`, sélection du fournisseur et basculement
+- [Variantes intégrées supplémentaires](/fr/providers/models#additional-bundled-provider-variants) - Anthropic Vertex, Copilot Proxy et Gemini CLI OAuth
+- [Génération d'images](/fr/tools/image-generation) - outil partagé `image_generate`, sélection du fournisseur et basculement
+- [Génération musicale](/fr/tools/music-generation) - outil partagé `music_generate`, sélection du fournisseur et basculement
+- [Génération vidéo](/fr/tools/video-generation) - outil partagé `video_generate`, sélection du fournisseur et basculement
 
 ## Fournisseurs de transcription
 
@@ -90,7 +91,7 @@ Vous cherchez la documentation des canaux de discussion (WhatsApp/Telegram/Disco
 
 ## Outils communautaires
 
-- [Claude Max API Proxy](/fr/providers/claude-max-api-proxy) - Proxy communautaire pour les identifiants d'abonnement Claude (vérifiez la politique / les conditions d'Anthropic avant utilisation)
+- [Claude Max API Proxy](/fr/providers/claude-max-api-proxy) - Proxy communautaire pour les identifiants d'abonnement Claude (vérifiez la politique/les conditions d'Anthropic avant utilisation)
 
 Pour le catalogue complet des fournisseurs (xAI, Groq, Mistral, etc.) et la configuration avancée,
 consultez [Fournisseurs de modèles](/fr/concepts/model-providers).

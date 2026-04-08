@@ -1,27 +1,27 @@
 ---
 read_when:
-    - Sie möchten einen Modell-Provider auswählen
-    - Sie möchten schnelle Einrichtungsbeispiele für LLM-Authentifizierung und Modellauswahl
-summary: Von OpenClaw unterstützte Modell-Provider (LLMs)
-title: Schnellstart für Modell-Provider
+    - Sie möchten einen Modellanbieter auswählen
+    - Sie möchten kurze Einrichtungsbeispiele für LLM-Auth + Modellauswahl
+summary: Von OpenClaw unterstützte Modellanbieter (LLMs)
+title: Schnellstart für Modellanbieter
 x-i18n:
-    generated_at: "2026-04-07T06:18:30Z"
+    generated_at: "2026-04-08T02:17:53Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 500191bfe853241096f97928ced2327a13b6f7f62003cb7452b24886c272e6ba
+    source_hash: 59ee4c2f993fe0ae05fe34f52bc6f3e0fc9a76b10760f56b20ad251e25ee9f20
     source_path: providers/models.md
     workflow: 15
 ---
 
-# Model-Provider
+# Modellanbieter
 
-OpenClaw kann viele LLM-Provider verwenden. Wählen Sie einen aus, authentifizieren Sie sich und legen Sie dann das Standard-
-Modell als `provider/model` fest.
+OpenClaw kann viele LLM-Anbieter verwenden. Wählen Sie einen aus, authentifizieren Sie sich und setzen Sie dann das Standard-
+modell als `provider/model`.
 
 ## Schnellstart (zwei Schritte)
 
-1. Authentifizieren Sie sich beim Provider (normalerweise über `openclaw onboard`).
-2. Legen Sie das Standardmodell fest:
+1. Beim Anbieter authentifizieren (normalerweise über `openclaw onboard`).
+2. Das Standardmodell festlegen:
 
 ```json5
 {
@@ -29,7 +29,7 @@ Modell als `provider/model` fest.
 }
 ```
 
-## Unterstützte Provider (Startauswahl)
+## Unterstützte Anbieter (Startauswahl)
 
 - [Alibaba Model Studio](/de/providers/alibaba)
 - [Anthropic (API + Claude CLI)](/de/providers/anthropic)
@@ -40,7 +40,7 @@ Modell als `provider/model` fest.
 - [Cloudflare AI Gateway](/de/providers/cloudflare-ai-gateway)
 - [fal](/de/providers/fal)
 - [Fireworks](/de/providers/fireworks)
-- [GLM-Modelle](/de/providers/glm)
+- [GLM models](/de/providers/glm)
 - [MiniMax](/de/providers/minimax)
 - [Mistral](/de/providers/mistral)
 - [Moonshot AI (Kimi + Kimi Coding)](/de/providers/moonshot)
@@ -57,10 +57,10 @@ Modell als `provider/model` fest.
 - [xAI](/de/providers/xai)
 - [Z.AI](/de/providers/zai)
 
-## Zusätzliche gebündelte Provider-Varianten
+## Zusätzliche gebündelte Anbietervarianten
 
-- `anthropic-vertex` - implizite Anthropic-Unterstützung auf Google Vertex, wenn Vertex-Anmeldedaten verfügbar sind; keine separate Onboarding-Authentifizierungsoption
+- `anthropic-vertex` - implizite Anthropic-Unterstützung auf Google Vertex, wenn Vertex-Credentials verfügbar sind; keine separate Onboarding-Auth-Auswahl
 - `copilot-proxy` - lokale VS Code Copilot Proxy-Bridge; verwenden Sie `openclaw onboard --auth-choice copilot-proxy`
-- `google-gemini-cli` - inoffizieller Gemini-CLI-OAuth-Flow; erfordert eine lokale `gemini`-Installation (`brew install gemini-cli` oder `npm install -g @google/gemini-cli`); Standardmodell `google-gemini-cli/gemini-3.1-pro-preview`; verwenden Sie `openclaw onboard --auth-choice google-gemini-cli` oder `openclaw models auth login --provider google-gemini-cli --set-default`
+- `google-gemini-cli` - inoffizieller Gemini-CLI-OAuth-Flow; erfordert eine lokale `gemini`-Installation (`brew install gemini-cli` oder `npm install -g @google/gemini-cli`); Standardmodell `google-gemini-cli/gemini-3-flash-preview`; verwenden Sie `openclaw onboard --auth-choice google-gemini-cli` oder `openclaw models auth login --provider google-gemini-cli --set-default`
 
-Den vollständigen Provider-Katalog (xAI, Groq, Mistral usw.) und die erweiterte Konfiguration finden Sie unter [Model providers](/de/concepts/model-providers).
+Den vollständigen Anbieterkatalog (xAI, Groq, Mistral usw.) und die erweiterte Konfiguration finden Sie unter [Modellanbieter](/de/concepts/model-providers).

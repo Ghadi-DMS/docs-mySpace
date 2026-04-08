@@ -1,33 +1,33 @@
 ---
 read_when:
-    - Sie möchten NVIDIA-Modelle in OpenClaw verwenden
+    - Sie möchten kostenlose offene Modelle in OpenClaw verwenden
     - Sie benötigen die Einrichtung von NVIDIA_API_KEY
 summary: Die OpenAI-kompatible API von NVIDIA in OpenClaw verwenden
 title: NVIDIA
 x-i18n:
-    generated_at: "2026-04-05T12:53:24Z"
+    generated_at: "2026-04-08T02:17:56Z"
     model: gpt-5.4
     provider: openai
-    source_hash: a24c5e46c0cf0fbc63bf09c772b486dd7f8f4b52e687d3b835bb54a1176b28da
+    source_hash: b00f8cedaf223a33ba9f6a6dd8cf066d88cebeea52d391b871e435026182228a
     source_path: providers/nvidia.md
     workflow: 15
 ---
 
 # NVIDIA
 
-NVIDIA stellt unter `https://integrate.api.nvidia.com/v1` eine OpenAI-kompatible API für Nemotron- und NeMo-Modelle bereit. Authentifizieren Sie sich mit einem API-Schlüssel von [NVIDIA NGC](https://catalog.ngc.nvidia.com/).
+NVIDIA bietet unter `https://integrate.api.nvidia.com/v1` eine OpenAI-kompatible API für offene Modelle kostenlos an. Authentifizieren Sie sich mit einem API-Schlüssel von [build.nvidia.com](https://build.nvidia.com/settings/api-keys).
 
 ## CLI-Einrichtung
 
-Exportieren Sie den Schlüssel einmal, führen Sie dann das Onboarding aus und legen Sie ein NVIDIA-Modell fest:
+Exportieren Sie den Schlüssel einmal und führen Sie dann das Onboarding aus und setzen Sie ein NVIDIA-Modell:
 
 ```bash
 export NVIDIA_API_KEY="nvapi-..."
 openclaw onboard --auth-choice skip
-openclaw models set nvidia/nvidia/llama-3.1-nemotron-70b-instruct
+openclaw models set nvidia/nvidia/nemotron-3-super-120b-a12b
 ```
 
-Wenn Sie weiterhin `--token` übergeben, denken Sie daran, dass es im Shell-Verlauf und in der `ps`-Ausgabe landet; bevorzugen Sie nach Möglichkeit die env var.
+Wenn Sie weiterhin `--token` übergeben, denken Sie daran, dass es im Shell-Verlauf und in der `ps`-Ausgabe landet; verwenden Sie nach Möglichkeit bevorzugt die Umgebungsvariable.
 
 ## Konfigurations-Snippet
 
@@ -44,7 +44,7 @@ Wenn Sie weiterhin `--token` übergeben, denken Sie daran, dass es im Shell-Verl
   },
   agents: {
     defaults: {
-      model: { primary: "nvidia/nvidia/llama-3.1-nemotron-70b-instruct" },
+      model: { primary: "nvidia/nvidia/nemotron-3-super-120b-a12b" },
     },
   },
 }
@@ -52,14 +52,15 @@ Wenn Sie weiterhin `--token` übergeben, denken Sie daran, dass es im Shell-Verl
 
 ## Modell-IDs
 
-| Modellreferenz                                       | Name                                     | Kontext | Max. Ausgabe |
-| ---------------------------------------------------- | ---------------------------------------- | ------- | ------------ |
-| `nvidia/nvidia/llama-3.1-nemotron-70b-instruct`      | NVIDIA Llama 3.1 Nemotron 70B Instruct   | 131,072 | 4,096        |
-| `nvidia/meta/llama-3.3-70b-instruct`                 | Meta Llama 3.3 70B Instruct              | 131,072 | 4,096        |
-| `nvidia/nvidia/mistral-nemo-minitron-8b-8k-instruct` | NVIDIA Mistral NeMo Minitron 8B Instruct | 8,192   | 2,048        |
+| Model ref                                  | Name                         | Kontext | Maximale Ausgabe |
+| ------------------------------------------ | ---------------------------- | ------- | ---------------- |
+| `nvidia/nvidia/nemotron-3-super-120b-a12b` | NVIDIA Nemotron 3 Super 120B | 262,144 | 8,192            |
+| `nvidia/moonshotai/kimi-k2.5`              | Kimi K2.5                    | 262,144 | 8,192            |
+| `nvidia/minimaxai/minimax-m2.5`            | Minimax M2.5                 | 196,608 | 8,192            |
+| `nvidia/z-ai/glm5`                         | GLM 5                        | 202,752 | 8,192            |
 
 ## Hinweise
 
-- OpenAI-kompatibler `/v1`-Endpunkt; verwenden Sie einen API-Schlüssel von NVIDIA NGC.
-- Der Provider wird automatisch aktiviert, wenn `NVIDIA_API_KEY` gesetzt ist.
+- OpenAI-kompatibler `/v1`-Endpunkt; verwenden Sie einen API-Schlüssel von [build.nvidia.com](https://build.nvidia.com/).
+- Der Anbieter wird automatisch aktiviert, wenn `NVIDIA_API_KEY` gesetzt ist.
 - Der gebündelte Katalog ist statisch; Kosten sind im Quellcode standardmäßig auf `0` gesetzt.

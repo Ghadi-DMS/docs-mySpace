@@ -1,24 +1,24 @@
 ---
 read_when:
-    - Der Hub zur Fehlerbehebung hat Sie zur tieferen Diagnose hierher weitergeleitet
+    - Das Hub zur Fehlerbehebung hat Sie für eine tiefere Diagnose hierher verwiesen
     - Sie benötigen stabile symptomorientierte Runbook-Abschnitte mit exakten Befehlen
-summary: Tiefgehendes Runbook zur Fehlerbehebung für Gateway, Kanäle, Automatisierung, Nodes und Browser
+summary: Detailliertes Runbook zur Fehlerbehebung für Gateway, Channels, Automatisierung, Nodes und Browser
 title: Fehlerbehebung
 x-i18n:
-    generated_at: "2026-04-07T06:15:32Z"
+    generated_at: "2026-04-08T02:15:47Z"
     model: gpt-5.4
     provider: openai
-    source_hash: e0202e8858310a0bfc1c994cd37b01c3b2d6c73c8a74740094e92dc3c4c36729
+    source_hash: 02c9537845248db0c9d315bf581338a93215fe6fe3688ed96c7105cbb19fe6ba
     source_path: gateway/troubleshooting.md
     workflow: 15
 ---
 
-# Fehlerbehebung für das Gateway
+# Gateway-Fehlerbehebung
 
 Diese Seite ist das detaillierte Runbook.
-Beginnen Sie bei [/help/troubleshooting](/de/help/troubleshooting), wenn Sie zuerst den schnellen Triage-Ablauf möchten.
+Beginnen Sie unter [/help/troubleshooting](/de/help/troubleshooting), wenn Sie zuerst den schnellen Triage-Ablauf möchten.
 
-## Befehlsleiter
+## Befehlsabfolge
 
 Führen Sie diese Befehle zuerst in dieser Reihenfolge aus:
 
@@ -30,16 +30,16 @@ openclaw doctor
 openclaw channels status --probe
 ```
 
-Erwartete Signale bei gesundem Zustand:
+Erwartete Anzeichen für einen gesunden Zustand:
 
 - `openclaw gateway status` zeigt `Runtime: running` und `RPC probe: ok`.
 - `openclaw doctor` meldet keine blockierenden Konfigurations-/Serviceprobleme.
 - `openclaw channels status --probe` zeigt den Live-Transportstatus pro Konto und,
   wo unterstützt, Probe-/Audit-Ergebnisse wie `works` oder `audit ok`.
 
-## Anthropic 429 extra usage required for long context
+## Anthropic 429 zusätzlicher Verbrauch für langen Kontext erforderlich
 
-Verwenden Sie dies, wenn Logs/Fehler Folgendes enthalten:
+Verwenden Sie diesen Abschnitt, wenn Logs/Fehler Folgendes enthalten:
 `HTTP 429: rate_limit_error: Extra usage is required for long context requests`.
 
 ```bash
@@ -51,24 +51,78 @@ openclaw config get agents.defaults.models
 Achten Sie auf Folgendes:
 
 - Das ausgewählte Anthropic-Opus-/Sonnet-Modell hat `params.context1m: true`.
-- Die aktuellen Anthropic-Anmeldedaten sind nicht für die Nutzung mit langem Kontext berechtigt.
-- Anforderungen schlagen nur bei langen Sitzungen/Modelläufen fehl, die den 1M-Beta-Pfad benötigen.
+- Die aktuelle Anthropic-Anmeldung ist nicht für die Nutzung mit langem Kontext berechtigt.
+- Anfragen schlagen nur bei langen Sitzungen/Modelläufen fehl, die den 1M-Beta-Pfad benötigen.
 
-Mögliche Lösungen:
+Optionen zur Behebung:
 
 1. Deaktivieren Sie `context1m` für dieses Modell, um auf das normale Kontextfenster zurückzufallen.
-2. Verwenden Sie Anthropic-Anmeldedaten, die für Anfragen mit langem Kontext berechtigt sind, oder wechseln Sie zu einem Anthropic-API-Schlüssel.
+2. Verwenden Sie eine Anthropic-Anmeldung, die für Anfragen mit langem Kontext berechtigt ist, oder wechseln Sie zu einem Anthropic-API-Schlüssel.
 3. Konfigurieren Sie Fallback-Modelle, damit Läufe fortgesetzt werden, wenn Anthropic-Anfragen mit langem Kontext abgelehnt werden.
 
-Verwandt:
+Zugehörig:
 
 - [/providers/anthropic](/de/providers/anthropic)
 - [/reference/token-use](/de/reference/token-use)
 - [/help/faq#why-am-i-seeing-http-429-ratelimiterror-from-anthropic](/de/help/faq#why-am-i-seeing-http-429-ratelimiterror-from-anthropic)
 
+## Lokales OpenAI-kompatibles Backend besteht direkte Probes, aber Agent-Läufe schlagen fehl
+
+Verwenden Sie diesen Abschnitt, wenn:
+
+- `curl ... /v1/models` funktioniert
+- kleine direkte `/v1/chat/completions`-Aufrufe funktionieren
+- OpenClaw-Modelläufe nur bei normalen Agent-Turns fehlschlagen
+
+```bash
+curl http://127.0.0.1:1234/v1/models
+curl http://127.0.0.1:1234/v1/chat/completions \
+  -H 'content-type: application/json' \
+  -d '{"model":"<id>","messages":[{"role":"user","content":"hi"}],"stream":false}'
+openclaw infer model run --model <provider/model> --prompt "hi" --json
+openclaw logs --follow
+```
+
+Achten Sie auf Folgendes:
+
+- Direkte kleine Aufrufe sind erfolgreich, aber OpenClaw-Läufe schlagen nur bei größeren Prompts fehl
+- Backend-Fehler, bei denen `messages[].content` einen String erwartet
+- Backend-Abstürze, die nur bei größeren Prompt-Token-Zahlen oder vollständigen Agent-
+  Laufzeit-Prompts auftreten
+
+Häufige Anzeichen:
+
+- `messages[...].content: invalid type: sequence, expected a string` → das Backend
+  lehnt strukturierte Chat-Completions-Inhaltsteile ab. Behebung: setzen Sie
+  `models.providers.<provider>.models[].compat.requiresStringContent: true`.
+- Direkte kleine Anfragen sind erfolgreich, aber OpenClaw-Agent-Läufe schlagen mit Backend-/Modell-
+  Abstürzen fehl (zum Beispiel Gemma auf einigen `inferrs`-Builds) → der OpenClaw-Transport ist
+  wahrscheinlich bereits korrekt; das Backend scheitert an der größeren Agent-Laufzeit-
+  Prompt-Form.
+- Die Fehler nehmen ab, nachdem Tools deaktiviert wurden, verschwinden aber nicht → Tool-Schemas waren
+  Teil des Drucks, aber das verbleibende Problem ist weiterhin eine vorgelagerte Modell-/Server-Kapazität
+  oder ein Backend-Fehler.
+
+Optionen zur Behebung:
+
+1. Setzen Sie `compat.requiresStringContent: true` für Chat-Completions-Backends, die nur Strings unterstützen.
+2. Setzen Sie `compat.supportsTools: false` für Modelle/Backends, die die
+   OpenClaw-Tool-Schema-Oberfläche nicht zuverlässig verarbeiten können.
+3. Reduzieren Sie den Prompt-Druck, wo möglich: kleinerer Workspace-Bootstrap, kürzere
+   Sitzungshistorie, leichteres lokales Modell oder ein Backend mit stärkerer Unterstützung für langen Kontext.
+4. Wenn direkte kleine Anfragen weiterhin erfolgreich sind, während OpenClaw-Agent-Turns im Backend
+   trotzdem abstürzen, behandeln Sie dies als vorgelagerte Server-/Modellbeschränkung und reichen Sie dort
+   eine Reproduktion mit der akzeptierten Payload-Form ein.
+
+Zugehörig:
+
+- [/gateway/local-models](/de/gateway/local-models)
+- [/gateway/configuration#models](/de/gateway/configuration#models)
+- [/gateway/configuration-reference#openai-compatible-endpoints](/de/gateway/configuration-reference#openai-compatible-endpoints)
+
 ## Keine Antworten
 
-Wenn Kanäle aktiv sind, aber nichts antwortet, prüfen Sie Routing und Richtlinien, bevor Sie irgendetwas neu verbinden.
+Wenn Channels aktiv sind, aber nichts antwortet, prüfen Sie Routing und Richtlinien, bevor Sie irgendetwas neu verbinden.
 
 ```bash
 openclaw status
@@ -80,17 +134,17 @@ openclaw logs --follow
 
 Achten Sie auf Folgendes:
 
-- Ausstehendes Pairing für DM-Absender.
-- Erwähnungs-Gating in Gruppen (`requireMention`, `mentionPatterns`).
-- Nicht übereinstimmende Zulassungslisten für Kanal/Gruppen.
+- Pairing steht für DM-Absender aus.
+- Gating für Gruppenerwähnungen (`requireMention`, `mentionPatterns`).
+- Nichtübereinstimmungen bei der Channel-/Gruppen-Allowlist.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
 - `drop guild message (mention required` → Gruppennachricht wird ignoriert, bis eine Erwähnung erfolgt.
-- `pairing request` → Absender benötigt eine Freigabe.
-- `blocked` / `allowlist` → Absender/Kanal wurde durch Richtlinien gefiltert.
+- `pairing request` → der Absender benötigt eine Genehmigung.
+- `blocked` / `allowlist` → Absender/Channel wurde durch eine Richtlinie gefiltert.
 
-Verwandt:
+Zugehörig:
 
 - [/channels/troubleshooting](/de/channels/troubleshooting)
 - [/channels/pairing](/de/channels/pairing)
@@ -98,7 +152,7 @@ Verwandt:
 
 ## Dashboard-Control-UI-Konnektivität
 
-Wenn die Dashboard/Control UI keine Verbindung herstellt, validieren Sie URL, Authentifizierungsmodus und Annahmen zu sicherem Kontext.
+Wenn Dashboard/Control UI keine Verbindung herstellt, prüfen Sie URL, Auth-Modus und Annahmen zum sicheren Kontext.
 
 ```bash
 openclaw gateway status
@@ -111,47 +165,46 @@ openclaw gateway status --json
 Achten Sie auf Folgendes:
 
 - Korrekte Probe-URL und Dashboard-URL.
-- Nichtübereinstimmung von Authentifizierungsmodus/Token zwischen Client und Gateway.
+- Nichtübereinstimmung bei Auth-Modus/Token zwischen Client und Gateway.
 - HTTP-Nutzung, wo Geräteidentität erforderlich ist.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
 - `device identity required` → unsicherer Kontext oder fehlende Geräteauthentifizierung.
 - `origin not allowed` → Browser-`Origin` ist nicht in `gateway.controlUi.allowedOrigins`
-  (oder Sie verbinden sich von einer Nicht-Loopback-Browser-Origin ohne explizite
-  Zulassungsliste).
-- `device nonce required` / `device nonce mismatch` → Client schließt den
-  challengebasierten Geräteauthentifizierungsablauf nicht ab (`connect.challenge` + `device.nonce`).
-- `device signature invalid` / `device signature expired` → Client hat die falsche
-  Nutzlast (oder einen veralteten Zeitstempel) für den aktuellen Handshake signiert.
-- `AUTH_TOKEN_MISMATCH` mit `canRetryWithDeviceToken=true` → Client kann einen vertrauenswürdigen Wiederholungsversuch mit zwischengespeichertem Gerätetoken durchführen.
-- Dieser Wiederholungsversuch mit zwischengespeichertem Token verwendet erneut die mit dem
-  gepaarten Gerätetoken gespeicherte Scope-Menge. Aufrufer mit explizitem `deviceToken` / expliziten `scopes` behalten stattdessen ihre angeforderte Scope-Menge bei.
-- Außerhalb dieses Wiederholungswegs hat die Connect-Authentifizierung folgende Reihenfolge:
-  zuerst explizites Shared Token/Passwort, dann explizites `deviceToken`, dann gespeichertes Gerätetoken,
+  enthalten (oder Sie verbinden sich von einer Browser-Origin, die nicht loopback ist, ohne explizite
+  Allowlist).
+- `device nonce required` / `device nonce mismatch` → der Client schließt den
+  herausforderungsbasierten Geräteauthentifizierungsablauf nicht ab (`connect.challenge` + `device.nonce`).
+- `device signature invalid` / `device signature expired` → der Client hat die falsche
+  Payload (oder einen veralteten Zeitstempel) für den aktuellen Handshake signiert.
+- `AUTH_TOKEN_MISMATCH` mit `canRetryWithDeviceToken=true` → der Client kann einen vertrauenswürdigen Wiederholungsversuch mit zwischengespeichertem Gerätetoken ausführen.
+- Dieser Wiederholungsversuch mit zwischengespeichertem Token verwendet erneut die zwischengespeicherte Scope-Menge, die mit dem gekoppelten
+  Gerätetoken gespeichert wurde. Aufrufer mit explizitem `deviceToken` / expliziten `scopes` behalten stattdessen ihre
+  angeforderte Scope-Menge bei.
+- Außerhalb dieses Wiederholungswegs ist die Priorität für die Verbindungsauthentifizierung explizit
+  gemeinsames Token/Passwort zuerst, dann explizites `deviceToken`, dann gespeichertes Gerätetoken,
   dann Bootstrap-Token.
-- Auf dem asynchronen Tailscale-Serve-Control-UI-Pfad werden fehlgeschlagene Versuche für dasselbe
-  `{scope, ip}` serialisiert, bevor der Limiter den Fehler erfasst. Zwei fehlerhafte gleichzeitige
-  Wiederholungen desselben Clients können daher beim zweiten Versuch `retry later`
-  statt zweier normaler Nichtübereinstimmungen ausgeben.
-- `too many failed authentication attempts (retry later)` von einem Browser-Origin-
-  Loopback-Client → wiederholte Fehlschläge derselben normalisierten `Origin` werden
-  vorübergehend gesperrt; eine andere localhost-Origin verwendet einen separaten Bucket.
-- wiederholtes `unauthorized` nach diesem Wiederholungsversuch → Drift zwischen Shared Token und Gerätetoken; aktualisieren Sie die Token-Konfiguration und genehmigen/rotieren Sie bei Bedarf das Gerätetoken erneut.
+- Auf dem asynchronen Tailscale-Serve-Control-UI-Pfad werden fehlgeschlagene Versuche für dieselbe
+  `{scope, ip}` serialisiert, bevor der Limiter den Fehler erfasst. Zwei fehlerhafte gleichzeitige Wiederholungsversuche desselben Clients können daher beim zweiten Versuch
+  `retry later` statt zweier einfacher Nichtübereinstimmungen auslösen.
+- `too many failed authentication attempts (retry later)` von einem loopback-Client mit Browser-Origin
+  → wiederholte Fehler von derselben normalisierten `Origin` werden vorübergehend ausgesperrt; eine andere localhost-Origin verwendet einen separaten Bucket.
+- Wiederholtes `unauthorized` nach diesem Wiederholungsversuch → Drift zwischen gemeinsamem Token/Gerätetoken; aktualisieren Sie die Token-Konfiguration und genehmigen/rotieren Sie das Gerätetoken bei Bedarf erneut.
 - `gateway connect failed:` → falscher Host/Port/falsches URL-Ziel.
 
-### Kurzübersicht zu Authentifizierungs-Detailcodes
+### Schnelle Zuordnung von Auth-Detailcodes
 
-Verwenden Sie `error.details.code` aus der fehlgeschlagenen `connect`-Antwort, um die nächste Aktion auszuwählen:
+Verwenden Sie `error.details.code` aus der fehlgeschlagenen `connect`-Antwort, um die nächste Maßnahme zu bestimmen:
 
-| Detailcode                   | Bedeutung                                                | Empfohlene Aktion                                                                                                                                                                                                                                                                          |
-| ---------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `AUTH_TOKEN_MISSING`         | Der Client hat kein erforderliches Shared Token gesendet. | Fügen/setzen Sie das Token im Client und versuchen Sie es erneut. Für Dashboard-Pfade: `openclaw config get gateway.auth.token` und dann in die Einstellungen der Control UI einfügen.                                                                                                   |
-| `AUTH_TOKEN_MISMATCH`        | Das Shared Token stimmte nicht mit dem Gateway-Auth-Token überein. | Wenn `canRetryWithDeviceToken=true`, erlauben Sie einen vertrauenswürdigen Wiederholungsversuch. Wiederholungsversuche mit zwischengespeichertem Token verwenden erneut die gespeicherten genehmigten Scopes; Aufrufer mit explizitem `deviceToken` / `scopes` behalten angeforderte Scopes bei. Wenn es weiterhin fehlschlägt, führen Sie die [token drift recovery checklist](/cli/devices#token-drift-recovery-checklist) aus. |
-| `AUTH_DEVICE_TOKEN_MISMATCH` | Zwischengespeichertes gerätespezifisches Token ist veraltet oder widerrufen. | Rotieren/genehmigen Sie das Gerätetoken erneut mit der [devices CLI](/cli/devices), und verbinden Sie sich dann erneut.                                                                                                                                                                  |
-| `PAIRING_REQUIRED`           | Die Geräteidentität ist bekannt, aber für diese Rolle nicht genehmigt. | Genehmigen Sie die ausstehende Anfrage: `openclaw devices list` und dann `openclaw devices approve <requestId>`.                                                                                                                                                                         |
+| Detail code                  | Bedeutung                                               | Empfohlene Maßnahme                                                                                                                                                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_TOKEN_MISSING`         | Der Client hat kein erforderliches gemeinsames Token gesendet. | Fügen Sie das Token im Client ein/setzen Sie es und versuchen Sie es erneut. Für Dashboard-Pfade: `openclaw config get gateway.auth.token` und dann in die Control-UI-Einstellungen einfügen.                                                                                              |
+| `AUTH_TOKEN_MISMATCH`        | Das gemeinsame Token stimmte nicht mit dem Gateway-Auth-Token überein. | Wenn `canRetryWithDeviceToken=true`, erlauben Sie einen vertrauenswürdigen Wiederholungsversuch. Wiederholungsversuche mit zwischengespeichertem Token verwenden erneut gespeicherte genehmigte Scopes; Aufrufer mit explizitem `deviceToken` / `scopes` behalten die angeforderten Scopes. Wenn es weiterhin fehlschlägt, führen Sie die [Checkliste zur Behebung von Token-Drift](/cli/devices#token-drift-recovery-checklist) aus. |
+| `AUTH_DEVICE_TOKEN_MISMATCH` | Das zwischengespeicherte gerätespezifische Token ist veraltet oder widerrufen. | Rotieren/genehmigen Sie das Gerätetoken mit [devices CLI](/cli/devices) erneut und stellen Sie die Verbindung dann erneut her.                                                                                                                                                               |
+| `PAIRING_REQUIRED`           | Die Geräteidentität ist bekannt, aber nicht für diese Rolle genehmigt. | Genehmigen Sie die ausstehende Anfrage: `openclaw devices list` und dann `openclaw devices approve <requestId>`.                                                                                                                                                                              |
 
-Prüfung der Migration zu Geräteauthentifizierung v2:
+Prüfung der Migration zu Device Auth v2:
 
 ```bash
 openclaw --version
@@ -159,55 +212,55 @@ openclaw doctor
 openclaw gateway status
 ```
 
-Wenn Logs Nonce-/Signaturfehler zeigen, aktualisieren Sie den verbindenden Client und prüfen Sie, dass er:
+Wenn die Logs Nonce-/Signaturfehler zeigen, aktualisieren Sie den verbindenden Client und prüfen Sie, dass er:
 
 1. auf `connect.challenge` wartet
-2. die an die Challenge gebundene Nutzlast signiert
+2. die challenge-gebundene Payload signiert
 3. `connect.params.device.nonce` mit derselben Challenge-Nonce sendet
 
 Wenn `openclaw devices rotate` / `revoke` / `remove` unerwartet verweigert wird:
 
-- Sitzungen mit gepaartem Gerätetoken können nur **ihr eigenes** Gerät verwalten, es sei denn, der
+- Sitzungen mit gekoppeltem Gerätetoken können nur **ihr eigenes** Gerät verwalten, es sei denn, der
   Aufrufer hat zusätzlich `operator.admin`
 - `openclaw devices rotate --scope ...` kann nur Operator-Scopes anfordern, die
-  die Aufrufersitzung bereits besitzt
+  die Aufrufer-Sitzung bereits besitzt
 
-Verwandt:
+Zugehörig:
 
 - [/web/control-ui](/web/control-ui)
-- [/gateway/configuration](/de/gateway/configuration) (Gateway-Authentifizierungsmodi)
+- [/gateway/configuration](/de/gateway/configuration) (Gateway-Auth-Modi)
 - [/gateway/trusted-proxy-auth](/de/gateway/trusted-proxy-auth)
 - [/gateway/remote](/de/gateway/remote)
 - [/cli/devices](/cli/devices)
 
 ## Gateway-Service läuft nicht
 
-Verwenden Sie dies, wenn der Service installiert ist, der Prozess aber nicht aktiv bleibt.
+Verwenden Sie diesen Abschnitt, wenn der Service installiert ist, der Prozess aber nicht dauerhaft läuft.
 
 ```bash
 openclaw gateway status
 openclaw status
 openclaw logs --follow
 openclaw doctor
-openclaw gateway status --deep   # scannt auch Services auf Systemebene
+openclaw gateway status --deep   # scannt auch Dienste auf Systemebene
 ```
 
 Achten Sie auf Folgendes:
 
 - `Runtime: stopped` mit Hinweisen zum Beenden.
-- Nichtübereinstimmung der Service-Konfiguration (`Config (cli)` vs `Config (service)`).
+- Nichtübereinstimmung bei der Service-Konfiguration (`Config (cli)` vs `Config (service)`).
 - Port-/Listener-Konflikte.
-- Zusätzliche Installationen via launchd/systemd/schtasks bei Verwendung von `--deep`.
-- Hinweise zur Bereinigung von `Other gateway-like services detected (best effort)`.
+- Zusätzliche launchd-/systemd-/schtasks-Installationen bei Verwendung von `--deep`.
+- Bereinigungshinweise für `Other gateway-like services detected (best effort)`.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
-- `Gateway start blocked: set gateway.mode=local` oder `existing config is missing gateway.mode` → lokaler Gateway-Modus ist nicht aktiviert, oder die Konfigurationsdatei wurde überschrieben und hat `gateway.mode` verloren. Lösung: Setzen Sie `gateway.mode="local"` in Ihrer Konfiguration oder führen Sie `openclaw onboard --mode local` / `openclaw setup` erneut aus, um die erwartete Konfiguration für den lokalen Modus wiederherzustellen. Wenn Sie OpenClaw über Podman ausführen, ist der Standardpfad der Konfiguration `~/.openclaw/openclaw.json`.
-- `refusing to bind gateway ... without auth` → Nicht-Loopback-Bind ohne gültigen Gateway-Authentifizierungspfad (Token/Passwort oder, falls konfiguriert, trusted-proxy).
+- `Gateway start blocked: set gateway.mode=local` oder `existing config is missing gateway.mode` → der lokale Gateway-Modus ist nicht aktiviert, oder die Konfigurationsdatei wurde überschrieben und hat `gateway.mode` verloren. Behebung: setzen Sie `gateway.mode="local"` in Ihrer Konfiguration oder führen Sie `openclaw onboard --mode local` / `openclaw setup` erneut aus, um die erwartete Konfiguration für den lokalen Modus wiederherzustellen. Wenn Sie OpenClaw über Podman ausführen, ist der Standard-Konfigurationspfad `~/.openclaw/openclaw.json`.
+- `refusing to bind gateway ... without auth` → Nicht-loopback-Bind ohne gültigen Gateway-Auth-Pfad (Token/Passwort oder Trusted-Proxy, sofern konfiguriert).
 - `another gateway instance is already listening` / `EADDRINUSE` → Portkonflikt.
-- `Other gateway-like services detected (best effort)` → veraltete oder parallele launchd-/systemd-/schtasks-Units existieren. Die meisten Setups sollten ein Gateway pro Maschine verwenden; wenn Sie tatsächlich mehr als eines benötigen, isolieren Sie Ports + Konfiguration/Status/Workspace. Siehe [/gateway#multiple-gateways-same-host](/de/gateway#multiple-gateways-same-host).
+- `Other gateway-like services detected (best effort)` → veraltete oder parallele launchd-/systemd-/schtasks-Units existieren. Die meisten Setups sollten ein Gateway pro Maschine beibehalten; wenn Sie tatsächlich mehr als eines benötigen, isolieren Sie Ports + Konfiguration/Status/Workspace. Siehe [/gateway#multiple-gateways-same-host](/de/gateway#multiple-gateways-same-host).
 
-Verwandt:
+Zugehörig:
 
 - [/gateway/background-process](/de/gateway/background-process)
 - [/gateway/configuration](/de/gateway/configuration)
@@ -215,7 +268,7 @@ Verwandt:
 
 ## Gateway-Probe-Warnungen
 
-Verwenden Sie dies, wenn `openclaw gateway probe` etwas erreicht, aber trotzdem einen Warnblock ausgibt.
+Verwenden Sie diesen Abschnitt, wenn `openclaw gateway probe` etwas erreicht, aber trotzdem einen Warnblock ausgibt.
 
 ```bash
 openclaw gateway probe
@@ -226,24 +279,24 @@ openclaw gateway probe --ssh user@gateway-host
 Achten Sie auf Folgendes:
 
 - `warnings[].code` und `primaryTargetId` in der JSON-Ausgabe.
-- Ob sich die Warnung auf SSH-Fallback, mehrere Gateways, fehlende Scopes oder nicht auflösbare Auth-Refs bezieht.
+- Ob sich die Warnung auf SSH-Fallback, mehrere Gateways, fehlende Scopes oder nicht aufgelöste Auth-Refs bezieht.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
-- `SSH tunnel failed to start; falling back to direct probes.` → SSH-Setup ist fehlgeschlagen, aber der Befehl hat dennoch direkte konfigurierte/Loopback-Ziele versucht.
+- `SSH tunnel failed to start; falling back to direct probes.` → die SSH-Einrichtung ist fehlgeschlagen, aber der Befehl hat trotzdem direkte konfigurierte/loopback-Ziele versucht.
 - `multiple reachable gateways detected` → mehr als ein Ziel hat geantwortet. Das bedeutet normalerweise ein beabsichtigtes Multi-Gateway-Setup oder veraltete/duplizierte Listener.
-- `Probe diagnostics are limited by gateway scopes (missing operator.read)` → Verbindung hat funktioniert, aber die Detail-RPC ist durch Scopes eingeschränkt; koppeln Sie Geräteidentität oder verwenden Sie Anmeldedaten mit `operator.read`.
-- nicht aufgelöster Warntext zu `gateway.auth.*` / `gateway.remote.*` SecretRef → Authentifizierungsmaterial war in diesem Befehlspfad für das fehlgeschlagene Ziel nicht verfügbar.
+- `Probe diagnostics are limited by gateway scopes (missing operator.read)` → die Verbindung hat funktioniert, aber die Detail-RPC ist durch Scopes eingeschränkt; koppeln Sie die Geräteidentität oder verwenden Sie Anmeldedaten mit `operator.read`.
+- nicht aufgelöster SecretRef-Warntext zu `gateway.auth.*` / `gateway.remote.*` → Auth-Material war in diesem Befehlspfad für das fehlgeschlagene Ziel nicht verfügbar.
 
-Verwandt:
+Zugehörig:
 
 - [/cli/gateway](/cli/gateway)
 - [/gateway#multiple-gateways-same-host](/de/gateway#multiple-gateways-same-host)
 - [/gateway/remote](/de/gateway/remote)
 
-## Kanal verbunden, aber Nachrichten fließen nicht
+## Channel verbunden, aber Nachrichten fließen nicht
 
-Wenn der Kanalstatus verbunden ist, aber kein Nachrichtenfluss stattfindet, konzentrieren Sie sich auf Richtlinien, Berechtigungen und kanalspezifische Zustellungsregeln.
+Wenn der Channel-Status verbunden ist, der Nachrichtenfluss aber tot ist, konzentrieren Sie sich auf Richtlinien, Berechtigungen und channelspezifische Zustellregeln.
 
 ```bash
 openclaw channels status --probe
@@ -256,16 +309,16 @@ openclaw config get channels
 Achten Sie auf Folgendes:
 
 - DM-Richtlinie (`pairing`, `allowlist`, `open`, `disabled`).
-- Zulassungsliste für Gruppen und Anforderungen an Erwähnungen.
-- Fehlende Kanal-API-Berechtigungen/-Scopes.
+- Gruppen-Allowlist und Anforderungen an Erwähnungen.
+- Fehlende Channel-API-Berechtigungen/-Scopes.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
 - `mention required` → Nachricht wird durch die Gruppen-Erwähnungsrichtlinie ignoriert.
-- `pairing` / Spuren ausstehender Freigaben → Absender ist nicht genehmigt.
-- `missing_scope`, `not_in_channel`, `Forbidden`, `401/403` → Problem mit Kanal-Authentifizierung/-Berechtigungen.
+- `pairing` / ausstehende Genehmigungsspuren → der Absender ist nicht genehmigt.
+- `missing_scope`, `not_in_channel`, `Forbidden`, `401/403` → Problem mit Channel-Auth/Berechtigungen.
 
-Verwandt:
+Zugehörig:
 
 - [/channels/troubleshooting](/de/channels/troubleshooting)
 - [/channels/whatsapp](/de/channels/whatsapp)
@@ -274,7 +327,7 @@ Verwandt:
 
 ## Cron- und Heartbeat-Zustellung
 
-Wenn Cron oder Heartbeat nicht ausgeführt wurde oder nicht zugestellt wurde, prüfen Sie zuerst den Scheduler-Status und dann das Zustellungsziel.
+Wenn Cron oder Heartbeat nicht ausgeführt wurde oder nicht zugestellt wurde, prüfen Sie zuerst den Scheduler-Status und dann das Zustellziel.
 
 ```bash
 openclaw cron status
@@ -286,29 +339,29 @@ openclaw logs --follow
 
 Achten Sie auf Folgendes:
 
-- Cron ist aktiviert und der nächste Weckzeitpunkt ist vorhanden.
-- Status der Job-Ausführungshistorie (`ok`, `skipped`, `error`).
-- Gründe für übersprungene Heartbeats (`quiet-hours`, `requests-in-flight`, `alerts-disabled`, `empty-heartbeat-file`, `no-tasks-due`).
+- Cron ist aktiviert und die nächste Aufweckzeit ist vorhanden.
+- Status des Job-Ausführungsverlaufs (`ok`, `skipped`, `error`).
+- Heartbeat-Überspringgründe (`quiet-hours`, `requests-in-flight`, `alerts-disabled`, `empty-heartbeat-file`, `no-tasks-due`).
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
 - `cron: scheduler disabled; jobs will not run automatically` → Cron ist deaktiviert.
 - `cron: timer tick failed` → Scheduler-Tick ist fehlgeschlagen; prüfen Sie Datei-/Log-/Laufzeitfehler.
-- `heartbeat skipped` mit `reason=quiet-hours` → außerhalb des aktiven Zeitfensters.
-- `heartbeat skipped` mit `reason=empty-heartbeat-file` → `HEARTBEAT.md` existiert, enthält aber nur leere Zeilen / Markdown-Überschriften, daher überspringt OpenClaw den Modellaufruf.
-- `heartbeat skipped` mit `reason=no-tasks-due` → `HEARTBEAT.md` enthält einen `tasks:`-Block, aber für diesen Tick ist keine Aufgabe fällig.
-- `heartbeat: unknown accountId` → ungültige Konto-ID für das Heartbeat-Zustellungsziel.
-- `heartbeat skipped` mit `reason=dm-blocked` → Heartbeat-Ziel wurde zu einem DM-ähnlichen Ziel aufgelöst, während `agents.defaults.heartbeat.directPolicy` (oder eine Überschreibung pro Agent) auf `block` gesetzt ist.
+- `heartbeat skipped` mit `reason=quiet-hours` → außerhalb des Zeitfensters für aktive Stunden.
+- `heartbeat skipped` mit `reason=empty-heartbeat-file` → `HEARTBEAT.md` existiert, enthält aber nur Leerzeilen / Markdown-Überschriften, daher überspringt OpenClaw den Modellaufruf.
+- `heartbeat skipped` mit `reason=no-tasks-due` → `HEARTBEAT.md` enthält einen `tasks:`-Block, aber keine der Aufgaben ist bei diesem Tick fällig.
+- `heartbeat: unknown accountId` → ungültige Konto-ID für das Heartbeat-Zustellziel.
+- `heartbeat skipped` mit `reason=dm-blocked` → das Heartbeat-Ziel wurde in ein Ziel im DM-Stil aufgelöst, während `agents.defaults.heartbeat.directPolicy` (oder die agentenspezifische Überschreibung) auf `block` gesetzt ist.
 
-Verwandt:
+Zugehörig:
 
 - [/automation/cron-jobs#troubleshooting](/de/automation/cron-jobs#troubleshooting)
 - [/automation/cron-jobs](/de/automation/cron-jobs)
 - [/gateway/heartbeat](/de/gateway/heartbeat)
 
-## Gepaartes Node-Tool schlägt fehl
+## Gekoppeltes Node-Tool schlägt fehl
 
-Wenn ein Node gepaart ist, Tools aber fehlschlagen, isolieren Sie Vordergrund-, Berechtigungs- und Genehmigungsstatus.
+Wenn ein Node gekoppelt ist, Tools aber fehlschlagen, isolieren Sie Vordergrund-, Berechtigungs- und Genehmigungsstatus.
 
 ```bash
 openclaw nodes status
@@ -320,18 +373,18 @@ openclaw status
 
 Achten Sie auf Folgendes:
 
-- Node ist online und verfügt über die erwarteten Fähigkeiten.
+- Node ist online und hat die erwarteten Fähigkeiten.
 - OS-Berechtigungen für Kamera/Mikrofon/Standort/Bildschirm.
-- Exec-Genehmigungen und Status der Zulassungsliste.
+- Exec-Genehmigungen und Allowlist-Status.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
-- `NODE_BACKGROUND_UNAVAILABLE` → Node-App muss im Vordergrund sein.
+- `NODE_BACKGROUND_UNAVAILABLE` → die Node-App muss im Vordergrund sein.
 - `*_PERMISSION_REQUIRED` / `LOCATION_PERMISSION_REQUIRED` → fehlende OS-Berechtigung.
 - `SYSTEM_RUN_DENIED: approval required` → Exec-Genehmigung steht aus.
-- `SYSTEM_RUN_DENIED: allowlist miss` → Befehl wurde durch die Zulassungsliste blockiert.
+- `SYSTEM_RUN_DENIED: allowlist miss` → Befehl wurde durch die Allowlist blockiert.
 
-Verwandt:
+Zugehörig:
 
 - [/nodes/troubleshooting](/de/nodes/troubleshooting)
 - [/nodes/index](/de/nodes/index)
@@ -339,7 +392,7 @@ Verwandt:
 
 ## Browser-Tool schlägt fehl
 
-Verwenden Sie dies, wenn Aktionen des Browser-Tools fehlschlagen, obwohl das Gateway selbst gesund ist.
+Verwenden Sie diesen Abschnitt, wenn Browser-Tool-Aktionen fehlschlagen, obwohl das Gateway selbst gesund ist.
 
 ```bash
 openclaw browser status
@@ -354,38 +407,38 @@ Achten Sie auf Folgendes:
 - Ob `plugins.allow` gesetzt ist und `browser` enthält.
 - Gültiger Pfad zur Browser-Executable.
 - Erreichbarkeit des CDP-Profils.
-- Verfügbarkeit von lokalem Chrome für `existing-session`- / `user`-Profile.
+- Verfügbarkeit von lokalem Chrome für `existing-session`-/`user`-Profile.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
-- `unknown command "browser"` oder `unknown command 'browser'` → das gebündelte Browser-Plugin wird durch `plugins.allow` ausgeschlossen.
+- `unknown command "browser"` oder `unknown command 'browser'` → das gebündelte Browser-Plugin ist durch `plugins.allow` ausgeschlossen.
 - Browser-Tool fehlt / ist nicht verfügbar, obwohl `browser.enabled=true` → `plugins.allow` schließt `browser` aus, daher wurde das Plugin nie geladen.
 - `Failed to start Chrome CDP on port` → Browser-Prozess konnte nicht gestartet werden.
 - `browser.executablePath not found` → der konfigurierte Pfad ist ungültig.
 - `browser.cdpUrl must be http(s) or ws(s)` → die konfigurierte CDP-URL verwendet ein nicht unterstütztes Schema wie `file:` oder `ftp:`.
 - `browser.cdpUrl has invalid port` → die konfigurierte CDP-URL hat einen fehlerhaften oder ungültigen Port.
-- `No Chrome tabs found for profile="user"` → das Chrome-MCP-Attach-Profil hat keine offenen lokalen Chrome-Tabs.
+- `No Chrome tabs found for profile="user"` → das Chrome-MCP-Attach-Profil hat keine geöffneten lokalen Chrome-Tabs.
 - `Remote CDP for profile "<name>" is not reachable` → der konfigurierte Remote-CDP-Endpunkt ist vom Gateway-Host aus nicht erreichbar.
-- `Browser attachOnly is enabled ... not reachable` oder `Browser attachOnly is enabled and CDP websocket ... is not reachable` → das Attach-only-Profil hat kein erreichbares Ziel, oder der HTTP-Endpunkt hat geantwortet, aber das CDP-WebSocket konnte weiterhin nicht geöffnet werden.
-- `Playwright is not available in this gateway build; '<feature>' is unsupported.` → in der aktuellen Gateway-Installation fehlt das vollständige Playwright-Paket; ARIA-Snapshots und einfache Seitenscreenshots können weiterhin funktionieren, aber Navigation, AI-Snapshots, Element-Screenshots über CSS-Selektoren und PDF-Export bleiben nicht verfügbar.
-- `fullPage is not supported for element screenshots` → die Screenshot-Anforderung mischte `--full-page` mit `--ref` oder `--element`.
-- `element screenshots are not supported for existing-session profiles; use ref from snapshot.` → Screenshot-Aufrufe für Chrome MCP / `existing-session` müssen Seitenerfassung oder eine Snapshot-`--ref` verwenden, nicht CSS-`--element`.
+- `Browser attachOnly is enabled ... not reachable` oder `Browser attachOnly is enabled and CDP websocket ... is not reachable` → das Attach-only-Profil hat kein erreichbares Ziel, oder der HTTP-Endpunkt hat geantwortet, aber der CDP-WebSocket konnte trotzdem nicht geöffnet werden.
+- `Playwright is not available in this gateway build; '<feature>' is unsupported.` → der aktuelle Gateway-Install enthält nicht das vollständige Playwright-Paket; ARIA-Snapshots und einfache Seitenscreenshots können weiterhin funktionieren, aber Navigation, AI-Snapshots, Element-Screenshots per CSS-Selektor und PDF-Export bleiben nicht verfügbar.
+- `fullPage is not supported for element screenshots` → die Screenshot-Anfrage hat `--full-page` mit `--ref` oder `--element` kombiniert.
+- `element screenshots are not supported for existing-session profiles; use ref from snapshot.` → Screenshot-Aufrufe von Chrome MCP / `existing-session` müssen Seitenerfassung oder einen Snapshot-`--ref` verwenden, nicht CSS-`--element`.
 - `existing-session file uploads do not support element selectors; use ref/inputRef.` → Upload-Hooks von Chrome MCP benötigen Snapshot-Refs, keine CSS-Selektoren.
 - `existing-session file uploads currently support one file at a time.` → senden Sie bei Chrome-MCP-Profilen einen Upload pro Aufruf.
-- `existing-session dialog handling does not support timeoutMs.` → Dialog-Hooks bei Chrome-MCP-Profilen unterstützen keine Timeout-Überschreibungen.
-- `response body is not supported for existing-session profiles yet.` → `responsebody` erfordert weiterhin einen verwalteten Browser oder ein Raw-CDP-Profil.
-- veraltete Overrides für Viewport / Dunkelmodus / Gebietsschema / Offline-Modus auf Attach-only- oder Remote-CDP-Profilen → führen Sie `openclaw browser stop --browser-profile <name>` aus, um die aktive Kontrollsitzung zu schließen und den Emulationsstatus von Playwright/CDP freizugeben, ohne das gesamte Gateway neu zu starten.
+- `existing-session dialog handling does not support timeoutMs.` → Dialog-Hooks auf Chrome-MCP-Profilen unterstützen keine Timeout-Überschreibungen.
+- `response body is not supported for existing-session profiles yet.` → `responsebody` erfordert weiterhin einen verwalteten Browser oder ein rohes CDP-Profil.
+- veraltete Überschreibungen für Viewport / Dark Mode / Gebietsschema / Offline-Modus auf Attach-only- oder Remote-CDP-Profilen → führen Sie `openclaw browser stop --browser-profile <name>` aus, um die aktive Steuersitzung zu schließen und den Playwright-/CDP-Emulationsstatus freizugeben, ohne das gesamte Gateway neu zu starten.
 
-Verwandt:
+Zugehörig:
 
 - [/tools/browser-linux-troubleshooting](/de/tools/browser-linux-troubleshooting)
 - [/tools/browser](/de/tools/browser)
 
 ## Wenn Sie ein Upgrade durchgeführt haben und plötzlich etwas nicht mehr funktioniert
 
-Die meisten Probleme nach Upgrades sind Konfigurationsdrift oder inzwischen strenger durchgesetzte Standardwerte.
+Die meisten Probleme nach einem Upgrade sind Konfigurations-Drift oder jetzt erzwungene strengere Standardwerte.
 
-### 1) Verhalten von Authentifizierung und URL-Überschreibung hat sich geändert
+### 1) Verhalten von Auth- und URL-Überschreibungen hat sich geändert
 
 ```bash
 openclaw gateway status
@@ -396,15 +449,15 @@ openclaw config get gateway.auth.mode
 
 Was zu prüfen ist:
 
-- Wenn `gateway.mode=remote`, können CLI-Aufrufe auf ein Remote-Ziel gehen, während Ihr lokaler Service in Ordnung ist.
-- Explizite `--url`-Aufrufe fallen nicht auf gespeicherte Anmeldedaten zurück.
+- Wenn `gateway.mode=remote`, können CLI-Aufrufe auf remote zielen, während Ihr lokaler Service in Ordnung ist.
+- Explizite `--url`-Aufrufe greifen nicht auf gespeicherte Anmeldedaten zurück.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
 - `gateway connect failed:` → falsches URL-Ziel.
-- `unauthorized` → Endpunkt ist erreichbar, aber die Authentifizierung ist falsch.
+- `unauthorized` → Endpunkt erreichbar, aber falsche Authentifizierung.
 
-### 2) Guardrails für Bind und Authentifizierung sind strenger
+### 2) Bind- und Auth-Schutzmechanismen sind strenger
 
 ```bash
 openclaw config get gateway.bind
@@ -416,13 +469,13 @@ openclaw logs --follow
 
 Was zu prüfen ist:
 
-- Nicht-Loopback-Binds (`lan`, `tailnet`, `custom`) benötigen einen gültigen Gateway-Authentifizierungspfad: Authentifizierung per Shared Token/Passwort oder eine korrekt konfigurierte Nicht-Loopback-`trusted-proxy`-Bereitstellung.
+- Nicht-loopback-Binds (`lan`, `tailnet`, `custom`) benötigen einen gültigen Gateway-Auth-Pfad: gemeinsame Token-/Passwort-Authentifizierung oder eine korrekt konfigurierte nicht-loopback-`trusted-proxy`-Bereitstellung.
 - Alte Schlüssel wie `gateway.token` ersetzen `gateway.auth.token` nicht.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
-- `refusing to bind gateway ... without auth` → Nicht-Loopback-Bind ohne gültigen Gateway-Authentifizierungspfad.
-- `RPC probe: failed` während die Runtime läuft → Gateway lebt, ist aber mit der aktuellen Authentifizierung/URL nicht erreichbar.
+- `refusing to bind gateway ... without auth` → Nicht-loopback-Bind ohne gültigen Gateway-Auth-Pfad.
+- `RPC probe: failed` während die Runtime läuft → Gateway lebt, ist aber mit der aktuellen Auth/URL nicht zugänglich.
 
 ### 3) Pairing- und Geräteidentitätsstatus haben sich geändert
 
@@ -435,10 +488,10 @@ openclaw doctor
 
 Was zu prüfen ist:
 
-- Ausstehende Gerätefreigaben für Dashboard/Nodes.
-- Ausstehende DM-Pairing-Freigaben nach Richtlinien- oder Identitätsänderungen.
+- Ausstehende Gerätegenehmigungen für Dashboard/Nodes.
+- Ausstehende DM-Pairing-Genehmigungen nach Richtlinien- oder Identitätsänderungen.
 
-Häufige Signaturen:
+Häufige Anzeichen:
 
 - `device identity required` → Geräteauthentifizierung ist nicht erfüllt.
 - `pairing required` → Absender/Gerät muss genehmigt werden.
@@ -450,7 +503,7 @@ openclaw gateway install --force
 openclaw gateway restart
 ```
 
-Verwandt:
+Zugehörig:
 
 - [/gateway/pairing](/de/gateway/pairing)
 - [/gateway/authentication](/de/gateway/authentication)

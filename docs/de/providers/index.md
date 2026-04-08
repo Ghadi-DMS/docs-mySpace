@@ -5,18 +5,18 @@ read_when:
 summary: Von OpenClaw unterstützte Modellanbieter (LLMs)
 title: Anbieterverzeichnis
 x-i18n:
-    generated_at: "2026-04-07T06:18:20Z"
+    generated_at: "2026-04-08T02:17:47Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 39d9ace35fd9452a4fb510fd980d251b6e51480e4647f051020bee2f1f2222e1
+    source_hash: e7bee5528b7fc9a982b3d0eaa4930cb77f7bded19a47aec00572b6fcbd823a70
     source_path: providers/index.md
     workflow: 15
 ---
 
 # Modellanbieter
 
-OpenClaw kann viele LLM-Anbieter verwenden. Wählen Sie einen Anbieter, authentifizieren Sie sich und setzen Sie dann das
-Standardmodell auf `provider/model`.
+OpenClaw kann viele LLM-Anbieter verwenden. Wählen Sie einen Anbieter aus, authentifizieren Sie sich und setzen Sie dann das
+Standardmodell als `provider/model`.
 
 Suchen Sie nach Dokumentation zu Chat-Kanälen (WhatsApp/Telegram/Discord/Slack/Mattermost (Plugin)/usw.)? Siehe [Channels](/de/channels).
 
@@ -37,7 +37,7 @@ Suchen Sie nach Dokumentation zu Chat-Kanälen (WhatsApp/Telegram/Discord/Slack/
 - [Amazon Bedrock](/de/providers/bedrock)
 - [Anthropic (API + Claude CLI)](/de/providers/anthropic)
 - [Arcee AI (Trinity-Modelle)](/de/providers/arcee)
-- [BytePlus (international)](/de/concepts/model-providers#byteplus-international)
+- [BytePlus (International)](/de/concepts/model-providers#byteplus-international)
 - [Chutes](/de/providers/chutes)
 - [ComfyUI](/de/providers/comfy)
 - [Cloudflare AI Gateway](/de/providers/cloudflare-ai-gateway)
@@ -49,6 +49,7 @@ Suchen Sie nach Dokumentation zu Chat-Kanälen (WhatsApp/Telegram/Discord/Slack/
 - [Google (Gemini)](/de/providers/google)
 - [Groq (LPU-Inferenz)](/de/providers/groq)
 - [Hugging Face (Inference)](/de/providers/huggingface)
+- [inferrs (lokale Modelle)](/de/providers/inferrs)
 - [Kilocode](/de/providers/kilocode)
 - [LiteLLM (einheitliches Gateway)](/de/providers/litellm)
 - [MiniMax](/de/providers/minimax)
@@ -90,7 +91,7 @@ Suchen Sie nach Dokumentation zu Chat-Kanälen (WhatsApp/Telegram/Discord/Slack/
 
 ## Community-Tools
 
-- [Claude Max API Proxy](/de/providers/claude-max-api-proxy) - Community-Proxy für Claude-Abonnement-Zugangsdaten (prüfen Sie vor der Nutzung die Richtlinien/Bedingungen von Anthropic)
+- [Claude Max API Proxy](/de/providers/claude-max-api-proxy) - Community-Proxy für Claude-Abonnement-Anmeldedaten (prüfen Sie vor der Verwendung die Richtlinien/Nutzungsbedingungen von Anthropic)
 
-Den vollständigen Anbieterkatalog (xAI, Groq, Mistral usw.) und die erweiterte Konfiguration
-finden Sie unter [Model providers](/de/concepts/model-providers).
+Den vollständigen Anbieterkatalog (xAI, Groq, Mistral usw.) und die erweiterte Konfiguration finden Sie unter
+[Model providers](/de/concepts/model-providers).

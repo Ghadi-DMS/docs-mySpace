@@ -1,14 +1,14 @@
 ---
 read_when:
     - Quieres elegir un proveedor de modelos
-    - Necesitas una visión general rápida de los backends LLM compatibles
-summary: Proveedores de modelos (LLM) compatibles con OpenClaw
+    - Necesitas una vista general rápida de los backends LLM compatibles
+summary: Proveedores de modelos (LLMs) compatibles con OpenClaw
 title: Directorio de proveedores
 x-i18n:
-    generated_at: "2026-04-07T05:05:44Z"
+    generated_at: "2026-04-08T02:17:19Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 39d9ace35fd9452a4fb510fd980d251b6e51480e4647f051020bee2f1f2222e1
+    source_hash: e7bee5528b7fc9a982b3d0eaa4930cb77f7bded19a47aec00572b6fcbd823a70
     source_path: providers/index.md
     workflow: 15
 ---
@@ -18,7 +18,7 @@ x-i18n:
 OpenClaw puede usar muchos proveedores de LLM. Elige un proveedor, autentícate y luego establece el
 modelo predeterminado como `provider/model`.
 
-¿Buscas documentación sobre canales de chat (WhatsApp/Telegram/Discord/Slack/Mattermost (plugin)/etc.)? Consulta [Canales](/es/channels).
+¿Buscas documentación de canales de chat (WhatsApp/Telegram/Discord/Slack/Mattermost (plugin)/etc.)? Consulta [Canales](/es/channels).
 
 ## Inicio rápido
 
@@ -49,13 +49,14 @@ modelo predeterminado como `provider/model`.
 - [Google (Gemini)](/es/providers/google)
 - [Groq (inferencia LPU)](/es/providers/groq)
 - [Hugging Face (inferencia)](/es/providers/huggingface)
+- [inferrs (modelos locales)](/es/providers/inferrs)
 - [Kilocode](/es/providers/kilocode)
 - [LiteLLM (gateway unificado)](/es/providers/litellm)
 - [MiniMax](/es/providers/minimax)
 - [Mistral](/es/providers/mistral)
 - [Moonshot AI (Kimi + Kimi Coding)](/es/providers/moonshot)
 - [NVIDIA](/es/providers/nvidia)
-- [Ollama (modelos en la nube + locales)](/es/providers/ollama)
+- [Ollama (nube + modelos locales)](/es/providers/ollama)
 - [OpenAI (API + Codex)](/es/providers/openai)
 - [OpenCode](/es/providers/opencode)
 - [OpenCode Go](/es/providers/opencode-go)
@@ -79,10 +80,10 @@ modelo predeterminado como `provider/model`.
 
 ## Páginas generales compartidas
 
-- [Variantes incluidas adicionales](/es/providers/models#additional-bundled-provider-variants) - Anthropic Vertex, Copilot Proxy y OAuth de Gemini CLI
-- [Generación de imágenes](/es/tools/image-generation) - herramienta compartida `image_generate`, selección de proveedor y conmutación por error
-- [Generación de música](/es/tools/music-generation) - herramienta compartida `music_generate`, selección de proveedor y conmutación por error
-- [Generación de video](/es/tools/video-generation) - herramienta compartida `video_generate`, selección de proveedor y conmutación por error
+- [Variantes empaquetadas adicionales](/es/providers/models#additional-bundled-provider-variants) - Anthropic Vertex, Copilot Proxy y Gemini CLI OAuth
+- [Generación de imágenes](/es/tools/image-generation) - Herramienta compartida `image_generate`, selección de proveedor y failover
+- [Generación de música](/es/tools/music-generation) - Herramienta compartida `music_generate`, selección de proveedor y failover
+- [Generación de video](/es/tools/video-generation) - Herramienta compartida `video_generate`, selección de proveedor y failover
 
 ## Proveedores de transcripción
 
@@ -90,7 +91,7 @@ modelo predeterminado como `provider/model`.
 
 ## Herramientas de la comunidad
 
-- [Claude Max API Proxy](/es/providers/claude-max-api-proxy) - Proxy comunitario para credenciales de suscripción de Claude (verifica la política/los términos de Anthropic antes de usarlo)
+- [Claude Max API Proxy](/es/providers/claude-max-api-proxy) - Proxy de la comunidad para credenciales de suscripción de Claude (verifica la política/los términos de Anthropic antes de usarlo)
 
-Para ver el catálogo completo de proveedores (xAI, Groq, Mistral, etc.) y la configuración avanzada,
+Para el catálogo completo de proveedores (xAI, Groq, Mistral, etc.) y la configuración avanzada,
 consulta [Proveedores de modelos](/es/concepts/model-providers).

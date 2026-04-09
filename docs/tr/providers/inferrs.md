@@ -1,15 +1,15 @@
 ---
 read_when:
     - OpenClaw'ı yerel bir inferrs sunucusuna karşı çalıştırmak istiyorsunuz
-    - Gemma'yı veya başka bir modeli inferrs üzerinden sunuyorsunuz
-    - inferrs için tam OpenClaw uyumluluk işaretlerine ihtiyacınız var
-summary: OpenClaw'ı inferrs üzerinden çalıştırın (OpenAI uyumlu yerel sunucu)
+    - Gemma veya başka bir modeli inferrs üzerinden sunuyorsunuz
+    - inferrs için tam OpenClaw uyumluluk bayraklarına ihtiyacınız var
+summary: OpenClaw'ı inferrs (OpenAI uyumlu yerel sunucu) üzerinden çalıştırın
 title: inferrs
 x-i18n:
-    generated_at: "2026-04-08T02:17:36Z"
+    generated_at: "2026-04-09T01:29:52Z"
     model: gpt-5.4
     provider: openai
-    source_hash: d84f660d49a682d0c0878707eebe1bc1e83dd115850687076ea3938b9f9c86c6
+    source_hash: 03b9d5a9935c75fd369068bacb7807a5308cd0bd74303b664227fb664c3a2098
     source_path: providers/inferrs.md
     workflow: 15
 ---
@@ -17,20 +17,20 @@ x-i18n:
 # inferrs
 
 [inferrs](https://github.com/ericcurtin/inferrs), yerel modelleri
-OpenAI uyumlu bir `/v1` API'sinin arkasında sunabilir. OpenClaw, `inferrs` ile genel
+OpenAI uyumlu bir `/v1` API arkasında sunabilir. OpenClaw, `inferrs` ile genel
 `openai-completions` yolu üzerinden çalışır.
 
-`inferrs` şu anda özel, self-hosted, OpenAI uyumlu bir
-arka uç olarak ele alınmalıdır; özel bir OpenClaw sağlayıcı plugin'i olarak değil.
+`inferrs`, şu anda özel olarak self-hosted bir OpenAI uyumlu
+backend olarak ele alınmalıdır; özel bir OpenClaw sağlayıcı plugin'i olarak değil.
 
 ## Hızlı başlangıç
 
-1. `inferrs`'i bir model ile başlatın.
+1. `inferrs`'ü bir modelle başlatın.
 
 Örnek:
 
 ```bash
-inferrs serve gg-hf-gg/gemma-4-E2B-it \
+inferrs serve google/gemma-4-E2B-it \
   --host 127.0.0.1 \
   --port 8080 \
   --device metal
@@ -53,9 +53,9 @@ Bu örnek, yerel bir `inferrs` sunucusunda Gemma 4 kullanır.
 {
   agents: {
     defaults: {
-      model: { primary: "inferrs/gg-hf-gg/gemma-4-E2B-it" },
+      model: { primary: "inferrs/google/gemma-4-E2B-it" },
       models: {
-        "inferrs/gg-hf-gg/gemma-4-E2B-it": {
+        "inferrs/google/gemma-4-E2B-it": {
           alias: "Gemma 4 (inferrs)",
         },
       },
@@ -70,7 +70,7 @@ Bu örnek, yerel bir `inferrs` sunucusunda Gemma 4 kullanır.
         api: "openai-completions",
         models: [
           {
-            id: "gg-hf-gg/gemma-4-E2B-it",
+            id: "google/gemma-4-E2B-it",
             name: "Gemma 4 E2B (inferrs)",
             reasoning: false,
             input: ["text"],
@@ -90,10 +90,10 @@ Bu örnek, yerel bir `inferrs` sunucusunda Gemma 4 kullanır.
 
 ## `requiresStringContent` neden önemlidir
 
-Bazı `inferrs` Chat Completions yolları, yapılandırılmış içerik parça dizileri yerine
-yalnızca dize biçimindeki `messages[].content` değerini kabul eder.
+Bazı `inferrs` Chat Completions rotaları yalnızca dize
+`messages[].content` kabul eder, yapılandırılmış içerik parçası dizilerini değil.
 
-OpenClaw çalıştırmaları şu tür bir hatayla başarısız olursa:
+OpenClaw çalıştırmaları aşağıdaki gibi bir hatayla başarısız olursa:
 
 ```text
 messages[1].content: invalid type: sequence, expected a string
@@ -107,16 +107,15 @@ compat: {
 }
 ```
 
-OpenClaw, isteği göndermeden önce yalnızca metin içeren içerik parçalarını düz
-dizelere indirger.
+OpenClaw, isteği göndermeden önce yalnızca metin içeren içerik parçalarını düz dizelere indirger.
 
-## Gemma ve tool-schema uyarısı
+## Gemma ve araç şeması kısıtı
 
 Bazı güncel `inferrs` + Gemma birleşimleri, küçük doğrudan
-`/v1/chat/completions` isteklerini kabul ederken tam OpenClaw agent-runtime
-turlarında yine de başarısız olabilir.
+`/v1/chat/completions` isteklerini kabul eder ancak yine de tam OpenClaw agent çalışma zamanı
+dönüşlerinde başarısız olur.
 
-Bu olursa önce şunu deneyin:
+Böyle olursa, önce şunu deneyin:
 
 ```json5
 compat: {
@@ -125,53 +124,52 @@ compat: {
 }
 ```
 
-Bu, model için OpenClaw'ın araç şeması yüzeyini devre dışı bırakır ve daha katı
-yerel arka uçlarda istem yükü baskısını azaltabilir.
+Bu, model için OpenClaw'ın araç şeması yüzeyini devre dışı bırakır ve daha katı yerel backend'lerde istem
+yükünü azaltabilir.
 
-Küçük doğrudan istekler hâlâ çalışıyor ama normal OpenClaw agent turları
-`inferrs` içinde çökmeye devam ediyorsa, kalan sorun genellikle OpenClaw'ın taşıma
-katmanından ziyade yukarı akış model/sunucu davranışıdır.
+Küçük doğrudan istekler yine de çalışıyor ancak normal OpenClaw agent dönüşleri
+`inferrs` içinde çökmeye devam ediyorsa, kalan sorun genellikle OpenClaw'ın taşıma katmanından ziyade yukarı akış model/sunucu davranışıdır.
 
-## El ile smoke test
+## Elle smoke test
 
-Yapılandırmadan sonra her iki katmanı da test edin:
+Yapılandırıldıktan sonra her iki katmanı da test edin:
 
 ```bash
 curl http://127.0.0.1:8080/v1/chat/completions \
   -H 'content-type: application/json' \
-  -d '{"model":"gg-hf-gg/gemma-4-E2B-it","messages":[{"role":"user","content":"What is 2 + 2?"}],"stream":false}'
+  -d '{"model":"google/gemma-4-E2B-it","messages":[{"role":"user","content":"What is 2 + 2?"}],"stream":false}'
 
 openclaw infer model run \
-  --model inferrs/gg-hf-gg/gemma-4-E2B-it \
+  --model inferrs/google/gemma-4-E2B-it \
   --prompt "What is 2 + 2? Reply with one short sentence." \
   --json
 ```
 
-İlk komut çalışıyor ama ikincisi başarısız oluyorsa, aşağıdaki sorun giderme
-notlarını kullanın.
+İlk komut çalışıyor ancak ikincisi başarısız oluyorsa, aşağıdaki sorun giderme notlarını
+kullanın.
 
 ## Sorun giderme
 
 - `curl /v1/models` başarısız oluyor: `inferrs` çalışmıyor, erişilemiyor veya
-  beklenen ana makine/port'a bağlanmamış.
+  beklenen host/port'a bağlanmamış.
 - `messages[].content ... expected a string`: şunu ayarlayın:
   `compat.requiresStringContent: true`.
-- Doğrudan küçük `/v1/chat/completions` çağrıları başarılı oluyor, ancak `openclaw infer model run`
+- Doğrudan küçük `/v1/chat/completions` çağrıları başarılı, ancak `openclaw infer model run`
   başarısız oluyor: `compat.supportsTools: false` deneyin.
-- OpenClaw artık şema hataları almıyor ama `inferrs` daha büyük
-  agent turlarında hâlâ çöküyor: bunu yukarı akış `inferrs` veya model sınırlaması olarak değerlendirin ve
-  istem baskısını azaltın ya da yerel arka ucu/modeli değiştirin.
+- OpenClaw artık şema hataları almıyor, ancak `inferrs` daha büyük
+  agent dönüşlerinde hâlâ çöküyor: bunu yukarı akış `inferrs` veya model kısıtı olarak değerlendirin ve
+  istem yükünü azaltın ya da yerel backend/model değiştirin.
 
-## Proxy tarzı davranış
+## Proxy benzeri davranış
 
-`inferrs`, yerel bir OpenAI uç noktası olarak değil, proxy tarzı OpenAI uyumlu bir `/v1`
-arka uç olarak ele alınır.
+`inferrs`, yerel bir
+OpenAI uç noktası değil, proxy benzeri bir OpenAI uyumlu `/v1` backend olarak ele alınır.
 
-- yerel OpenAI'ya özgü istek şekillendirme burada uygulanmaz
+- yerel OpenAI'ye özgü istek şekillendirme burada uygulanmaz
 - `service_tier`, Responses `store`, prompt-cache ipuçları ve
-  OpenAI reasoning-compat istem yükü şekillendirmesi yoktur
-- gizli OpenClaw atıf başlıkları (`originator`, `version`, `User-Agent`),
-  özel `inferrs` base URL'lerine eklenmez
+  OpenAI reasoning uyumluluk payload şekillendirmesi yoktur
+- gizli OpenClaw atıf üstbilgileri (`originator`, `version`, `User-Agent`)
+  özel `inferrs` base URL'lerine enjekte edilmez
 
 ## Ayrıca bakın
 

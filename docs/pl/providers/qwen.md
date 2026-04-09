@@ -2,13 +2,13 @@
 read_when:
     - Chcesz używać Qwen z OpenClaw
     - Wcześniej używałeś OAuth Qwen
-summary: Używaj Qwen Cloud przez wbudowanego providera qwen w OpenClaw
+summary: Używaj Qwen Cloud przez dołączonego dostawcę qwen w OpenClaw
 title: Qwen
 x-i18n:
-    generated_at: "2026-04-06T03:12:03Z"
+    generated_at: "2026-04-09T01:30:16Z"
     model: gpt-5.4
     provider: openai
-    source_hash: f175793693ab6a4c3f1f4d42040e673c15faf7603a500757423e9e06977c989d
+    source_hash: 4786df2cb6ec1ab29d191d012c61dcb0e5468bf0f8561fbbb50eed741efad325
     source_path: providers/qwen.md
     workflow: 15
 ---
@@ -17,25 +17,25 @@ x-i18n:
 
 <Warning>
 
-**OAuth Qwen został usunięty.** Integracja OAuth w warstwie darmowej
+**OAuth Qwen został usunięty.** Integracja OAuth w bezpłatnym planie
 (`qwen-portal`), która używała endpointów `portal.qwen.ai`, nie jest już dostępna.
-Szczegóły znajdziesz w [Issue #49557](https://github.com/openclaw/openclaw/issues/49557).
+Kontekst znajdziesz w [Issue #49557](https://github.com/openclaw/openclaw/issues/49557).
 
 </Warning>
 
 ## Zalecane: Qwen Cloud
 
-OpenClaw traktuje teraz Qwen jako pełnoprawnego wbudowanego providera z kanonicznym identyfikatorem
-`qwen`. Wbudowany provider kieruje ruch do endpointów Qwen Cloud / Alibaba DashScope oraz
-Coding Plan i zachowuje starsze identyfikatory `modelstudio` jako alias
-zgodności.
+OpenClaw traktuje teraz Qwen jako pełnoprawnego dołączonego dostawcę z kanonicznym identyfikatorem
+`qwen`. Dołączony dostawca obsługuje endpointy Qwen Cloud / Alibaba DashScope oraz
+Coding Plan i zachowuje działanie starszych identyfikatorów `modelstudio` jako
+aliasu zgodności.
 
-- Provider: `qwen`
-- Preferowana zmienna środowiskowa: `QWEN_API_KEY`
-- Akceptowane również dla zgodności: `MODELSTUDIO_API_KEY`, `DASHSCOPE_API_KEY`
+- Dostawca: `qwen`
+- Preferowana zmienna env: `QWEN_API_KEY`
+- Akceptowane także dla zgodności: `MODELSTUDIO_API_KEY`, `DASHSCOPE_API_KEY`
 - Styl API: zgodny z OpenAI
 
-Jeśli chcesz używać `qwen3.6-plus`, preferuj endpoint **Standard (pay-as-you-go)**.
+Jeśli chcesz używać `qwen3.6-plus`, wybierz endpoint **Standard (pay-as-you-go)**.
 Obsługa Coding Plan może być opóźniona względem publicznego katalogu.
 
 ```bash
@@ -52,9 +52,9 @@ openclaw onboard --auth-choice qwen-standard-api-key
 openclaw onboard --auth-choice qwen-standard-api-key-cn
 ```
 
-Starsze identyfikatory `modelstudio-*` dla `auth-choice` oraz odwołania do modeli `modelstudio/...` nadal
-działają jako aliasy zgodności, ale nowe przepływy konfiguracji powinny preferować kanoniczne
-identyfikatory `qwen-*` dla `auth-choice` oraz odwołania do modeli `qwen/...`.
+Starsze identyfikatory `auth-choice` `modelstudio-*` oraz referencje modeli `modelstudio/...`
+nadal działają jako aliasy zgodności, ale nowe przepływy konfiguracji powinny preferować kanoniczne
+identyfikatory `auth-choice` z rodziny `qwen-*` oraz referencje modeli `qwen/...`.
 
 Po onboardingu ustaw model domyślny:
 
@@ -70,22 +70,22 @@ Po onboardingu ustaw model domyślny:
 
 ## Typy planów i endpointy
 
-| Plan                       | Region | Auth choice                | Endpoint                                         |
+| Plan                       | Region | Wybór auth                 | Endpoint                                         |
 | -------------------------- | ------ | -------------------------- | ------------------------------------------------ |
-| Standard (pay-as-you-go)   | Chiny  | `qwen-standard-api-key-cn` | `dashscope.aliyuncs.com/compatible-mode/v1`      |
+| Standard (pay-as-you-go)   | China  | `qwen-standard-api-key-cn` | `dashscope.aliyuncs.com/compatible-mode/v1`      |
 | Standard (pay-as-you-go)   | Global | `qwen-standard-api-key`    | `dashscope-intl.aliyuncs.com/compatible-mode/v1` |
-| Coding Plan (subskrypcja)  | Chiny  | `qwen-api-key-cn`          | `coding.dashscope.aliyuncs.com/v1`               |
-| Coding Plan (subskrypcja)  | Global | `qwen-api-key`             | `coding-intl.dashscope.aliyuncs.com/v1`          |
+| Coding Plan (subscription) | China  | `qwen-api-key-cn`          | `coding.dashscope.aliyuncs.com/v1`               |
+| Coding Plan (subscription) | Global | `qwen-api-key`             | `coding-intl.dashscope.aliyuncs.com/v1`          |
 
-Provider automatycznie wybiera endpoint na podstawie Twojego wyboru auth. Kanoniczne
-wybory używają rodziny `qwen-*`; `modelstudio-*` pozostaje wyłącznie warstwą zgodności.
+Dostawca automatycznie wybiera endpoint na podstawie wybranego auth. Kanoniczne
+opcje używają rodziny `qwen-*`; `modelstudio-*` pozostaje wyłącznie dla zgodności.
 Możesz nadpisać to własnym `baseUrl` w konfiguracji.
 
-Natywne endpointy Model Studio sygnalizują zgodność użycia streamingu na
-współdzielonym transporcie `openai-completions`. OpenClaw opiera to teraz na możliwościach endpointu, więc
-niestandardowe identyfikatory providerów zgodne z DashScope, kierujące ruch na te same
-natywne hosty, dziedziczą to samo zachowanie użycia streamingu zamiast
-wymagać konkretnie wbudowanego identyfikatora providera `qwen`.
+Natywne endpointy Model Studio deklarują zgodność użycia strumieniowego na
+współdzielonym transporcie `openai-completions`. OpenClaw opiera to teraz na możliwościach endpointu,
+więc niestandardowe identyfikatory dostawców zgodnych z DashScope, kierujące na te same
+natywne hosty, dziedziczą to samo zachowanie użycia strumieniowego zamiast
+wymagać konkretnie wbudowanego identyfikatora dostawcy `qwen`.
 
 ## Pobierz swój klucz API
 
@@ -94,24 +94,26 @@ wymagać konkretnie wbudowanego identyfikatora providera `qwen`.
 
 ## Wbudowany katalog
 
-OpenClaw obecnie dostarcza ten wbudowany katalog Qwen:
+OpenClaw obecnie dostarcza ten dołączony katalog Qwen. Skonfigurowany katalog jest
+świadomy endpointu: konfiguracje Coding Plan pomijają modele, o których wiadomo, że działają
+tylko na endpointach Standard.
 
-| Model ref                   | Input       | Context   | Notes                                              |
-| --------------------------- | ----------- | --------- | -------------------------------------------------- |
-| `qwen/qwen3.5-plus`         | text, image | 1,000,000 | Model domyślny                                     |
-| `qwen/qwen3.6-plus`         | text, image | 1,000,000 | Preferuj endpointy Standard, jeśli potrzebujesz tego modelu |
-| `qwen/qwen3-max-2026-01-23` | text        | 262,144   | Linia Qwen Max                                     |
-| `qwen/qwen3-coder-next`     | text        | 262,144   | Coding                                             |
-| `qwen/qwen3-coder-plus`     | text        | 1,000,000 | Coding                                             |
-| `qwen/MiniMax-M2.5`         | text        | 1,000,000 | Reasoning włączony                                 |
-| `qwen/glm-5`                | text        | 202,752   | GLM                                                |
-| `qwen/glm-4.7`              | text        | 202,752   | GLM                                                |
-| `qwen/kimi-k2.5`            | text, image | 262,144   | Moonshot AI przez Alibaba                          |
+| Referencja modelu          | Wejście     | Kontekst  | Uwagi                                              |
+| -------------------------- | ----------- | --------- | -------------------------------------------------- |
+| `qwen/qwen3.5-plus`        | text, image | 1,000,000 | Model domyślny                                     |
+| `qwen/qwen3.6-plus`        | text, image | 1,000,000 | Przy tym modelu preferuj endpointy Standard        |
+| `qwen/qwen3-max-2026-01-23`| text        | 262,144   | Linia Qwen Max                                     |
+| `qwen/qwen3-coder-next`    | text        | 262,144   | Coding                                             |
+| `qwen/qwen3-coder-plus`    | text        | 1,000,000 | Coding                                             |
+| `qwen/MiniMax-M2.5`        | text        | 1,000,000 | Reasoning włączony                                 |
+| `qwen/glm-5`               | text        | 202,752   | GLM                                                |
+| `qwen/glm-4.7`             | text        | 202,752   | GLM                                                |
+| `qwen/kimi-k2.5`           | text, image | 262,144   | Moonshot AI przez Alibaba                          |
 
-Dostępność może nadal różnić się w zależności od endpointu i planu rozliczeń, nawet jeśli model
-jest obecny we wbudowanym katalogu.
+Dostępność może nadal zależeć od endpointu i planu rozliczeniowego, nawet jeśli model
+jest obecny w dołączonym katalogu.
 
-Zgodność użycia native-streaming dotyczy zarówno hostów Coding Plan, jak i
+Zgodność użycia natywnego strumieniowania dotyczy zarówno hostów Coding Plan, jak i
 hostów Standard zgodnych z DashScope:
 
 - `https://coding.dashscope.aliyuncs.com/v1`
@@ -123,31 +125,31 @@ hostów Standard zgodnych z DashScope:
 
 `qwen3.6-plus` jest dostępny na endpointach Model Studio Standard (pay-as-you-go):
 
-- Chiny: `dashscope.aliyuncs.com/compatible-mode/v1`
+- China: `dashscope.aliyuncs.com/compatible-mode/v1`
 - Global: `dashscope-intl.aliyuncs.com/compatible-mode/v1`
 
 Jeśli endpointy Coding Plan zwracają błąd „unsupported model” dla
 `qwen3.6-plus`, przełącz się na Standard (pay-as-you-go) zamiast używać pary
-endpoint/klucz dla Coding Plan.
+endpoint/klucz Coding Plan.
 
 ## Plan możliwości
 
-Rozszerzenie `qwen` jest pozycjonowane jako docelowe miejsce dostawcy dla całej powierzchni Qwen
+Rozszerzenie `qwen` jest pozycjonowane jako dom producenta dla pełnej powierzchni Qwen
 Cloud, a nie tylko modeli coding/text.
 
-- Modele text/chat: już wbudowane
-- Tool calling, structured output, thinking: dziedziczone z transportu zgodnego z OpenAI
-- Image generation: planowane na warstwie pluginu providera
-- Image/video understanding: już wbudowane na endpointach Standard
-- Speech/audio: planowane na warstwie pluginu providera
-- Embeddingi/reranking pamięci: planowane przez powierzchnię adaptera embeddingów
-- Video generation: już wbudowane przez współdzieloną możliwość generowania wideo
+- Modele text/chat: dołączone już teraz
+- Wywoływanie narzędzi, output strukturalny, thinking: dziedziczone z transportu zgodnego z OpenAI
+- Generowanie obrazów: planowane na warstwie wtyczki dostawcy
+- Rozumienie obrazów/wideo: dołączone już teraz na endpointach Standard
+- Speech/audio: planowane na warstwie wtyczki dostawcy
+- Embeddingi pamięci/reranking: planowane przez powierzchnię adaptera embeddingów
+- Generowanie wideo: dołączone już teraz przez współdzieloną możliwość generowania wideo
 
 ## Dodatki multimodalne
 
 Rozszerzenie `qwen` udostępnia teraz także:
 
-- Video understanding przez `qwen-vl-max-latest`
+- Rozumienie wideo przez `qwen-vl-max-latest`
 - Generowanie wideo Wan przez:
   - `wan2.6-t2v` (domyślnie)
   - `wan2.6-i2v`
@@ -158,20 +160,20 @@ Rozszerzenie `qwen` udostępnia teraz także:
 Te powierzchnie multimodalne używają endpointów DashScope **Standard**, a nie
 endpointów Coding Plan.
 
-- Globalny/międzynarodowy podstawowy URL Standard: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`
-- Chiński podstawowy URL Standard: `https://dashscope.aliyuncs.com/compatible-mode/v1`
+- Global/Intl Standard base URL: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`
+- China Standard base URL: `https://dashscope.aliyuncs.com/compatible-mode/v1`
 
-Dla generowania wideo OpenClaw mapuje skonfigurowany region Qwen na odpowiadający mu
-host DashScope AIGC przed wysłaniem zadania:
+Dla generowania wideo OpenClaw mapuje skonfigurowany region Qwen na odpowiadający
+mu host DashScope AIGC przed wysłaniem zadania:
 
 - Global/Intl: `https://dashscope-intl.aliyuncs.com`
-- Chiny: `https://dashscope.aliyuncs.com`
+- China: `https://dashscope.aliyuncs.com`
 
 Oznacza to, że zwykłe `models.providers.qwen.baseUrl` wskazujące na hosty Qwen
 Coding Plan lub Standard nadal utrzymuje generowanie wideo na poprawnym
-regionalnym endpointzie wideo DashScope.
+regionalnym endpointcie wideo DashScope.
 
-Dla generowania wideo ustaw model domyślny jawnie:
+Dla generowania wideo ustaw jawnie model domyślny:
 
 ```json5
 {
@@ -183,22 +185,22 @@ Dla generowania wideo ustaw model domyślny jawnie:
 }
 ```
 
-Bieżące ograniczenia wbudowanego generowania wideo Qwen:
+Obecne limity generowania wideo dla dołączonego Qwen:
 
 - Maksymalnie **1** wyjściowe wideo na żądanie
 - Maksymalnie **1** obraz wejściowy
 - Maksymalnie **4** wejściowe wideo
-- Maksymalnie **10 sekund** czasu trwania
+- Maksymalny czas trwania **10 sekund**
 - Obsługuje `size`, `aspectRatio`, `resolution`, `audio` i `watermark`
-- Tryb obrazu/wideo referencyjnego obecnie wymaga **zdalnych URL `http(s)`**. Lokalne
+- Tryb obrazu/wideo referencyjnego obecnie wymaga **zdalnych adresów URL http(s)**. Lokalne
   ścieżki plików są odrzucane od razu, ponieważ endpoint wideo DashScope nie
-  akceptuje przesyłanych lokalnych buforów dla tych referencji.
+  akceptuje przesyłanych lokalnych buforów dla takich referencji.
 
-Zobacz [Generowanie wideo](/tools/video-generation), aby poznać współdzielone
-parametry narzędzia, wybór providera i zachowanie failover.
+Zobacz [Video Generation](/pl/tools/video-generation), aby poznać współdzielone parametry
+narzędzia, wybór dostawcy i zachowanie failover.
 
 ## Uwaga dotycząca środowiska
 
-Jeśli Gateway działa jako daemon (launchd/systemd), upewnij się, że `QWEN_API_KEY` jest
-dostępny dla tego procesu (na przykład w `~/.openclaw/.env` lub przez
+Jeśli Gateway działa jako demon (launchd/systemd), upewnij się, że `QWEN_API_KEY` jest
+dostępne dla tego procesu (na przykład w `~/.openclaw/.env` lub przez
 `env.shellEnv`).

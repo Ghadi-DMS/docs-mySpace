@@ -1,287 +1,309 @@
 ---
 read_when:
     - تشغيل الاختبارات محليًا أو في CI
-    - إضافة اختبارات تراجع لأخطاء النموذج/الموفر
+    - إضافة اختبارات انحدار لأخطاء النموذج/المزوّد
     - تصحيح سلوك البوابة + الوكيل
-summary: 'عدة الاختبار: أجنحة unit/e2e/live، ومشغلات Docker، وما الذي يغطيه كل اختبار'
+summary: 'مجموعة الاختبار: مجموعات unit/e2e/live، مشغّلات Docker، وما الذي يغطيه كل اختبار'
 title: الاختبار
 x-i18n:
-    generated_at: "2026-04-09T01:30:55Z"
+    generated_at: "2026-04-10T07:17:26Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 01117f41d8b171a4f1da11ed78486ee700e70ae70af54eb6060c57baf64ab21b
+    source_hash: 21b78e59a5189f4e8e6e1b490d350f4735c0395da31d21fc5d10b825313026b4
     source_path: help/testing.md
     workflow: 15
 ---
 
 # الاختبار
 
-يحتوي OpenClaw على ثلاثة أجنحة Vitest (unit/integration، وe2e، وlive) ومجموعة صغيرة من مشغلات Docker.
+يحتوي OpenClaw على ثلاث مجموعات Vitest (unit/integration وe2e وlive) ومجموعة صغيرة من مشغّلات Docker.
 
 هذه الوثيقة هي دليل "كيف نختبر":
 
-- ما الذي يغطيه كل جناح (وما الذي لا يغطيه عمدًا)
-- ما الأوامر التي يجب تشغيلها في مسارات العمل الشائعة (محليًا، قبل الدفع، التصحيح)
-- كيف تكتشف الاختبارات الحية بيانات الاعتماد وتختار النماذج/الموفرين
-- كيف تضيف اختبارات تراجع لمشكلات النماذج/الموفرين في العالم الحقيقي
+- ما الذي تغطيه كل مجموعة (وما الذي لا تغطيه عمدًا)
+- الأوامر التي يجب تشغيلها لسير العمل الشائع (محليًا، قبل الدفع، التصحيح)
+- كيف تكتشف الاختبارات الحية بيانات الاعتماد وتحدد النماذج/المزوّدين
+- كيفية إضافة اختبارات انحدار لمشكلات النماذج/المزوّدين في العالم الحقيقي
 
-## البدء السريع
+## البداية السريعة
 
 في معظم الأيام:
 
 - البوابة الكاملة (متوقعة قبل الدفع): `pnpm build && pnpm check && pnpm test`
-- تشغيل أسرع محليًا للجناح الكامل على جهاز واسع الموارد: `pnpm test:max`
+- تشغيل أسرع للمجموعة الكاملة محليًا على جهاز ذي موارد كافية: `pnpm test:max`
 - حلقة مراقبة Vitest مباشرة: `pnpm test:watch`
-- استهداف الملفات مباشرة يوجّه الآن مسارات extensions/channel أيضًا: `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts`
+- استهداف الملفات مباشرة يوجّه الآن أيضًا مسارات الإضافات/القنوات: `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts`
+- فضّل أولًا التشغيلات المستهدفة عندما تكون تعمل على تكرار فشل واحد.
 - موقع QA مدعوم بـ Docker: `pnpm qa:lab:up`
+- مسار QA مدعوم بآلة Linux افتراضية: `pnpm openclaw qa suite --runner multipass --scenario channel-chat-baseline`
 
 عندما تلمس الاختبارات أو تريد ثقة إضافية:
 
 - بوابة التغطية: `pnpm test:coverage`
-- جناح E2E: `pnpm test:e2e`
+- مجموعة E2E: `pnpm test:e2e`
 
-عند تصحيح موفرين/نماذج حقيقية (يتطلب بيانات اعتماد حقيقية):
+عند تصحيح مزوّدين/نماذج حقيقية (يتطلب بيانات اعتماد حقيقية):
 
-- الجناح الحي (مجسات النماذج + أدوات/صور البوابة): `pnpm test:live`
-- استهدف ملفًا حيًا واحدًا بهدوء: `pnpm test:live -- src/agents/models.profiles.live.test.ts`
+- المجموعة الحية (فحوصات النماذج + أدوات/صور البوابة): `pnpm test:live`
+- استهداف ملف حي واحد بهدوء: `pnpm test:live -- src/agents/models.profiles.live.test.ts`
 
-نصيحة: عندما تحتاج فقط إلى حالة فاشلة واحدة، فالأفضل تضييق الاختبارات الحية باستخدام متغيرات البيئة allowlist الموضحة أدناه.
+نصيحة: عندما تحتاج فقط إلى حالة فاشلة واحدة، ففضّل تضييق الاختبارات الحية عبر متغيرات البيئة الخاصة بقائمة السماح الموضحة أدناه.
 
-## أجنحة الاختبار (ما الذي يعمل وأين)
+## مشغّلات خاصة بـ QA
 
-فكّر في الأجنحة على أنها "واقعية متزايدة" (ومعها قابلية فشل/تكلفة متزايدة):
+توجد هذه الأوامر بجانب مجموعات الاختبار الرئيسية عندما تحتاج إلى واقعية QA-lab:
+
+- `pnpm openclaw qa suite`
+  - يشغّل سيناريوهات QA المعتمدة على المستودع مباشرة على المضيف.
+- `pnpm openclaw qa suite --runner multipass`
+  - يشغّل مجموعة QA نفسها داخل آلة Linux افتراضية مؤقتة عبر Multipass.
+  - يحافظ على سلوك اختيار السيناريو نفسه كما في `qa suite` على المضيف.
+  - يعيد استخدام أعلام اختيار المزوّد/النموذج نفسها كما في `qa suite`.
+  - التشغيلات الحية تمرّر مدخلات مصادقة QA المدعومة والعملية للضيف:
+    مفاتيح المزوّد المعتمدة على البيئة، ومسار إعدادات مزوّد QA الحي، و`CODEX_HOME`
+    عند وجوده.
+  - يجب أن تبقى مجلدات المخرجات تحت جذر المستودع حتى يتمكن الضيف من الكتابة مرة أخرى عبر
+    مساحة العمل المركبة.
+  - يكتب تقرير QA العادي + الملخص بالإضافة إلى سجلات Multipass ضمن
+    `.artifacts/qa-e2e/...`.
+- `pnpm qa:lab:up`
+  - يبدأ موقع QA المدعوم بـ Docker لأعمال QA بأسلوب المشغّل.
+
+## مجموعات الاختبار (ما الذي يعمل وأين)
+
+فكّر في المجموعات باعتبارها "واقعية متزايدة" (ومعها تزداد القابلية للتذبذب/التكلفة):
 
 ### Unit / integration (الافتراضي)
 
 - الأمر: `pnpm test`
-- الإعداد: عشر تشغيلات shards متسلسلة (`vitest.full-*.config.ts`) فوق مشاريع Vitest المقيّدة الحالية
-- الملفات: مخزونات core/unit تحت `src/**/*.test.ts` و`packages/**/*.test.ts` و`test/**/*.test.ts` واختبارات `ui` المعتمدة على node والمسموح بها والمغطاة بواسطة `vitest.unit.config.ts`
+- الإعداد: عشر تشغيلات شظايا متسلسلة (`vitest.full-*.config.ts`) عبر مشاريع Vitest المحددة الموجودة
+- الملفات: قوائم core/unit ضمن `src/**/*.test.ts` و`packages/**/*.test.ts` و`test/**/*.test.ts` واختبارات `ui` الخاصة بـ node المدرجة في قائمة السماح والمشمولة بواسطة `vitest.unit.config.ts`
 - النطاق:
   - اختبارات unit خالصة
-  - اختبارات integration داخل العملية (مصادقة البوابة، والتوجيه، والأدوات، والتحليل، والإعداد)
-  - اختبارات تراجع حتمية للأخطاء المعروفة
+  - اختبارات integration داخل العملية (مصادقة البوابة، التوجيه، الأدوات، التحليل، الإعدادات)
+  - اختبارات انحدار حتمية للأخطاء المعروفة
 - التوقعات:
   - تعمل في CI
   - لا تتطلب مفاتيح حقيقية
   - يجب أن تكون سريعة ومستقرة
 - ملاحظة المشاريع:
-  - أصبح `pnpm test` غير المستهدف الآن يشغّل أحد عشر إعداد shard أصغر (`core-unit-src` و`core-unit-security` و`core-unit-ui` و`core-unit-support` و`core-support-boundary` و`core-contracts` و`core-bundled` و`core-runtime` و`agentic` و`auto-reply` و`extensions`) بدلًا من عملية root-project أصلية واحدة ضخمة. يقلل هذا من ذروة RSS على الأجهزة المزدحمة ويتجنب أن تستنزف أعمال auto-reply/extension الأجنحة غير المرتبطة.
-  - يظل `pnpm test --watch` يستخدم مخطط المشروع الأصلي في الجذر `vitest.config.ts`، لأن حلقة مراقبة متعددة الـ shards غير عملية.
-  - تقوم `pnpm test` و`pnpm test:watch` و`pnpm test:perf:imports` بتوجيه أهداف الملفات/الأدلة الصريحة عبر المسارات المقيّدة أولًا، لذلك فإن `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts` يتجنب كلفة بدء تشغيل مشروع الجذر الكامل.
-  - يوسّع `pnpm test:changed` مسارات git المتغيرة إلى المسارات المقيّدة نفسها عندما يلمس diff فقط ملفات المصدر/الاختبار القابلة للتوجيه؛ أما تعديلات config/setup فتعيد المسار إلى إعادة تشغيل مشروع الجذر الواسعة.
-  - يتم أيضًا توجيه اختبارات `plugin-sdk` و`commands` المحددة عبر مسارات خفيفة مخصصة تتجاوز `test/setup-openclaw-runtime.ts`؛ وتبقى الملفات الثقيلة من حيث الحالة/وقت التشغيل على المسارات الحالية.
-  - كما تُطابق ملفات المصدر المساعدة المحددة في `plugin-sdk` و`commands` تشغيلات وضع changed مع اختبارات شقيقة صريحة في تلك المسارات الخفيفة، بحيث تتجنب تعديلات المساعدين إعادة تشغيل الجناح الثقيل الكامل لذلك الدليل.
-  - يحتوي `auto-reply` الآن على ثلاثة أقسام مخصصة: مساعدات core من المستوى الأعلى، واختبارات integration من المستوى الأعلى `reply.*`، والشجرة الفرعية `src/auto-reply/reply/**`. يحافظ هذا على أعمال harness الأثقل للرد بعيدًا عن اختبارات الحالة/القطع/token الأرخص.
-- ملاحظة المشغل المضمّن:
-  - عندما تغيّر مدخلات اكتشاف message-tool أو سياق وقت تشغيل compaction،
+  - تشغيل `pnpm test` غير المستهدف يشغّل الآن أحد عشر إعداد شظايا أصغر (`core-unit-src` و`core-unit-security` و`core-unit-ui` و`core-unit-support` و`core-support-boundary` و`core-contracts` و`core-bundled` و`core-runtime` و`agentic` و`auto-reply` و`extensions`) بدلًا من عملية مشروع جذرية أصلية ضخمة واحدة. هذا يقلل ذروة RSS على الأجهزة المحمّلة ويمنع أعمال auto-reply/الإضافات من تجويع المجموعات غير المرتبطة.
+  - `pnpm test --watch` لا يزال يستخدم رسم مشروع الجذر الأصلي `vitest.config.ts`، لأن حلقة مراقبة متعددة الشظايا غير عملية.
+  - `pnpm test` و`pnpm test:watch` و`pnpm test:perf:imports` توجّه أهداف الملفات/المجلدات الصريحة عبر المسارات المحددة أولًا، لذا فإن `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts` يتجنب تكلفة بدء تشغيل مشروع الجذر الكامل.
+  - `pnpm test:changed` يوسّع مسارات git المتغيرة إلى المسارات المحددة نفسها عندما يلمس الفرق فقط ملفات المصدر/الاختبار القابلة للتوجيه؛ أما تعديلات الإعداد/التهيئة فتعود إلى إعادة التشغيل الأوسع لمشروع الجذر.
+  - بعض اختبارات `plugin-sdk` و`commands` تُوجَّه أيضًا عبر مسارات خفيفة مخصصة تتخطى `test/setup-openclaw-runtime.ts`؛ أما الملفات ذات الحالة/الأثقل وقت التشغيل فتبقى على المسارات الموجودة.
+  - بعض ملفات مصدر المساعدة في `plugin-sdk` و`commands` تُطابق أيضًا التشغيلات في وضع changed مع اختبارات شقيقة صريحة في تلك المسارات الخفيفة، بحيث تتجنب تعديلات المساعدين إعادة تشغيل المجموعة الثقيلة الكاملة لذلك الدليل.
+  - لدى `auto-reply` الآن ثلاث حاويات مخصصة: مساعدات core من المستوى الأعلى، واختبارات integration العليا `reply.*`، والشجرة الفرعية `src/auto-reply/reply/**`. هذا يُبقي أثقل أعمال حزمة الرد خارج اختبارات الحالة/الأجزاء/الرموز الأرخص.
+- ملاحظة المشغّل المضمّن:
+  - عندما تغيّر مدخلات اكتشاف أدوات الرسائل أو سياق وقت تشغيل الضغط،
     حافظ على مستويي التغطية معًا.
-  - أضف اختبارات تراجع مركزة للمساعدات لحدود التوجيه/التطبيع الخالصة.
-  - وحافظ أيضًا على صحة أجنحة integration للمشغل المضمّن:
-    `src/agents/pi-embedded-runner/compact.hooks.test.ts`،
-    و`src/agents/pi-embedded-runner/run.overflow-compaction.test.ts`، و
+  - أضف اختبارات انحدار مركزة للمساعدين عند حدود التوجيه/التطبيع الخالصة.
+  - وحافظ أيضًا على صحة مجموعات integration الخاصة بالمشغّل المضمّن:
+    `src/agents/pi-embedded-runner/compact.hooks.test.ts`,
+    `src/agents/pi-embedded-runner/run.overflow-compaction.test.ts`, و
     `src/agents/pi-embedded-runner/run.overflow-compaction.loop.test.ts`.
-  - تتحقق هذه الأجنحة من أن المعرّفات المقيّدة وسلوك compaction ما زالا يمران
-    عبر المسارات الحقيقية `run.ts` / `compact.ts`؛ ولا تُعد اختبارات المساعدات فقط
+  - تتحقق هذه المجموعات من أن المعرّفات المحددة وسلوك الضغط ما زالا يتدفقان
+    عبر المسارات الحقيقية `run.ts` / `compact.ts`؛ اختبارات المساعدين وحدها ليست
     بديلًا كافيًا عن مسارات integration هذه.
-- ملاحظة الـ pool:
-  - أصبح إعداد Vitest الأساسي يفترض `threads`.
-  - كما يثبت إعداد Vitest المشترك `isolate: false` ويستخدم المشغّل غير المعزول عبر مشاريع الجذر وإعدادات e2e وlive.
-  - يحتفظ مسار UI في الجذر بإعداد `jsdom` والمُحسِّن الخاص به، لكنه يعمل الآن أيضًا على المشغّل المشترك غير المعزول.
-  - يرث كل shard في `pnpm test` القيم الافتراضية نفسها `threads` + `isolate: false` من إعداد Vitest المشترك.
-  - يضيف مشغّل `scripts/run-vitest.mjs` المشترك الآن أيضًا `--no-maglev` افتراضيًا إلى عمليات Node الفرعية الخاصة بـ Vitest لتقليل تقلبات ترجمة V8 أثناء التشغيلات المحلية الكبيرة. عيّن `OPENCLAW_VITEST_ENABLE_MAGLEV=1` إذا كنت تحتاج إلى المقارنة مع سلوك V8 القياسي.
+- ملاحظة pool:
+  - إعداد Vitest الأساسي يستخدم الآن `threads` افتراضيًا.
+  - إعداد Vitest المشترك يثبت أيضًا `isolate: false` ويستخدم المشغّل غير المعزول عبر مشاريع الجذر وتهيئات e2e وlive.
+  - يحتفظ مسار UI الجذري بإعداد `jsdom` والمُحسّن الخاص به، لكنه يعمل الآن أيضًا على المشغّل غير المعزول المشترك.
+  - كل شظية `pnpm test` ترث القيم الافتراضية نفسها `threads` + `isolate: false` من إعداد Vitest المشترك.
+  - يضيف مشغّل `scripts/run-vitest.mjs` المشترك الآن أيضًا `--no-maglev` لعمليات Node الفرعية الخاصة بـ Vitest افتراضيًا لتقليل اضطراب ترجمة V8 أثناء التشغيلات المحلية الكبيرة. اضبط `OPENCLAW_VITEST_ENABLE_MAGLEV=1` إذا كنت تحتاج إلى المقارنة مع سلوك V8 القياسي.
 - ملاحظة التكرار المحلي السريع:
-  - يوجّه `pnpm test:changed` عبر المسارات المقيّدة عندما تُطابق المسارات المتغيرة جناحًا أصغر بشكل واضح.
-  - يحتفظ `pnpm test:max` و`pnpm test:changed:max` بسلوك التوجيه نفسه، ولكن مع حد أعلى أكبر للعمّال.
-  - أصبح توسيع العمّال المحلي التلقائي محافظًا عمدًا الآن كما أنه يتراجع عندما يكون متوسط حمل المضيف مرتفعًا بالفعل، بحيث تُحدث تشغيلات Vitest المتزامنة المتعددة ضررًا أقل افتراضيًا.
-  - يعلّم إعداد Vitest الأساسي ملفات projects/config على أنها `forceRerunTriggers` حتى تظل إعادة التشغيل في وضع changed صحيحة عندما يتغير توصيل الاختبارات.
-  - يحافظ الإعداد على تفعيل `OPENCLAW_VITEST_FS_MODULE_CACHE` على المضيفين المدعومين؛ عيّن `OPENCLAW_VITEST_FS_MODULE_CACHE_PATH=/abs/path` إذا كنت تريد موقع cache صريحًا واحدًا لأغراض التحليل المباشر.
+  - `pnpm test:changed` يوجّه عبر المسارات المحددة عندما تُطابق المسارات المتغيرة مجموعة أصغر بشكل واضح.
+  - `pnpm test:max` و`pnpm test:changed:max` يحافظان على سلوك التوجيه نفسه، ولكن مع حد أعلى للعمال.
+  - التوسّع التلقائي لعدد العمال محليًا أصبح محافظًا عمدًا الآن ويتراجع أيضًا عندما يكون متوسط حمل المضيف مرتفعًا أصلًا، بحيث تُحدث تشغيلات Vitest المحلية المتعددة ضررًا أقل افتراضيًا.
+  - يضع إعداد Vitest الأساسي المشاريع/ملفات الإعداد ضمن `forceRerunTriggers` حتى تبقى إعادة التشغيل في وضع changed صحيحة عندما تتغير آلية توصيل الاختبارات.
+  - يحتفظ الإعداد بتمكين `OPENCLAW_VITEST_FS_MODULE_CACHE` على المضيفين المدعومين؛ اضبط `OPENCLAW_VITEST_FS_MODULE_CACHE_PATH=/abs/path` إذا كنت تريد موقع cache صريحًا واحدًا من أجل profiling مباشر.
 - ملاحظة تصحيح الأداء:
-  - يفعّل `pnpm test:perf:imports` تقارير مدة الاستيراد في Vitest بالإضافة إلى مخرجات تفصيل الاستيراد.
-  - يقيّد `pnpm test:perf:imports:changed` طريقة العرض التحليلية نفسها بالملفات المتغيرة منذ `origin/main`.
-- يقارن `pnpm test:perf:changed:bench -- --ref <git-ref>` بين `test:changed` الموجّه والمسار الأصلي لمشروع الجذر لذلك diff الملتزم ويطبع زمن التنفيذ بالإضافة إلى أقصى RSS على macOS.
-- يضع `pnpm test:perf:changed:bench -- --worktree` معيارًا للشجرة المتسخة الحالية عبر توجيه قائمة الملفات المتغيرة من خلال `scripts/test-projects.mjs` وإعداد Vitest الجذري.
-  - يكتب `pnpm test:perf:profile:main` ملف تعريف CPU للخيط الرئيسي لتكاليف بدء تشغيل Vitest/Vite والتحويل.
-  - يكتب `pnpm test:perf:profile:runner` ملفات تعريف CPU+heap للمشغّل لجناح unit مع تعطيل التوازي على مستوى الملفات.
+  - `pnpm test:perf:imports` يفعّل تقارير مدة الاستيراد في Vitest بالإضافة إلى مخرجات تفصيل الاستيراد.
+  - `pnpm test:perf:imports:changed` يقيّد عرض profiling نفسه للملفات المتغيرة منذ `origin/main`.
+- `pnpm test:perf:changed:bench -- --ref <git-ref>` يقارن `test:changed` الموجّه بمسار مشروع الجذر الأصلي لذلك الفرق الملتزم ويطبع زمن التنفيذ بالإضافة إلى أقصى RSS على macOS.
+- `pnpm test:perf:changed:bench -- --worktree` يختبر أداء الشجرة المتسخة الحالية عبر توجيه قائمة الملفات المتغيرة خلال `scripts/test-projects.mjs` وتهيئة Vitest لمشروع الجذر.
+  - `pnpm test:perf:profile:main` يكتب ملف CPU profile للخيط الرئيسي لوقت بدء Vitest/Vite ونفقات التحويل.
+  - `pnpm test:perf:profile:runner` يكتب ملفات CPU+heap profile للمشغّل لمجموعة unit مع تعطيل توازي الملفات.
 
-### E2E (اختبار دخان البوابة)
+### E2E (فحوصات البوابة الأساسية)
 
 - الأمر: `pnpm test:e2e`
 - الإعداد: `vitest.e2e.config.ts`
 - الملفات: `src/**/*.e2e.test.ts` و`test/**/*.e2e.test.ts`
-- افتراضيات وقت التشغيل:
-  - يستخدم Vitest `threads` مع `isolate: false` بما يطابق بقية المستودع.
-  - يستخدم عمّالًا تكيّفيين (CI: حتى 2، محليًا: 1 افتراضيًا).
-  - يعمل في الوضع الصامت افتراضيًا لتقليل كلفة I/O في وحدة التحكم.
+- القيم الافتراضية لوقت التشغيل:
+  - يستخدم Vitest `threads` مع `isolate: false`، بما يتطابق مع بقية المستودع.
+  - يستخدم عمالًا تكيفيين (CI: حتى 2، محليًا: 1 افتراضيًا).
+  - يعمل في الوضع الصامت افتراضيًا لتقليل تكلفة إدخال/إخراج وحدة التحكم.
 - تجاوزات مفيدة:
-  - `OPENCLAW_E2E_WORKERS=<n>` لفرض عدد العمّال (بحد أقصى 16).
+  - `OPENCLAW_E2E_WORKERS=<n>` لفرض عدد العمال (بحد أقصى 16).
   - `OPENCLAW_E2E_VERBOSE=1` لإعادة تفعيل مخرجات وحدة التحكم المفصلة.
 - النطاق:
-  - سلوك البوابة متعددة المثيلات من طرف إلى طرف
+  - سلوك البوابة من طرف إلى طرف عبر عدة مثيلات
   - أسطح WebSocket/HTTP، واقتران العقد، والشبكات الأثقل
 - التوقعات:
-  - تعمل في CI (عند تفعيلها في المسار)
-  - لا تتطلب مفاتيح حقيقية
-  - تحتوي على أجزاء متحركة أكثر من اختبارات unit (وقد تكون أبطأ)
+  - يعمل في CI (عند تفعيله في خط الأنابيب)
+  - لا يتطلب مفاتيح حقيقية
+  - يحتوي على أجزاء متحركة أكثر من اختبارات unit (وقد يكون أبطأ)
 
-### E2E: اختبار دخان الواجهة الخلفية OpenShell
+### E2E: فحوصات OpenShell الخلفية الأساسية
 
 - الأمر: `pnpm test:e2e:openshell`
 - الملف: `test/openshell-sandbox.e2e.test.ts`
 - النطاق:
   - يبدأ بوابة OpenShell معزولة على المضيف عبر Docker
-  - ينشئ sandbox من Dockerfile محلي مؤقت
-  - يختبر الواجهة الخلفية OpenShell الخاصة بـ OpenClaw عبر `sandbox ssh-config` + تنفيذ SSH الحقيقي
-  - يتحقق من سلوك نظام الملفات canonical عن بُعد عبر جسر fs الخاص بـ sandbox
+  - ينشئ صندوقًا رمليًا من Dockerfile محلي مؤقت
+  - يختبر الخلفية OpenShell في OpenClaw عبر `sandbox ssh-config` الحقيقي + تنفيذ SSH
+  - يتحقق من سلوك نظام الملفات canonical البعيد عبر جسر fs الخاص بالصندوق الرملي
 - التوقعات:
-  - يعمل فقط عند الاشتراك؛ وليس جزءًا من تشغيل `pnpm test:e2e` الافتراضي
-  - يتطلب CLI محليًا باسم `openshell` بالإضافة إلى daemon Docker يعمل
-  - يستخدم `HOME` / `XDG_CONFIG_HOME` معزولين، ثم يدمر بوابة الاختبار وsandbox
+  - اختيارية فقط؛ ليست جزءًا من تشغيل `pnpm test:e2e` الافتراضي
+  - تتطلب CLI محليًا لـ `openshell` بالإضافة إلى daemon Docker عامل
+  - تستخدم `HOME` / `XDG_CONFIG_HOME` معزولين، ثم تدمّر بوابة الاختبار والصندوق الرملي
 - تجاوزات مفيدة:
-  - `OPENCLAW_E2E_OPENSHELL=1` لتفعيل الاختبار عند تشغيل جناح e2e الأوسع يدويًا
-  - `OPENCLAW_E2E_OPENSHELL_COMMAND=/path/to/openshell` للإشارة إلى binary CLI غير افتراضي أو wrapper script
+  - `OPENCLAW_E2E_OPENSHELL=1` لتفعيل الاختبار عند تشغيل مجموعة e2e الأوسع يدويًا
+  - `OPENCLAW_E2E_OPENSHELL_COMMAND=/path/to/openshell` للإشارة إلى CLI غير افتراضي أو برنامج wrapper نصي
 
-### Live (موفرون حقيقيون + نماذج حقيقية)
+### Live (مزوّدون حقيقيون + نماذج حقيقية)
 
 - الأمر: `pnpm test:live`
 - الإعداد: `vitest.live.config.ts`
 - الملفات: `src/**/*.live.test.ts`
 - الافتراضي: **مفعّل** بواسطة `pnpm test:live` (يضبط `OPENCLAW_LIVE_TEST=1`)
 - النطاق:
-  - "هل يعمل هذا الموفر/النموذج بالفعل _اليوم_ باستخدام بيانات اعتماد حقيقية؟"
-  - التقاط تغيّرات تنسيق الموفر، ومراوغات استدعاء الأدوات، ومشكلات المصادقة، وسلوك حدود المعدل
+  - "هل يعمل هذا المزوّد/النموذج فعليًا _اليوم_ باستخدام بيانات اعتماد حقيقية؟"
+  - التقاط تغيّرات تنسيق المزوّد، وخصائص استدعاء الأدوات، ومشكلات المصادقة، وسلوك حدود المعدل
 - التوقعات:
-  - غير مستقرة بطبيعتها في CI (شبكات حقيقية، وسياسات موفرين حقيقية، وحصص، وانقطاعات)
-  - تكلّف مالًا / تستهلك حدود المعدل
-  - يُفضَّل تشغيل مجموعات فرعية مضيقة بدلًا من "كل شيء"
-- تستورد التشغيلات الحية `~/.profile` لالتقاط مفاتيح API الناقصة.
-- افتراضيًا، تظل التشغيلات الحية تعزل `HOME` وتنسخ مواد config/auth إلى home اختباري مؤقت حتى لا تتمكن fixtures الخاصة بـ unit من تعديل `~/.openclaw` الحقيقي لديك.
+  - غير مستقرة في CI بطبيعتها (شبكات حقيقية، سياسات مزوّدين حقيقية، حصص، انقطاعات)
+  - تكلف المال / تستخدم حدود المعدل
+  - يُفضّل تشغيل مجموعات فرعية مضيقة بدلًا من "كل شيء"
+- تقوم التشغيلات الحية بتحميل `~/.profile` لالتقاط مفاتيح API الناقصة.
+- افتراضيًا، تعزل التشغيلات الحية `HOME` أيضًا وتنسخ مواد الإعداد/المصادقة إلى home اختبار مؤقت حتى لا تتمكن تجهيزات unit من تعديل `~/.openclaw` الحقيقي لديك.
 - اضبط `OPENCLAW_LIVE_USE_REAL_HOME=1` فقط عندما تحتاج عمدًا إلى أن تستخدم الاختبارات الحية دليل home الحقيقي لديك.
-- أصبح `pnpm test:live` افتراضيًا الآن في وضع أكثر هدوءًا: فهو يبقي مخرجات التقدم `[live] ...`، لكنه يخفي إشعار `~/.profile` الإضافي ويكتم سجلات إقلاع البوابة/ضوضاء Bonjour. اضبط `OPENCLAW_LIVE_TEST_QUIET=0` إذا أردت عودة سجلات البدء الكاملة.
-- تدوير مفاتيح API (حسب الموفر): اضبط `*_API_KEYS` بصيغة فاصلة/فاصلة منقوطة أو `*_API_KEY_1` و`*_API_KEY_2` (مثل `OPENAI_API_KEYS` و`ANTHROPIC_API_KEYS` و`GEMINI_API_KEYS`) أو تجاوزًا لكل live عبر `OPENCLAW_LIVE_*_KEY`؛ وتُعاد محاولة الاختبارات عند ردود rate limit.
-- مخرجات التقدم/النبض:
-  - تصدر الأجنحة الحية الآن أسطر التقدم إلى stderr بحيث تظهر الاستدعاءات الطويلة للموفر كأنها نشطة حتى عندما يكون التقاط وحدة التحكم في Vitest هادئًا.
-  - يعطل `vitest.live.config.ts` اعتراض Vitest لوحدة التحكم بحيث تتدفق أسطر تقدم الموفر/البوابة مباشرة أثناء التشغيلات الحية.
-  - اضبط نبضات direct-model باستخدام `OPENCLAW_LIVE_HEARTBEAT_MS`.
-  - اضبط نبضات gateway/probe باستخدام `OPENCLAW_LIVE_GATEWAY_HEARTBEAT_MS`.
+- أصبح `pnpm test:live` الآن افتراضيًا في وضع أكثر هدوءًا: فهو يحتفظ بمخرجات التقدم `[live] ...`، لكنه يخفي إشعار `~/.profile` الإضافي ويكتم سجلات إقلاع البوابة/ضجيج Bonjour. اضبط `OPENCLAW_LIVE_TEST_QUIET=0` إذا كنت تريد سجلات بدء التشغيل الكاملة مرة أخرى.
+- تدوير مفاتيح API (خاص بالمزوّد): اضبط `*_API_KEYS` بصيغة فاصلة/فاصلة منقوطة أو `*_API_KEY_1` و`*_API_KEY_2` (على سبيل المثال `OPENAI_API_KEYS` و`ANTHROPIC_API_KEYS` و`GEMINI_API_KEYS`) أو تجاوزًا لكل live عبر `OPENCLAW_LIVE_*_KEY`؛ تعيد الاختبارات المحاولة عند استجابات حدود المعدل.
+- مخرجات التقدم/نبض الحياة:
+  - تصدر المجموعات الحية الآن أسطر التقدم إلى stderr بحيث تظهر استدعاءات المزوّد الطويلة على أنها نشطة حتى عندما يكون التقاط وحدة التحكم في Vitest هادئًا.
+  - يعطّل `vitest.live.config.ts` اعتراض وحدة التحكم في Vitest بحيث تتدفق أسطر تقدم المزوّد/البوابة فورًا أثناء التشغيلات الحية.
+  - اضبط نبضات النماذج المباشرة عبر `OPENCLAW_LIVE_HEARTBEAT_MS`.
+  - اضبط نبضات البوابة/الفحص عبر `OPENCLAW_LIVE_GATEWAY_HEARTBEAT_MS`.
 
-## أي جناح يجب أن أشغّل؟
+## ما المجموعة التي ينبغي أن أشغّلها؟
 
 استخدم جدول القرار هذا:
 
 - تعديل المنطق/الاختبارات: شغّل `pnpm test` (و`pnpm test:coverage` إذا غيّرت الكثير)
 - لمس شبكات البوابة / بروتوكول WS / الاقتران: أضف `pnpm test:e2e`
-- تصحيح "البوت الخاص بي متوقف" / أعطال خاصة بالموفر / استدعاء الأدوات: شغّل `pnpm test:live` مضيّقًا
+- تصحيح "الروبوت الخاص بي متوقف" / الأعطال الخاصة بالمزوّد / استدعاء الأدوات: شغّل `pnpm test:live` مضيقًا
 
 ## Live: مسح قدرات عقدة Android
 
 - الاختبار: `src/gateway/android-node.capabilities.live.test.ts`
 - السكربت: `pnpm android:test:integration`
-- الهدف: استدعاء **كل أمر معلن عنه حاليًا** من عقدة Android متصلة والتحقق من سلوك عقد الأوامر.
+- الهدف: استدعاء **كل أمر مُعلن عنه حاليًا** من عقدة Android متصلة والتأكد من سلوك عقد الأمر.
 - النطاق:
-  - إعداد مسبق/يدوي (الجناح لا يثبت التطبيق ولا يشغّله ولا يقرنه).
-  - تحقق `node.invoke` في البوابة أمرًا بأمر لعقدة Android المحددة.
+  - إعداد مسبق/يدوي (المجموعة لا تثبّت التطبيق ولا تشغّله ولا تقترنه).
+  - التحقق من `node.invoke` في البوابة لكل أمر على حدة لعقدة Android المحددة.
 - الإعداد المسبق المطلوب:
-  - تطبيق Android متصل ومقترن بالبوابة بالفعل.
+  - تطبيق Android متصل ومقترن بالفعل بالبوابة.
   - إبقاء التطبيق في الواجهة الأمامية.
-  - منح الأذونات/الموافقة على الالتقاط للقدرات التي تتوقع نجاحها.
+  - منح الأذونات/موافقة الالتقاط للقدرات التي تتوقع نجاحها.
 - تجاوزات الهدف الاختيارية:
   - `OPENCLAW_ANDROID_NODE_ID` أو `OPENCLAW_ANDROID_NODE_NAME`.
   - `OPENCLAW_ANDROID_GATEWAY_URL` / `OPENCLAW_ANDROID_GATEWAY_TOKEN` / `OPENCLAW_ANDROID_GATEWAY_PASSWORD`.
-- تفاصيل إعداد Android الكاملة: [Android App](/ar/platforms/android)
+- تفاصيل إعداد Android الكاملة: [تطبيق Android](/ar/platforms/android)
 
-## Live: اختبار دخان النماذج (مفاتيح profiles)
+## Live: فحص أساسي للنماذج (مفاتيح profile)
 
 تنقسم الاختبارات الحية إلى طبقتين حتى نتمكن من عزل الأعطال:
 
-- يوضح "النموذج المباشر" أن الموفر/النموذج قادر على الاستجابة أصلًا بالمفتاح المعطى.
-- يوضح "اختبار دخان البوابة" أن مسار البوابة+الوكيل الكامل يعمل لذلك النموذج (الجلسات، السجل، الأدوات، سياسة sandbox، إلخ).
+- يوضح "النموذج المباشر" ما إذا كان المزوّد/النموذج قادرًا على الرد أصلًا باستخدام المفتاح المعطى.
+- يوضح "فحص البوابة الأساسي" ما إذا كان مسار البوابة+الوكيل الكامل يعمل لهذا النموذج (الجلسات، السجل، الأدوات، سياسة sandbox، إلخ).
 
-### الطبقة 1: إكمال النموذج المباشر (بدون بوابة)
+### الطبقة 1: إكمال مباشر للنموذج (من دون بوابة)
 
 - الاختبار: `src/agents/models.profiles.live.test.ts`
 - الهدف:
   - تعداد النماذج المكتشفة
   - استخدام `getApiKeyForModel` لاختيار النماذج التي لديك بيانات اعتماد لها
-  - تشغيل إكمال صغير لكل نموذج (واختبارات تراجع مستهدفة عند الحاجة)
+  - تشغيل إكمال صغير لكل نموذج (واختبارات انحدار مستهدفة عند الحاجة)
 - كيفية التفعيل:
   - `pnpm test:live` (أو `OPENCLAW_LIVE_TEST=1` إذا كنت تستدعي Vitest مباشرة)
-- اضبط `OPENCLAW_LIVE_MODELS=modern` (أو `all`، وهو اسم بديل لـ modern) لتشغيل هذا الجناح فعليًا؛ وإلا فسيتخطاه للحفاظ على تركيز `pnpm test:live` على اختبار دخان البوابة
+- اضبط `OPENCLAW_LIVE_MODELS=modern` (أو `all`، وهو اسم بديل لـ modern) لتشغيل هذه المجموعة فعليًا؛ وإلا فسيتم تخطيها للحفاظ على تركيز `pnpm test:live` على فحص البوابة الأساسي
 - كيفية اختيار النماذج:
-  - `OPENCLAW_LIVE_MODELS=modern` لتشغيل allowlist الحديثة (Opus/Sonnet 4.6+، وGPT-5.x + Codex، وGemini 3، وGLM 4.7، وMiniMax M2.7، وGrok 4)
-  - `OPENCLAW_LIVE_MODELS=all` هو اسم بديل لـ allowlist الحديثة
-  - أو `OPENCLAW_LIVE_MODELS="openai/gpt-5.4,anthropic/claude-opus-4-6,..."` (allowlist مفصولة بفواصل)
-  - تفترض مسوح modern/all حدًا عالي الإشارة مُنتقى؛ اضبط `OPENCLAW_LIVE_MAX_MODELS=0` لمسح modern شامل أو رقمًا موجبًا لحد أصغر.
-- كيفية اختيار الموفّرين:
-  - `OPENCLAW_LIVE_PROVIDERS="google,google-antigravity,google-gemini-cli"` (allowlist مفصولة بفواصل)
+  - `OPENCLAW_LIVE_MODELS=modern` لتشغيل قائمة السماح الحديثة (Opus/Sonnet 4.6+، وGPT-5.x + Codex، وGemini 3، وGLM 4.7، وMiniMax M2.7، وGrok 4)
+  - `OPENCLAW_LIVE_MODELS=all` هو اسم بديل لقائمة السماح الحديثة
+  - أو `OPENCLAW_LIVE_MODELS="openai/gpt-5.4,anthropic/claude-opus-4-6,..."` (قائمة سماح مفصولة بفواصل)
+  - تستخدم عمليات الفحص modern/all حدًا انتقائيًا عالي الإشارة افتراضيًا؛ اضبط `OPENCLAW_LIVE_MAX_MODELS=0` لإجراء فحص حديث شامل أو رقمًا موجبًا لحد أصغر.
+- كيفية اختيار المزوّدين:
+  - `OPENCLAW_LIVE_PROVIDERS="google,google-antigravity,google-gemini-cli"` (قائمة سماح مفصولة بفواصل)
 - من أين تأتي المفاتيح:
-  - افتراضيًا: من مخزن profiles وبدائل env
-  - اضبط `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لفرض **مخزن profiles** فقط
+  - افتراضيًا: مخزن profile وبدائل env
+  - اضبط `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لفرض **مخزن profile** فقط
 - سبب وجود هذا:
-  - يفصل بين "واجهة API الخاصة بالموفر معطلة / المفتاح غير صالح" و"مسار وكيل البوابة معطل"
-  - يحتوي اختبارات تراجع صغيرة ومعزولة (مثال: مسارات reasoning replay + tool-call الخاصة بـ OpenAI Responses/Codex Responses)
+  - يفصل بين "واجهة API الخاصة بالمزوّد معطلة / المفتاح غير صالح" و"مسار وكيل البوابة معطل"
+  - يحتوي اختبارات انحدار صغيرة ومعزولة (مثال: إعادة تشغيل الاستدلال + تدفقات استدعاء الأدوات في OpenAI Responses/Codex Responses)
 
-### الطبقة 2: اختبار دخان البوابة + وكيل dev (ما الذي يفعله "@openclaw" فعليًا)
+### الطبقة 2: فحص البوابة + وكيل dev الأساسي (ما الذي يفعله "@openclaw" فعليًا)
 
 - الاختبار: `src/gateway/gateway-models.profiles.live.test.ts`
 - الهدف:
   - تشغيل بوابة داخل العملية
   - إنشاء/ترقيع جلسة `agent:dev:*` (مع تجاوز النموذج لكل تشغيل)
-  - التكرار عبر النماذج ذات المفاتيح والتحقق من:
+  - التكرار عبر النماذج التي تملك مفاتيح والتأكد من:
     - استجابة "ذات معنى" (من دون أدوات)
-    - نجاح استدعاء أداة حقيقي (مجس read)
-    - مجسات أدوات إضافية اختيارية (مجس exec+read)
-    - استمرار عمل مسارات تراجع OpenAI (tool-call-only → follow-up)
-- تفاصيل المجسات (حتى تتمكن من شرح الأعطال بسرعة):
-  - مجس `read`: يكتب الاختبار ملف nonce في مساحة العمل ويطلب من الوكيل `read` له وإرجاع nonce.
-  - مجس `exec+read`: يطلب الاختبار من الوكيل كتابة nonce إلى ملف مؤقت عبر `exec` ثم `read` له مرة أخرى.
-  - مجس الصورة: يرفق الاختبار PNG مولّدًا (قط + رمز عشوائي) ويتوقع من النموذج أن يعيد `cat <CODE>`.
+    - نجاح استدعاء أداة حقيقي (`read` probe)
+    - نجاح فحوصات أدوات إضافية اختيارية (`exec+read` probe)
+    - استمرار عمل مسارات الانحدار في OpenAI (استدعاء أدوات فقط ← متابعة)
+- تفاصيل الفحوصات (حتى تتمكن من شرح الأعطال بسرعة):
+  - فحص `read`: يكتب الاختبار ملف nonce في مساحة العمل ويطلب من الوكيل أن يقوم بـ `read` له ثم يعيد nonce.
+  - فحص `exec+read`: يطلب الاختبار من الوكيل أن يكتب nonce إلى ملف مؤقت عبر `exec`، ثم يقوم بـ `read` له مرة أخرى.
+  - فحص الصورة: يرفق الاختبار ملف PNG مُولّدًا (قط + رمز عشوائي) ويتوقع من النموذج أن يعيد `cat <CODE>`.
   - مرجع التنفيذ: `src/gateway/gateway-models.profiles.live.test.ts` و`src/gateway/live-image-probe.ts`.
 - كيفية التفعيل:
   - `pnpm test:live` (أو `OPENCLAW_LIVE_TEST=1` إذا كنت تستدعي Vitest مباشرة)
 - كيفية اختيار النماذج:
-  - الافتراضي: allowlist الحديثة (Opus/Sonnet 4.6+، وGPT-5.x + Codex، وGemini 3، وGLM 4.7، وMiniMax M2.7، وGrok 4)
-  - `OPENCLAW_LIVE_GATEWAY_MODELS=all` هو اسم بديل لـ allowlist الحديثة
+  - الافتراضي: قائمة السماح الحديثة (Opus/Sonnet 4.6+، وGPT-5.x + Codex، وGemini 3، وGLM 4.7، وMiniMax M2.7، وGrok 4)
+  - `OPENCLAW_LIVE_GATEWAY_MODELS=all` هو اسم بديل لقائمة السماح الحديثة
   - أو اضبط `OPENCLAW_LIVE_GATEWAY_MODELS="provider/model"` (أو قائمة مفصولة بفواصل) للتضييق
-  - تفترض مسوح gateway الحديثة/الكلية حدًا عالي الإشارة مُنتقى؛ اضبط `OPENCLAW_LIVE_GATEWAY_MAX_MODELS=0` لمسح حديث شامل أو رقمًا موجبًا لحد أصغر.
-- كيفية اختيار الموفّرين (تجنب "كل ما في OpenRouter"):
-  - `OPENCLAW_LIVE_GATEWAY_PROVIDERS="google,google-antigravity,google-gemini-cli,openai,anthropic,zai,minimax"` (allowlist مفصولة بفواصل)
-- تكون مجسات الأدوات + الصور مفعّلة دائمًا في هذا الاختبار الحي:
-  - مجس `read` + مجس `exec+read` (ضغط الأدوات)
-  - يعمل مجس الصورة عندما يعلن النموذج دعم إدخال الصور
+  - تستخدم عمليات فحص البوابة modern/all حدًا انتقائيًا عالي الإشارة افتراضيًا؛ اضبط `OPENCLAW_LIVE_GATEWAY_MAX_MODELS=0` لإجراء فحص حديث شامل أو رقمًا موجبًا لحد أصغر.
+- كيفية اختيار المزوّدين (لتجنب "كل شيء في OpenRouter"):
+  - `OPENCLAW_LIVE_GATEWAY_PROVIDERS="google,google-antigravity,google-gemini-cli,openai,anthropic,zai,minimax"` (قائمة سماح مفصولة بفواصل)
+- فحوصات الأدوات + الصور مفعّلة دائمًا في هذا الاختبار الحي:
+  - فحص `read` + فحص `exec+read` (ضغط على الأدوات)
+  - يعمل فحص الصورة عندما يعلن النموذج دعم إدخال الصور
   - التدفق (على مستوى عالٍ):
-    - يولّد الاختبار PNG صغيرًا مع "CAT" + رمز عشوائي (`src/gateway/live-image-probe.ts`)
+    - يولّد الاختبار ملف PNG صغيرًا يحتوي على “CAT” + رمز عشوائي (`src/gateway/live-image-probe.ts`)
     - يرسله عبر `agent` `attachments: [{ mimeType: "image/png", content: "<base64>" }]`
-    - تحلل البوابة المرفقات إلى `images[]` (`src/gateway/server-methods/agent.ts` + `src/gateway/chat-attachments.ts`)
-    - يمرر الوكيل المضمّن رسالة مستخدم متعددة الوسائط إلى النموذج
-    - التحقق: تحتوي الاستجابة على `cat` + الرمز (مع سماحية OCR: أخطاء طفيفة مسموح بها)
+    - تقوم البوابة بتحليل attachments إلى `images[]` (`src/gateway/server-methods/agent.ts` + `src/gateway/chat-attachments.ts`)
+    - يمرّر الوكيل المضمّن رسالة مستخدم متعددة الوسائط إلى النموذج
+    - التأكيد: يحتوي الرد على `cat` + الرمز (مع سماحية OCR: الأخطاء البسيطة مقبولة)
 
-نصيحة: لمعرفة ما يمكنك اختباره على جهازك (ومعرفات `provider/model` الدقيقة)، شغّل:
+نصيحة: لمعرفة ما يمكنك اختباره على جهازك (ومعرّفات `provider/model` الدقيقة)، شغّل:
 
 ```bash
 openclaw models list
 openclaw models list --json
 ```
 
-## Live: اختبار دخان الواجهة الخلفية CLI (Claude أو Codex أو Gemini أو CLIs محلية أخرى)
+## Live: فحص أساسي لخلفية CLI (Claude أو Codex أو Gemini أو CLIs محلية أخرى)
 
 - الاختبار: `src/gateway/gateway-cli-backend.live.test.ts`
-- الهدف: التحقق من مسار Gateway + agent باستخدام واجهة خلفية CLI محلية، من دون لمس config الافتراضي لديك.
-- تعيش افتراضيات اختبار الدخان الخاصة بكل واجهة خلفية داخل تعريف `cli-backend.ts` للإضافة المالكة.
+- الهدف: التحقق من مسار البوابة + الوكيل باستخدام خلفية CLI محلية، من دون لمس إعداداتك الافتراضية.
+- القيم الافتراضية لفحص الخلفية الخاص بـ CLI موجودة ضمن تعريف `cli-backend.ts` التابع للإضافة المالكة.
 - التفعيل:
   - `pnpm test:live` (أو `OPENCLAW_LIVE_TEST=1` إذا كنت تستدعي Vitest مباشرة)
   - `OPENCLAW_LIVE_CLI_BACKEND=1`
-- الافتراضيات:
-  - الموفر/النموذج الافتراضي: `claude-cli/claude-sonnet-4-6`
-  - يأتي سلوك command/args/image من metadata الخاصة بالإضافة المالكة للواجهة الخلفية CLI.
+- القيم الافتراضية:
+  - المزوّد/النموذج الافتراضي: `claude-cli/claude-sonnet-4-6`
+  - سلوك الأمر/المعاملات/الصور يأتي من بيانات التعريف التابعة للإضافة المالكة لخلفية CLI.
 - التجاوزات (اختيارية):
   - `OPENCLAW_LIVE_CLI_BACKEND_MODEL="codex-cli/gpt-5.4"`
   - `OPENCLAW_LIVE_CLI_BACKEND_COMMAND="/full/path/to/codex"`
   - `OPENCLAW_LIVE_CLI_BACKEND_ARGS='["exec","--json","--color","never","--sandbox","read-only","--skip-git-repo-check"]'`
   - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_PROBE=1` لإرسال مرفق صورة حقيقي (يتم حقن المسارات في prompt).
-  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_ARG="--image"` لتمرير مسارات ملفات الصور كوسائط CLI بدلًا من حقنها في prompt.
-  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_MODE="repeat"` (أو `"list"`) للتحكم في كيفية تمرير وسائط الصور عندما يكون `IMAGE_ARG` مضبوطًا.
-  - `OPENCLAW_LIVE_CLI_BACKEND_RESUME_PROBE=1` لإرسال دورة ثانية والتحقق من تدفق الاستئناف.
-  - `OPENCLAW_LIVE_CLI_BACKEND_MODEL_SWITCH_PROBE=0` لتعطيل مجس الاستمرارية الافتراضي في الجلسة نفسها Claude Sonnet -> Opus (اضبطه على `1` لفرض تشغيله عندما يدعم النموذج المحدد هدف تبديل).
+  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_ARG="--image"` لتمرير مسارات ملفات الصور كمعاملات CLI بدلًا من الحقن في prompt.
+  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_MODE="repeat"` (أو `"list"`) للتحكم في كيفية تمرير معاملات الصور عند تعيين `IMAGE_ARG`.
+  - `OPENCLAW_LIVE_CLI_BACKEND_RESUME_PROBE=1` لإرسال دور ثانٍ والتحقق من مسار الاستئناف.
+  - `OPENCLAW_LIVE_CLI_BACKEND_MODEL_SWITCH_PROBE=0` لتعطيل فحص الاستمرارية الافتراضي للجلسة نفسها عند الانتقال من Claude Sonnet إلى Opus (اضبطه على `1` لفرض التفعيل عندما يدعم النموذج المحدد هدف تبديل).
 
 مثال:
 
@@ -297,7 +319,7 @@ OPENCLAW_LIVE_CLI_BACKEND=1 \
 pnpm test:docker:live-cli-backend
 ```
 
-وصفات Docker لموفر واحد:
+وصفات Docker لمزوّد واحد:
 
 ```bash
 pnpm test:docker:live-cli-backend:claude
@@ -308,27 +330,27 @@ pnpm test:docker:live-cli-backend:gemini
 ملاحظات:
 
 - يوجد مشغّل Docker في `scripts/test-live-cli-backend-docker.sh`.
-- يشغّل اختبار دخان الواجهة الخلفية CLI الحي داخل صورة Docker الخاصة بالمستودع بصفته المستخدم غير الجذر `node`.
-- يحل metadata الخاصة باختبار دخان CLI من الإضافة المالكة، ثم يثبت حزمة Linux CLI المطابقة (`@anthropic-ai/claude-code` أو `@openai/codex` أو `@google/gemini-cli`) في prefix قابل للكتابة ومخزّن مؤقتًا عند `OPENCLAW_DOCKER_CLI_TOOLS_DIR` (الافتراضي: `~/.cache/openclaw/docker-cli-tools`).
-- يختبر اختبار دخان الواجهة الخلفية CLI الحي الآن التدفق الكامل نفسه من طرف إلى طرف لكل من Claude وCodex وGemini: دورة نصية، ثم دورة تصنيف صورة، ثم استدعاء أداة MCP `cron` يتم التحقق منه عبر CLI البوابة.
-- يقوم اختبار الدخان الافتراضي لـ Claude أيضًا بترقيع الجلسة من Sonnet إلى Opus ويتحقق من أن الجلسة المستأنفة ما زالت تتذكر ملاحظة سابقة.
+- يشغّل فحص خلفية CLI الحي داخل صورة Docker الخاصة بالمستودع بصفته المستخدم غير الجذر `node`.
+- يحل بيانات تعريف فحص CLI الأساسية من الإضافة المالكة، ثم يثبّت حزمة CLI المطابقة على Linux (`@anthropic-ai/claude-code` أو `@openai/codex` أو `@google/gemini-cli`) داخل بادئة قابلة للكتابة ومخزنة مؤقتًا في `OPENCLAW_DOCKER_CLI_TOOLS_DIR` (الافتراضي: `~/.cache/openclaw/docker-cli-tools`).
+- أصبح فحص خلفية CLI الحي الآن يختبر المسار الكامل نفسه من طرف إلى طرف لكل من Claude وCodex وGemini: دور نصي، ثم دور تصنيف صورة، ثم استدعاء أداة MCP `cron` مع التحقق عبر CLI الخاص بالبوابة.
+- يقوم الفحص الافتراضي لـ Claude أيضًا بترقيع الجلسة من Sonnet إلى Opus ويتحقق من أن الجلسة المستأنفة ما زالت تتذكر ملاحظة سابقة.
 
-## Live: اختبار دخان ربط ACP (`/acp spawn ... --bind here`)
+## Live: فحص ACP bind الأساسي (`/acp spawn ... --bind here`)
 
 - الاختبار: `src/gateway/gateway-acp-bind.live.test.ts`
-- الهدف: التحقق من تدفق ربط المحادثة ACP الحقيقي مع وكيل ACP حي:
+- الهدف: التحقق من مسار ربط المحادثة ACP الحقيقي باستخدام وكيل ACP حي:
   - إرسال `/acp spawn <agent> --bind here`
-  - ربط محادثة قناة رسائل تركيبية في مكانها
-  - إرسال متابعة عادية على تلك المحادثة نفسها
-  - التحقق من أن المتابعة تصل إلى transcript الجلسة ACP المرتبطة
+  - ربط محادثة اصطناعية لقناة الرسائل في مكانها
+  - إرسال متابعة عادية على المحادثة نفسها
+  - التحقق من أن المتابعة تصل إلى transcript جلسة ACP المرتبطة
 - التفعيل:
   - `pnpm test:live src/gateway/gateway-acp-bind.live.test.ts`
   - `OPENCLAW_LIVE_ACP_BIND=1`
-- الافتراضيات:
+- القيم الافتراضية:
   - وكلاء ACP في Docker: `claude,codex,gemini`
-  - وكيل ACP للتشغيل المباشر `pnpm test:live ...`: `claude`
-  - القناة التركيبية: سياق محادثة بنمط Slack DM
-  - الواجهة الخلفية ACP: `acpx`
+  - وكيل ACP عند التشغيل المباشر عبر `pnpm test:live ...`: `claude`
+  - القناة الاصطناعية: سياق محادثة بأسلوب الرسائل المباشرة في Slack
+  - خلفية ACP: `acpx`
 - التجاوزات:
   - `OPENCLAW_LIVE_ACP_BIND_AGENT=claude`
   - `OPENCLAW_LIVE_ACP_BIND_AGENT=codex`
@@ -336,8 +358,8 @@ pnpm test:docker:live-cli-backend:gemini
   - `OPENCLAW_LIVE_ACP_BIND_AGENTS=claude,codex,gemini`
   - `OPENCLAW_LIVE_ACP_BIND_AGENT_COMMAND='npx -y @agentclientprotocol/claude-agent-acp@<version>'`
 - ملاحظات:
-  - يستخدم هذا المسار سطح البوابة `chat.send` مع حقول originating-route تركيبية خاصة بالمشرف فقط حتى تتمكن الاختبارات من إرفاق سياق قناة الرسائل من دون التظاهر بالتسليم الخارجي.
-  - عندما لا يكون `OPENCLAW_LIVE_ACP_BIND_AGENT_COMMAND` مضبوطًا، يستخدم الاختبار سجل الوكلاء المضمّن في إضافة `acpx` لاختيار وكيل harness ACP المحدد.
+  - يستخدم هذا المسار سطح البوابة `chat.send` مع حقول originating-route اصطناعية خاصة بالمشرف فقط، حتى تتمكن الاختبارات من إرفاق سياق قناة الرسائل من دون التظاهر بالتسليم الخارجي.
+  - عندما لا يكون `OPENCLAW_LIVE_ACP_BIND_AGENT_COMMAND` مضبوطًا، يستخدم الاختبار سجل الوكلاء المضمّن في إضافة `acpx` المحددة لوكيل حزمة ACP.
 
 مثال:
 
@@ -364,44 +386,44 @@ pnpm test:docker:live-acp-bind:gemini
 ملاحظات Docker:
 
 - يوجد مشغّل Docker في `scripts/test-live-acp-bind-docker.sh`.
-- يشغّل افتراضيًا اختبار دخان ربط ACP ضد جميع وكلاء CLI الحية المدعومة بالتسلسل: `claude` ثم `codex` ثم `gemini`.
+- يشغّل فحص ACP bind الأساسي افتراضيًا على جميع وكلاء CLI الحية المدعومة بالتسلسل: `claude` ثم `codex` ثم `gemini`.
 - استخدم `OPENCLAW_LIVE_ACP_BIND_AGENTS=claude` أو `OPENCLAW_LIVE_ACP_BIND_AGENTS=codex` أو `OPENCLAW_LIVE_ACP_BIND_AGENTS=gemini` لتضييق المصفوفة.
-- يستورد `~/.profile`، ويجهز مواد مصادقة CLI المطابقة داخل الحاوية، ويثبت `acpx` في prefix npm قابل للكتابة، ثم يثبت CLI الحي المطلوب (`@anthropic-ai/claude-code` أو `@openai/codex` أو `@google/gemini-cli`) إذا كان مفقودًا.
-- داخل Docker، يضبط المشغّل `OPENCLAW_LIVE_ACP_BIND_ACPX_COMMAND=$HOME/.npm-global/bin/acpx` حتى يحتفظ acpx بمتغيرات بيئة الموفر من profile المستوردة والمتاحة لـ CLI harness الابن.
+- يقوم بتحميل `~/.profile`، ويجهّز مواد المصادقة المطابقة لـ CLI داخل الحاوية، ويثبت `acpx` في بادئة npm قابلة للكتابة، ثم يثبت CLI الحي المطلوب (`@anthropic-ai/claude-code` أو `@openai/codex` أو `@google/gemini-cli`) إذا كان مفقودًا.
+- داخل Docker، يضبط المشغّل `OPENCLAW_LIVE_ACP_BIND_ACPX_COMMAND=$HOME/.npm-global/bin/acpx` حتى يحتفظ acpx بمتغيرات بيئة المزوّد القادمة من profile المحمّل والمتاحة لـ CLI الفرعي الخاص بالحزمة.
 
 ### وصفات live الموصى بها
 
-تكون allowlists الضيقة والصريحة الأسرع والأقل تعرّضًا للفشل:
+قوائم السماح الضيقة والصريحة هي الأسرع والأقل تذبذبًا:
 
-- نموذج واحد، مباشر (بدون بوابة):
+- نموذج واحد، مباشر (من دون بوابة):
   - `OPENCLAW_LIVE_MODELS="openai/gpt-5.4" pnpm test:live src/agents/models.profiles.live.test.ts`
 
-- نموذج واحد، اختبار دخان البوابة:
+- نموذج واحد، فحص بوابة أساسي:
   - `OPENCLAW_LIVE_GATEWAY_MODELS="openai/gpt-5.4" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
-- استدعاء الأدوات عبر عدة موفرين:
+- استدعاء الأدوات عبر عدة مزوّدين:
   - `OPENCLAW_LIVE_GATEWAY_MODELS="openai/gpt-5.4,anthropic/claude-opus-4-6,google/gemini-3-flash-preview,zai/glm-4.7,minimax/MiniMax-M2.7" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
-- تركيز Google (مفتاح Gemini API + Antigravity):
+- التركيز على Google (مفتاح Gemini API + Antigravity):
   - Gemini (مفتاح API): `OPENCLAW_LIVE_GATEWAY_MODELS="google/gemini-3-flash-preview" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
   - Antigravity (OAuth): `OPENCLAW_LIVE_GATEWAY_MODELS="google-antigravity/claude-opus-4-6-thinking,google-antigravity/gemini-3-pro-high" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
 ملاحظات:
 
-- يستخدم `google/...` واجهة Gemini API (مفتاح API).
-- يستخدم `google-antigravity/...` جسر Antigravity OAuth (نقطة نهاية وكيل بنمط Cloud Code Assist).
-- يستخدم `google-gemini-cli/...` Gemini CLI المحلي على جهازك (مصادقة منفصلة ومراوغات أدوات منفصلة).
+- `google/...` يستخدم Gemini API (مفتاح API).
+- `google-antigravity/...` يستخدم جسر Antigravity OAuth (نقطة نهاية وكيل بأسلوب Cloud Code Assist).
+- `google-gemini-cli/...` يستخدم Gemini CLI المحلي على جهازك (مصادقة منفصلة وخصائص أدوات مختلفة).
 - Gemini API مقابل Gemini CLI:
-  - API: يستدعي OpenClaw Gemini API المستضافة من Google عبر HTTP (مفتاح API / مصادقة profile)؛ وهذا ما يعنيه معظم المستخدمين عندما يقولون "Gemini".
-  - CLI: يقوم OpenClaw بتنفيذ binary محلي باسم `gemini`؛ وله مصادقة خاصة به وقد يتصرف بشكل مختلف (streaming/دعم الأدوات/اختلاف الإصدار).
+  - API: يقوم OpenClaw باستدعاء Gemini API المستضاف من Google عبر HTTP (مفتاح API / مصادقة profile)؛ وهذا ما يقصده معظم المستخدمين عند قولهم "Gemini".
+  - CLI: يقوم OpenClaw باستدعاء ملف `gemini` الثنائي المحلي عبر shell؛ وله مصادقة خاصة به وقد يتصرف بشكل مختلف (الدفق/دعم الأدوات/اختلاف الإصدارات).
 
 ## Live: مصفوفة النماذج (ما الذي نغطيه)
 
-لا توجد "قائمة نماذج CI" ثابتة (live اختيارية)، لكن هذه هي النماذج **الموصى بها** للتغطية بانتظام على جهاز تطوير مع مفاتيح.
+لا توجد "قائمة نماذج CI" ثابتة (لأن live اختيارية)، لكن هذه هي النماذج **الموصى بها** للتغطية بانتظام على جهاز تطوير يملك مفاتيح.
 
-### مجموعة الدخان الحديثة (استدعاء الأدوات + الصور)
+### مجموعة الفحص الأساسية الحديثة (استدعاء الأدوات + الصور)
 
-هذا هو تشغيل "النماذج الشائعة" الذي نتوقع أن يظل يعمل:
+هذا هو تشغيل "النماذج الشائعة" الذي نتوقع الحفاظ على عمله:
 
 - OpenAI (غير Codex): `openai/gpt-5.4` (اختياري: `openai/gpt-5.4-mini`)
 - OpenAI Codex: `openai-codex/gpt-5.4`
@@ -411,12 +433,12 @@ pnpm test:docker:live-acp-bind:gemini
 - Z.AI (GLM): `zai/glm-4.7`
 - MiniMax: `minimax/MiniMax-M2.7`
 
-شغّل اختبار دخان البوابة مع الأدوات + الصور:
+شغّل فحص البوابة الأساسي مع الأدوات + الصور:
 `OPENCLAW_LIVE_GATEWAY_MODELS="openai/gpt-5.4,openai-codex/gpt-5.4,anthropic/claude-opus-4-6,google/gemini-3.1-pro-preview,google/gemini-3-flash-preview,google-antigravity/claude-opus-4-6-thinking,google-antigravity/gemini-3-flash,zai/glm-4.7,minimax/MiniMax-M2.7" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
 ### الأساس: استدعاء الأدوات (Read + Exec اختياري)
 
-اختر على الأقل واحدًا من كل عائلة موفرين:
+اختر على الأقل نموذجًا واحدًا لكل عائلة مزوّد:
 
 - OpenAI: `openai/gpt-5.4` (أو `openai/gpt-5.4-mini`)
 - Anthropic: `anthropic/claude-opus-4-6` (أو `anthropic/claude-sonnet-4-6`)
@@ -424,46 +446,46 @@ pnpm test:docker:live-acp-bind:gemini
 - Z.AI (GLM): `zai/glm-4.7`
 - MiniMax: `minimax/MiniMax-M2.7`
 
-تغطية إضافية اختيارية (من الجيد وجودها):
+تغطية إضافية اختيارية (جيدة إن توفرت):
 
-- xAI: `xai/grok-4` (أو أحدث ما هو متاح)
-- Mistral: `mistral/`… (اختر نموذجًا واحدًا يدعم "tools" لديك مفعّل)
+- xAI: `xai/grok-4` (أو أحدث إصدار متاح)
+- Mistral: `mistral/`… (اختر نموذجًا واحدًا يدعم "tools" ومفعّلًا لديك)
 - Cerebras: `cerebras/`… (إذا كان لديك وصول)
-- LM Studio: `lmstudio/`… (محلي؛ يعتمد استدعاء الأدوات على وضع API)
+- LM Studio: `lmstudio/`… (محلي؛ استدعاء الأدوات يعتمد على وضع API)
 
-### الرؤية: إرسال الصور (مرفق → رسالة متعددة الوسائط)
+### Vision: إرسال الصور (مرفق ← رسالة متعددة الوسائط)
 
-ضمّن نموذجًا واحدًا على الأقل يدعم الصور في `OPENCLAW_LIVE_GATEWAY_MODELS` (إصدارات Claude/Gemini/OpenAI القادرة على الرؤية، إلخ) لتفعيل مجس الصورة.
+ضمّن نموذجًا واحدًا على الأقل يدعم الصور في `OPENCLAW_LIVE_GATEWAY_MODELS` (مثل Claude أو Gemini أو متغيرات OpenAI الداعمة للرؤية، إلخ) لاختبار فحص الصور.
 
 ### المجمعات / البوابات البديلة
 
 إذا كانت لديك مفاتيح مفعلة، فنحن ندعم أيضًا الاختبار عبر:
 
-- OpenRouter: `openrouter/...` (مئات النماذج؛ استخدم `openclaw models scan` للعثور على مرشحين يدعمون tools+image)
+- OpenRouter: `openrouter/...` (مئات النماذج؛ استخدم `openclaw models scan` للعثور على مرشحين يدعمون الأدوات+الصور)
 - OpenCode: `opencode/...` لـ Zen و`opencode-go/...` لـ Go (المصادقة عبر `OPENCODE_API_KEY` / `OPENCODE_ZEN_API_KEY`)
 
-موفرون إضافيون يمكنك تضمينهم في مصفوفة live (إذا كانت لديك بيانات اعتماد/config):
+مزيد من المزوّدين الذين يمكنك تضمينهم في مصفوفة live (إذا كانت لديك بيانات اعتماد/إعدادات):
 
 - مدمجة: `openai` و`openai-codex` و`anthropic` و`google` و`google-vertex` و`google-antigravity` و`google-gemini-cli` و`zai` و`openrouter` و`opencode` و`opencode-go` و`xai` و`groq` و`cerebras` و`mistral` و`github-copilot`
-- عبر `models.providers` (نقاط نهاية مخصصة): `minimax` (سحابي/API)، بالإضافة إلى أي proxy متوافق مع OpenAI/Anthropic (LM Studio أو vLLM أو LiteLLM، إلخ)
+- عبر `models.providers` (نقاط نهاية مخصصة): `minimax` (سحابي/API)، بالإضافة إلى أي proxy متوافق مع OpenAI/Anthropic (مثل LM Studio أو vLLM أو LiteLLM، إلخ)
 
-نصيحة: لا تحاول ترميز "كل النماذج" بشكل ثابت في الوثائق. القائمة الموثوقة هي ما تُرجعه `discoverModels(...)` على جهازك + أي مفاتيح متاحة.
+نصيحة: لا تحاول تضمين "كل النماذج" بشكل ثابت في الوثائق. القائمة المرجعية هي كل ما تعيده `discoverModels(...)` على جهازك + أي مفاتيح متاحة.
 
-## بيانات الاعتماد (لا تُلتزم أبدًا)
+## بيانات الاعتماد (لا تُجرِ commit لها أبدًا)
 
-تكتشف الاختبارات الحية بيانات الاعتماد بالطريقة نفسها التي يفعلها CLI. وتترتب على ذلك آثار عملية:
+تكتشف الاختبارات الحية بيانات الاعتماد بالطريقة نفسها التي يفعلها CLI. والنتائج العملية لذلك:
 
-- إذا كان CLI يعمل، فيجب أن تجد الاختبارات الحية المفاتيح نفسها.
-- إذا قال اختبار حي "لا توجد بيانات اعتماد"، فقم بالتصحيح بالطريقة نفسها التي ستصحح بها `openclaw models list` / اختيار النموذج.
+- إذا كان CLI يعمل، فينبغي أن تجد الاختبارات الحية المفاتيح نفسها.
+- إذا أبلغك اختبار حي بأنه "لا توجد بيانات اعتماد"، فقم بالتصحيح بالطريقة نفسها التي ستصحح بها `openclaw models list` / اختيار النموذج.
 
-- ملفات auth profile لكل وكيل: `~/.openclaw/agents/<agentId>/agent/auth-profiles.json` (وهذا هو المقصود بـ "profile keys" في الاختبارات الحية)
-- الإعداد: `~/.openclaw/openclaw.json` (أو `OPENCLAW_CONFIG_PATH`)
-- دليل الحالة القديم: `~/.openclaw/credentials/` (يُنسخ إلى home الحي المرحلي عندما يكون موجودًا، لكنه ليس مخزن مفاتيح profile الرئيسي)
-- تنسخ التشغيلات الحية المحلية افتراضيًا الإعداد النشط وملفات `auth-profiles.json` لكل وكيل و`credentials/` القديمة وأدلة مصادقة CLI الخارجية المدعومة إلى home اختباري مؤقت؛ وتتخطى homes الحية المرحلية `workspace/` و`sandboxes/`، وتُزال تجاوزات المسار `agents.*.workspace` / `agentDir` حتى تبقى المجسات بعيدة عن مساحة العمل الحقيقية على مضيفك.
+- ملفات مصادقة profile لكل وكيل: `~/.openclaw/agents/<agentId>/agent/auth-profiles.json` (وهذا هو المقصود بـ "profile keys" في الاختبارات الحية)
+- الإعدادات: `~/.openclaw/openclaw.json` (أو `OPENCLAW_CONFIG_PATH`)
+- دليل الحالة القديم: `~/.openclaw/credentials/` (يُنسخ إلى home الحي المرحلي عند وجوده، لكنه ليس مخزن مفاتيح profile الرئيسي)
+- تقوم التشغيلات الحية المحلية افتراضيًا بنسخ الإعدادات النشطة وملفات `auth-profiles.json` لكل وكيل و`credentials/` القديمة وأدلة مصادقة CLI الخارجية المدعومة إلى home اختبار مؤقت؛ وتتخطى homes الحية المرحلية `workspace/` و`sandboxes/`، كما تُزال تجاوزات المسار `agents.*.workspace` و`agentDir` حتى تبقى الفحوصات بعيدة عن مساحة العمل الحقيقية على المضيف.
 
-إذا كنت تريد الاعتماد على مفاتيح env (مثلًا المصدّرة في `~/.profile`)، فشغّل الاختبارات المحلية بعد `source ~/.profile`، أو استخدم مشغلات Docker أدناه (يمكنها ربط `~/.profile` بالحاوية).
+إذا كنت تريد الاعتماد على مفاتيح env (مثل المصدّرة في `~/.profile`)، فشغّل الاختبارات المحلية بعد `source ~/.profile`، أو استخدم مشغّلات Docker أدناه (يمكنها تركيب `~/.profile` داخل الحاوية).
 
-## Deepgram live (نسخ صوتي)
+## Deepgram live (نسخ الصوت)
 
 - الاختبار: `src/media-understanding/providers/deepgram/audio.live.test.ts`
 - التفعيل: `DEEPGRAM_API_KEY=... DEEPGRAM_LIVE_TEST=1 pnpm test:live src/media-understanding/providers/deepgram/audio.live.test.ts`
@@ -479,282 +501,282 @@ pnpm test:docker:live-acp-bind:gemini
 - الاختبار: `extensions/comfy/comfy.live.test.ts`
 - التفعيل: `OPENCLAW_LIVE_TEST=1 COMFY_LIVE_TEST=1 pnpm test:live -- extensions/comfy/comfy.live.test.ts`
 - النطاق:
-  - يختبر مسارات الصورة والفيديو و`music_generate` المدمجة الخاصة بـ comfy
-  - يتخطى كل قدرة ما لم تكن `models.providers.comfy.<capability>` مضبوطة
-  - مفيد بعد تغيير إرسال workflow الخاص بـ comfy أو polling أو التنزيلات أو تسجيل الإضافة
+  - يختبر مسارات الصور والفيديو و`music_generate` المجمّعة في comfy
+  - يتخطى كل قدرة ما لم يتم إعداد `models.providers.comfy.<capability>`
+  - مفيد بعد تغيير إرسال سير عمل comfy أو polling أو التنزيلات أو تسجيل plugin
 
 ## Image generation live
 
 - الاختبار: `src/image-generation/runtime.live.test.ts`
 - الأمر: `pnpm test:live src/image-generation/runtime.live.test.ts`
-- الـ harness: `pnpm test:live:media image`
+- الحزمة: `pnpm test:live:media image`
 - النطاق:
-  - يعدد كل إضافة موفر لتوليد الصور مسجلة
-  - يحمّل متغيرات env الناقصة للموفر من shell تسجيل الدخول لديك (`~/.profile`) قبل المجسات
-  - يستخدم مفاتيح API الحية/من env قبل profiles المخزنة للمصادقة افتراضيًا، حتى لا تُخفي مفاتيح الاختبار القديمة في `auth-profiles.json` بيانات اعتماد shell الحقيقية
-  - يتخطى الموفّرين الذين لا يملكون مصادقة/ profile / نموذجًا صالحًا
-  - يشغّل متغيرات توليد الصور الافتراضية عبر قدرة runtime المشتركة:
+  - يعدد كل plugin مزوّد لتوليد الصور مسجّل
+  - يحمّل متغيرات بيئة المزوّد الناقصة من shell تسجيل الدخول (`~/.profile`) قبل الفحص
+  - يستخدم مفاتيح API الحية/الخاصة بـ env قبل ملفات auth profiles المخزنة افتراضيًا، حتى لا تحجب مفاتيح الاختبار القديمة في `auth-profiles.json` بيانات اعتماد shell الحقيقية
+  - يتخطى المزوّدين الذين لا يملكون مصادقة/‏profile/‏نموذجًا صالحًا
+  - يشغّل متغيرات توليد الصور القياسية عبر قدرة runtime المشتركة:
     - `google:flash-generate`
     - `google:pro-generate`
     - `google:pro-edit`
     - `openai:default-generate`
-- الموفّرون المدمجون الحاليون المغطّون:
+- المزوّدون المجمّعون المشمولون حاليًا:
   - `openai`
   - `google`
-- تضييق اختياري:
+- التضييق الاختياري:
   - `OPENCLAW_LIVE_IMAGE_GENERATION_PROVIDERS="openai,google"`
   - `OPENCLAW_LIVE_IMAGE_GENERATION_MODELS="openai/gpt-image-1,google/gemini-3.1-flash-image-preview"`
   - `OPENCLAW_LIVE_IMAGE_GENERATION_CASES="google:flash-generate,google:pro-edit"`
-- سلوك مصادقة اختياري:
-  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لفرض مصادقة مخزن profiles وتجاهل تجاوزات env-only
+- سلوك المصادقة الاختياري:
+  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لفرض مصادقة مخزن profile وتجاهل تجاوزات env فقط
 
 ## Music generation live
 
 - الاختبار: `extensions/music-generation-providers.live.test.ts`
 - التفعيل: `OPENCLAW_LIVE_TEST=1 pnpm test:live -- extensions/music-generation-providers.live.test.ts`
-- الـ harness: `pnpm test:live:media music`
+- الحزمة: `pnpm test:live:media music`
 - النطاق:
-  - يختبر مسار موفر توليد الموسيقى المشترك المدمج
+  - يختبر المسار المشترك المجمّع لمزوّد توليد الموسيقى
   - يغطي حاليًا Google وMiniMax
-  - يحمّل متغيرات env الخاصة بالموفر من shell تسجيل الدخول لديك (`~/.profile`) قبل المجسات
-  - يستخدم مفاتيح API الحية/من env قبل profiles المخزنة للمصادقة افتراضيًا، حتى لا تُخفي مفاتيح الاختبار القديمة في `auth-profiles.json` بيانات اعتماد shell الحقيقية
-  - يتخطى الموفّرين الذين لا يملكون مصادقة/ profile / نموذجًا صالحًا
-  - يشغّل وضعي runtime المعلنين كليهما عندما يكونان متاحين:
-    - `generate` مع إدخال يعتمد فقط على prompt
-    - `edit` عندما يعلن الموفّر `capabilities.edit.enabled`
+  - يحمّل متغيرات بيئة المزوّد من shell تسجيل الدخول (`~/.profile`) قبل الفحص
+  - يستخدم مفاتيح API الحية/الخاصة بـ env قبل ملفات auth profiles المخزنة افتراضيًا، حتى لا تحجب مفاتيح الاختبار القديمة في `auth-profiles.json` بيانات اعتماد shell الحقيقية
+  - يتخطى المزوّدين الذين لا يملكون مصادقة/‏profile/‏نموذجًا صالحًا
+  - يشغّل وضعي runtime المعلنين كليهما عند توفرهما:
+    - `generate` مع إدخال يعتمد على prompt فقط
+    - `edit` عندما يعلن المزوّد `capabilities.edit.enabled`
   - التغطية الحالية للمسار المشترك:
     - `google`: `generate` و`edit`
     - `minimax`: `generate`
     - `comfy`: ملف Comfy حي منفصل، وليس هذا المسح المشترك
-- تضييق اختياري:
+- التضييق الاختياري:
   - `OPENCLAW_LIVE_MUSIC_GENERATION_PROVIDERS="google,minimax"`
   - `OPENCLAW_LIVE_MUSIC_GENERATION_MODELS="google/lyria-3-clip-preview,minimax/music-2.5+"`
-- سلوك مصادقة اختياري:
-  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لفرض مصادقة مخزن profiles وتجاهل تجاوزات env-only
+- سلوك المصادقة الاختياري:
+  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لفرض مصادقة مخزن profile وتجاهل تجاوزات env فقط
 
 ## Video generation live
 
 - الاختبار: `extensions/video-generation-providers.live.test.ts`
 - التفعيل: `OPENCLAW_LIVE_TEST=1 pnpm test:live -- extensions/video-generation-providers.live.test.ts`
-- الـ harness: `pnpm test:live:media video`
+- الحزمة: `pnpm test:live:media video`
 - النطاق:
-  - يختبر مسار موفر توليد الفيديو المشترك المدمج
-  - يحمّل متغيرات env الخاصة بالموفر من shell تسجيل الدخول لديك (`~/.profile`) قبل المجسات
-  - يستخدم مفاتيح API الحية/من env قبل profiles المخزنة للمصادقة افتراضيًا، حتى لا تُخفي مفاتيح الاختبار القديمة في `auth-profiles.json` بيانات اعتماد shell الحقيقية
-  - يتخطى الموفّرين الذين لا يملكون مصادقة/ profile / نموذجًا صالحًا
-  - يشغّل وضعي runtime المعلنين كليهما عندما يكونان متاحين:
-    - `generate` مع إدخال يعتمد فقط على prompt
-    - `imageToVideo` عندما يعلن الموفّر `capabilities.imageToVideo.enabled` ويقبل الموفّر/النموذج المحدد إدخال الصور المحلية المعتمد على buffer في المسح المشترك
-    - `videoToVideo` عندما يعلن الموفّر `capabilities.videoToVideo.enabled` ويقبل الموفّر/النموذج المحدد إدخال الفيديو المحلي المعتمد على buffer في المسح المشترك
-  - الموفّرون المعلنون حاليًا لكن المتخطَّون في المسح المشترك لـ `imageToVideo`:
-    - `vydra` لأن `veo3` المدمج نصي فقط و`kling` المدمج يتطلب URL صورة عن بُعد
-  - تغطية Vydra الخاصة بالموفر:
+  - يختبر المسار المشترك المجمّع لمزوّد توليد الفيديو
+  - يحمّل متغيرات بيئة المزوّد من shell تسجيل الدخول (`~/.profile`) قبل الفحص
+  - يستخدم مفاتيح API الحية/الخاصة بـ env قبل ملفات auth profiles المخزنة افتراضيًا، حتى لا تحجب مفاتيح الاختبار القديمة في `auth-profiles.json` بيانات اعتماد shell الحقيقية
+  - يتخطى المزوّدين الذين لا يملكون مصادقة/‏profile/‏نموذجًا صالحًا
+  - يشغّل وضعي runtime المعلنين كليهما عند توفرهما:
+    - `generate` مع إدخال يعتمد على prompt فقط
+    - `imageToVideo` عندما يعلن المزوّد `capabilities.imageToVideo.enabled` ويقبل المزوّد/النموذج المحدد إدخال الصورة المحلية المعتمد على buffer في المسح المشترك
+    - `videoToVideo` عندما يعلن المزوّد `capabilities.videoToVideo.enabled` ويقبل المزوّد/النموذج المحدد إدخال الفيديو المحلي المعتمد على buffer في المسح المشترك
+  - المزوّدون الحاليون المعلن عنهم لكن المتخطَّون في المسح المشترك لـ `imageToVideo`:
+    - `vydra` لأن `veo3` المجمّع نصي فقط و`kling` المجمّع يتطلب URL صورة بعيدًا
+  - تغطية Vydra الخاصة بالمزوّد:
     - `OPENCLAW_LIVE_TEST=1 OPENCLAW_LIVE_VYDRA_VIDEO=1 pnpm test:live -- extensions/vydra/vydra.live.test.ts`
-    - يشغّل هذا الملف `veo3` لتحويل النص إلى فيديو بالإضافة إلى مسار `kling` يستخدم fixture افتراضيًا لصورة عبر URL عن بُعد
-  - التغطية الحية الحالية لـ `videoToVideo`:
+    - يشغّل ذلك الملف `veo3` لتحويل النص إلى فيديو بالإضافة إلى مسار `kling` يستخدم fixture بعنوان URL صورة بعيد افتراضيًا
+  - تغطية `videoToVideo` الحية الحالية:
     - `runway` فقط عندما يكون النموذج المحدد هو `runway/gen4_aleph`
-  - الموفّرون المعلنون حاليًا لكن المتخطَّون في المسح المشترك لـ `videoToVideo`:
-    - `alibaba` و`qwen` و`xai` لأن هذه المسارات تتطلب حاليًا URLs مرجعية عن بُعد من نوع `http(s)` / MP4
-    - `google` لأن مسار Gemini/Veo المشترك الحالي يستخدم إدخالًا محليًا معتمدًا على buffer وهذا المسار غير مقبول في المسح المشترك
-    - `openai` لأن المسار المشترك الحالي يفتقر إلى ضمانات وصول خاصة بالمؤسسة إلى inpaint/remix للفيديو
-- تضييق اختياري:
+  - المزوّدون الحاليون المعلن عنهم لكن المتخطَّون في المسح المشترك لـ `videoToVideo`:
+    - `alibaba` و`qwen` و`xai` لأن هذه المسارات تتطلب حاليًا عناوين URL مرجعية بعيدة من نوع `http(s)` / MP4
+    - `google` لأن مسار Gemini/Veo المشترك الحالي يستخدم إدخالًا محليًا مدعومًا بـ buffer وهذا المسار غير مقبول في المسح المشترك
+    - `openai` لأن المسار المشترك الحالي لا يضمن وصولًا خاصًا بالمؤسسة إلى inpaint/remix للفيديو
+- التضييق الاختياري:
   - `OPENCLAW_LIVE_VIDEO_GENERATION_PROVIDERS="google,openai,runway"`
   - `OPENCLAW_LIVE_VIDEO_GENERATION_MODELS="google/veo-3.1-fast-generate-preview,openai/sora-2,runway/gen4_aleph"`
-- سلوك مصادقة اختياري:
-  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لفرض مصادقة مخزن profiles وتجاهل تجاوزات env-only
+- سلوك المصادقة الاختياري:
+  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لفرض مصادقة مخزن profile وتجاهل تجاوزات env فقط
 
-## Media live harness
+## حزمة media الحية
 
 - الأمر: `pnpm test:live:media`
 - الغرض:
-  - يشغّل أجنحة image وmusic وvideo الحية المشتركة عبر نقطة دخول أصلية واحدة للمستودع
-  - يحمّل تلقائيًا متغيرات env الناقصة للموفر من `~/.profile`
-  - يضيّق تلقائيًا كل جناح إلى الموفّرين الذين لديهم حاليًا مصادقة صالحة افتراضيًا
-  - يعيد استخدام `scripts/test-live.mjs`، بحيث يبقى سلوك النبض والوضع الهادئ متسقًا
+  - يشغّل مجموعات الصور والموسيقى والفيديو الحية المشتركة عبر نقطة دخول أصلية واحدة للمستودع
+  - يحمّل متغيرات بيئة المزوّد الناقصة تلقائيًا من `~/.profile`
+  - يضيّق كل مجموعة تلقائيًا إلى المزوّدين الذين يملكون حاليًا مصادقة صالحة افتراضيًا
+  - يعيد استخدام `scripts/test-live.mjs`، حتى يبقى سلوك heartbeat والوضع الهادئ متسقًا
 - أمثلة:
   - `pnpm test:live:media`
   - `pnpm test:live:media image video --providers openai,google,minimax`
   - `pnpm test:live:media video --video-providers openai,runway --all-providers`
   - `pnpm test:live:media music --quiet`
 
-## مشغلات Docker (اختبارات اختيارية من نوع "يعمل على Linux")
+## مشغّلات Docker (اختبارات اختيارية من نوع "يعمل على Linux")
 
-تنقسم مشغلات Docker هذه إلى فئتين:
+تنقسم مشغّلات Docker هذه إلى مجموعتين:
 
-- مشغلات النماذج الحية: يقوم `test:docker:live-models` و`test:docker:live-gateway` بتشغيل ملف live المطابق الخاص بمفاتيح profiles فقط داخل صورة Docker للمستودع (`src/agents/models.profiles.live.test.ts` و`src/gateway/gateway-models.profiles.live.test.ts`)، مع ربط دليل config المحلي ومساحة العمل لديك (واستيراد `~/.profile` إذا تم ربطه). نقاط الدخول المحلية المطابقة هي `test:live:models-profiles` و`test:live:gateway-profiles`.
-- تفترض مشغلات Docker الحية افتراضيًا حدًا أصغر لاختبار الدخان حتى يبقى المسح الكامل عبر Docker عمليًا:
-  يضبط `test:docker:live-models` افتراضيًا `OPENCLAW_LIVE_MAX_MODELS=12`، ويضبط
-  `test:docker:live-gateway` افتراضيًا `OPENCLAW_LIVE_GATEWAY_SMOKE=1`،
+- مشغّلات النماذج الحية: `test:docker:live-models` و`test:docker:live-gateway` يشغّلان فقط ملف live المطابق المعتمد على مفاتيح profile داخل صورة Docker الخاصة بالمستودع (`src/agents/models.profiles.live.test.ts` و`src/gateway/gateway-models.profiles.live.test.ts`)، مع تركيب دليل الإعدادات المحلي ومساحة العمل لديك (ومع تحميل `~/.profile` إذا تم تركيبه). نقاط الدخول المحلية المطابقة هي `test:live:models-profiles` و`test:live:gateway-profiles`.
+- تستخدم مشغّلات Docker الحية افتراضيًا حدًا أصغر للفحص الأساسي حتى يبقى المسح الكامل عبر Docker عمليًا:
+  يضبط `test:docker:live-models` افتراضيًا `OPENCLAW_LIVE_MAX_MODELS=12`،
+  ويضبط `test:docker:live-gateway` افتراضيًا `OPENCLAW_LIVE_GATEWAY_SMOKE=1`،
   و`OPENCLAW_LIVE_GATEWAY_MAX_MODELS=8`،
   و`OPENCLAW_LIVE_GATEWAY_STEP_TIMEOUT_MS=45000`، و
-  `OPENCLAW_LIVE_GATEWAY_MODEL_TIMEOUT_MS=90000`. تجاوز متغيرات البيئة تلك عندما
-  تريد عمدًا المسح الشامل الأكبر.
-- يبني `test:docker:all` صورة Docker الحية مرة واحدة عبر `test:docker:live-build`، ثم يعيد استخدامها لمساري Docker الحيين.
-- مشغلات دخان الحاويات: تقوم `test:docker:openwebui` و`test:docker:onboard` و`test:docker:gateway-network` و`test:docker:mcp-channels` و`test:docker:plugins` بتشغيل حاوية أو أكثر حقيقية وتتحقق من مسارات integration ذات مستوى أعلى.
+  `OPENCLAW_LIVE_GATEWAY_MODEL_TIMEOUT_MS=90000`. تجاوز متغيرات البيئة هذه عندما
+  تريد عمدًا المسح الأكبر والأشمل.
+- يقوم `test:docker:all` ببناء صورة Docker الحية مرة واحدة عبر `test:docker:live-build`، ثم يعيد استخدامها لمساري Docker الحيين.
+- مشغّلات الفحص الأساسية للحاويات: `test:docker:openwebui` و`test:docker:onboard` و`test:docker:gateway-network` و`test:docker:mcp-channels` و`test:docker:plugins` تشغّل حاوية حقيقية واحدة أو أكثر وتتحقق من مسارات integration الأعلى مستوى.
 
-تقوم مشغلات Docker الخاصة بالنماذج الحية أيضًا بربط أدلة مصادقة CLI المطلوبة فقط (أو جميع الأدلة المدعومة عندما لا يكون التشغيل مضيّقًا)، ثم تنسخها إلى home الحاوية قبل التشغيل حتى تتمكن OAuth الخاصة بـ CLI الخارجي من تحديث الرموز من دون تعديل مخزن المصادقة على المضيف:
+تقوم مشغّلات Docker الخاصة بالنماذج الحية أيضًا بتركيب homes مصادقة CLI المطلوبة فقط (أو جميع homes المدعومة عندما لا يكون التشغيل مضيقًا)، ثم تنسخها إلى home الحاوية قبل التشغيل حتى تتمكن مصادقة OAuth الخاصة بـ CLI الخارجي من تحديث الرموز من دون تعديل مخزن المصادقة على المضيف:
 
 - النماذج المباشرة: `pnpm test:docker:live-models` (السكربت: `scripts/test-live-models-docker.sh`)
-- اختبار دخان ربط ACP: `pnpm test:docker:live-acp-bind` (السكربت: `scripts/test-live-acp-bind-docker.sh`)
-- اختبار دخان الواجهة الخلفية CLI: `pnpm test:docker:live-cli-backend` (السكربت: `scripts/test-live-cli-backend-docker.sh`)
+- فحص ACP bind الأساسي: `pnpm test:docker:live-acp-bind` (السكربت: `scripts/test-live-acp-bind-docker.sh`)
+- فحص خلفية CLI الأساسي: `pnpm test:docker:live-cli-backend` (السكربت: `scripts/test-live-cli-backend-docker.sh`)
 - البوابة + وكيل dev: `pnpm test:docker:live-gateway` (السكربت: `scripts/test-live-gateway-models-docker.sh`)
-- اختبار دخان Open WebUI الحي: `pnpm test:docker:openwebui` (السكربت: `scripts/e2e/openwebui-docker.sh`)
-- معالج onboarding (TTY، سقالة كاملة): `pnpm test:docker:onboard` (السكربت: `scripts/e2e/onboard-docker.sh`)
+- فحص Open WebUI الحي الأساسي: `pnpm test:docker:openwebui` (السكربت: `scripts/e2e/openwebui-docker.sh`)
+- معالج onboarding (TTY، مع كامل scaffolding): `pnpm test:docker:onboard` (السكربت: `scripts/e2e/onboard-docker.sh`)
 - شبكات البوابة (حاويتان، مصادقة WS + health): `pnpm test:docker:gateway-network` (السكربت: `scripts/e2e/gateway-network-docker.sh`)
-- جسر قناة MCP (بوابة seed + جسر stdio + اختبار دخان raw Claude notification-frame): `pnpm test:docker:mcp-channels` (السكربت: `scripts/e2e/mcp-channels-docker.sh`)
-- الإضافات (اختبار دخان التثبيت + الاسم البديل `/plugin` + دلالات إعادة تشغيل Claude-bundle): `pnpm test:docker:plugins` (السكربت: `scripts/e2e/plugins-docker.sh`)
+- جسر قناة MCP (بوابة مزروعة مسبقًا + جسر stdio + فحص إطار إشعارات Claude الخام): `pnpm test:docker:mcp-channels` (السكربت: `scripts/e2e/mcp-channels-docker.sh`)
+- Plugins (فحص التثبيت الأساسي + الاسم البديل `/plugin` + دلالات إعادة تشغيل Claude-bundle): `pnpm test:docker:plugins` (السكربت: `scripts/e2e/plugins-docker.sh`)
 
-تقوم مشغلات Docker الخاصة بالنماذج الحية أيضًا بربط النسخة الحالية من checkout
-لديك بوضع القراءة فقط وتهيئتها في workdir مؤقت داخل الحاوية. يحافظ هذا على نحافة
-صورة وقت التشغيل مع الاستمرار في تشغيل Vitest على المصدر/config المحليين لديك بدقة.
-تتخطى خطوة التهيئة caches المحلية الكبيرة فقط ومخرجات بناء التطبيقات مثل
-`.pnpm-store` و`.worktrees` و`__openclaw_vitest__` وأدلة `.build` المحلية للتطبيق أو
-مخرجات Gradle حتى لا تقضي تشغيلات Docker الحية دقائق في نسخ
-القطع الأثرية الخاصة بالجهاز.
-كما تضبط `OPENCLAW_SKIP_CHANNELS=1` حتى لا تبدأ مجسات البوابة الحية
-عمّال القنوات الحقيقية مثل Telegram/Discord وغيرها داخل الحاوية.
-لا يزال `test:docker:live-models` يشغّل `pnpm test:live`، لذا مرّر أيضًا
-`OPENCLAW_LIVE_GATEWAY_*` عندما تحتاج إلى تضييق أو استبعاد تغطية
-البوابة الحية من مسار Docker ذلك.
-يُعد `test:docker:openwebui` اختبار دخان توافق أعلى مستوى: فهو يبدأ
-حاوية بوابة OpenClaw مع تمكين نقاط النهاية HTTP المتوافقة مع OpenAI،
-ويبدأ حاوية Open WebUI مثبتة على ذلك gateway، ويسجل الدخول عبر
+تقوم مشغّلات Docker الخاصة بالنماذج الحية أيضًا بتركيب النسخة الحالية من
+المستودع للقراءة فقط ثم تجهيزها في دليل عمل مؤقت داخل الحاوية. وهذا يُبقي صورة runtime
+خفيفة مع الاستمرار في تشغيل Vitest على المصدر/الإعدادات المحلية الدقيقة لديك.
+تتخطى خطوة التجهيز الـ cache المحلية الكبيرة فقط ومخرجات بناء التطبيق مثل
+`.pnpm-store` و`.worktrees` و`__openclaw_vitest__` وأدلة
+`.build` المحلية للتطبيق أو مخرجات Gradle، حتى لا تقضي تشغيلات Docker الحية دقائق في نسخ
+الملفات الخاصة بالجهاز.
+كما تضبط أيضًا `OPENCLAW_SKIP_CHANNELS=1` حتى لا تبدأ فحوصات البوابة الحية
+عمّال القنوات الحقيقية مثل Telegram وDiscord وغيرها داخل الحاوية.
+لا يزال `test:docker:live-models` يشغّل `pnpm test:live`، لذا مرّر
+`OPENCLAW_LIVE_GATEWAY_*` أيضًا عندما تحتاج إلى تضييق أو استبعاد تغطية البوابة
+الحية من مسار Docker هذا.
+يُعد `test:docker:openwebui` فحص توافق أعلى مستوى: فهو يبدأ
+حاوية بوابة OpenClaw مع تفعيل نقاط نهاية HTTP المتوافقة مع OpenAI،
+ويبدأ حاوية Open WebUI مثبّتة الإصدار مقابل تلك البوابة، ويسجّل الدخول عبر
 Open WebUI، ويتحقق من أن `/api/models` يعرض `openclaw/default`، ثم يرسل
-طلب محادثة حقيقيًا عبر وكيل `/api/chat/completions` في Open WebUI.
+طلب دردشة حقيقيًا عبر وكيل `/api/chat/completions` في Open WebUI.
 قد يكون التشغيل الأول أبطأ بشكل ملحوظ لأن Docker قد يحتاج إلى سحب
-صورة Open WebUI وقد يحتاج Open WebUI إلى إكمال إعداد البدء البارد الخاص به.
-يتوقع هذا المسار مفتاح نموذج حي صالحًا، ويُعد `OPENCLAW_PROFILE_FILE`
-(`~/.profile` افتراضيًا) الطريقة الأساسية لتوفيره في التشغيلات عبر Docker.
-تطبع التشغيلات الناجحة payload JSON صغيرة مثل `{ "ok": true, "model":
+صورة Open WebUI وقد تحتاج Open WebUI إلى إكمال إعداد البدء البارد الخاص بها.
+يتوقع هذا المسار وجود مفتاح نموذج حي صالح، ويُعد `OPENCLAW_PROFILE_FILE`
+(الافتراضي `~/.profile`) الوسيلة الأساسية لتوفيره في التشغيلات داخل Docker.
+تطبع التشغيلات الناجحة حمولة JSON صغيرة مثل `{ "ok": true, "model":
 "openclaw/default", ... }`.
 تم تصميم `test:docker:mcp-channels` ليكون حتميًا عمدًا ولا يحتاج إلى
-حساب Telegram أو Discord أو iMessage حقيقي. فهو يشغّل حاوية Gateway
-ببيانات seed، ويبدأ حاوية ثانية تشغّل `openclaw mcp serve`، ثم
-يتحقق من اكتشاف المحادثات الموجّهة، وقراءات transcript، وmetadata الخاصة بالمرفقات،
-وسلوك قائمة الأحداث الحية، وتوجيه الإرسال الصادر، وإشعارات القناة +
-الصلاحيات بنمط Claude عبر جسر stdio MCP الحقيقي. ويفحص تحقق الإشعارات
-إطارات stdio MCP الخام مباشرة بحيث يثبت اختبار الدخان ما الذي يصدره
-الجسر فعلًا، وليس فقط ما قد تُظهره SDK عميل معين.
+حساب Telegram أو Discord أو iMessage حقيقي. فهو يشغّل
+حاوية بوابة مزروعة مسبقًا، ثم يبدأ حاوية ثانية تشغّل `openclaw mcp serve`، ثم
+يتحقق من اكتشاف المحادثات الموجّهة، وقراءة transcript، وبيانات تعريف المرفقات،
+وسلوك قائمة انتظار الأحداث الحية، وتوجيه الإرسال الصادر، وإشعارات القناة +
+الأذونات بأسلوب Claude عبر جسر MCP الحقيقي المبني على stdio. ويتحقق فحص الإشعارات
+من إطارات stdio الخام لـ MCP مباشرة، بحيث يثبت الفحص ما الذي يصدره الجسر فعليًا،
+وليس فقط ما قد تعرضه مجموعة SDK معينة للعميل.
 
-اختبار thread ACP باللغة الطبيعية يدويًا (ليس في CI):
+فحص يدوي لخيط ACP بلغة طبيعية بسيطة (ليس ضمن CI):
 
 - `bun scripts/dev/discord-acp-plain-language-smoke.ts --channel <discord-channel-id> ...`
-- احتفظ بهذا السكربت لمسارات اختبارات التراجع/التصحيح. قد تكون هناك حاجة إليه مرة أخرى للتحقق من توجيه thread في ACP، لذا لا تحذفه.
+- احتفظ بهذا السكربت لسير عمل الانحدار/التصحيح. قد تكون هناك حاجة إليه مرة أخرى للتحقق من توجيه خيوط ACP، لذا لا تحذفه.
 
 متغيرات بيئة مفيدة:
 
-- `OPENCLAW_CONFIG_DIR=...` (الافتراضي: `~/.openclaw`) يُربط إلى `/home/node/.openclaw`
-- `OPENCLAW_WORKSPACE_DIR=...` (الافتراضي: `~/.openclaw/workspace`) يُربط إلى `/home/node/.openclaw/workspace`
-- `OPENCLAW_PROFILE_FILE=...` (الافتراضي: `~/.profile`) يُربط إلى `/home/node/.profile` ويُستورد قبل تشغيل الاختبارات
-- `OPENCLAW_DOCKER_CLI_TOOLS_DIR=...` (الافتراضي: `~/.cache/openclaw/docker-cli-tools`) يُربط إلى `/home/node/.npm-global` لتثبيتات CLI المخزنة مؤقتًا داخل Docker
-- تُربط أدلة/ملفات مصادقة CLI الخارجية تحت `$HOME` بوضع القراءة فقط تحت `/host-auth...`، ثم تُنسخ إلى `/home/node/...` قبل بدء الاختبارات
+- `OPENCLAW_CONFIG_DIR=...` (الافتراضي: `~/.openclaw`) يُركَّب إلى `/home/node/.openclaw`
+- `OPENCLAW_WORKSPACE_DIR=...` (الافتراضي: `~/.openclaw/workspace`) يُركَّب إلى `/home/node/.openclaw/workspace`
+- `OPENCLAW_PROFILE_FILE=...` (الافتراضي: `~/.profile`) يُركَّب إلى `/home/node/.profile` ويُحمَّل قبل تشغيل الاختبارات
+- `OPENCLAW_DOCKER_CLI_TOOLS_DIR=...` (الافتراضي: `~/.cache/openclaw/docker-cli-tools`) يُركَّب إلى `/home/node/.npm-global` من أجل تثبيتات CLI المخزنة مؤقتًا داخل Docker
+- تُركَّب أدلة/ملفات مصادقة CLI الخارجية تحت `$HOME` للقراءة فقط ضمن `/host-auth...`، ثم تُنسخ إلى `/home/node/...` قبل بدء الاختبارات
   - الأدلة الافتراضية: `.minimax`
   - الملفات الافتراضية: `~/.codex/auth.json` و`~/.codex/config.toml` و`.claude.json` و`~/.claude/.credentials.json` و`~/.claude/settings.json` و`~/.claude/settings.local.json`
-  - تقوم تشغيلات الموفّر المضيق بربط الأدلة/الملفات المطلوبة فقط والمستنتجة من `OPENCLAW_LIVE_PROVIDERS` / `OPENCLAW_LIVE_GATEWAY_PROVIDERS`
-  - تجاوز يدويًا عبر `OPENCLAW_DOCKER_AUTH_DIRS=all` أو `OPENCLAW_DOCKER_AUTH_DIRS=none` أو قائمة مفصولة بفواصل مثل `OPENCLAW_DOCKER_AUTH_DIRS=.claude,.codex`
+  - التشغيلات المضيقة للمزوّدين تركّب فقط الأدلة/الملفات المطلوبة المستنتجة من `OPENCLAW_LIVE_PROVIDERS` / `OPENCLAW_LIVE_GATEWAY_PROVIDERS`
+  - التجاوز اليدوي عبر `OPENCLAW_DOCKER_AUTH_DIRS=all` أو `OPENCLAW_DOCKER_AUTH_DIRS=none` أو قائمة مفصولة بفواصل مثل `OPENCLAW_DOCKER_AUTH_DIRS=.claude,.codex`
 - `OPENCLAW_LIVE_GATEWAY_MODELS=...` / `OPENCLAW_LIVE_MODELS=...` لتضييق التشغيل
-- `OPENCLAW_LIVE_GATEWAY_PROVIDERS=...` / `OPENCLAW_LIVE_PROVIDERS=...` لتصفية الموفّرين داخل الحاوية
-- `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لضمان أن تأتي بيانات الاعتماد من مخزن profiles (وليس env)
-- `OPENCLAW_OPENWEBUI_MODEL=...` لاختيار النموذج الذي تعرضه البوابة لاختبار دخان Open WebUI
-- `OPENCLAW_OPENWEBUI_PROMPT=...` لتجاوز prompt فحص nonce المستخدم في اختبار دخان Open WebUI
-- `OPENWEBUI_IMAGE=...` لتجاوز وسم صورة Open WebUI المثبتة
+- `OPENCLAW_LIVE_GATEWAY_PROVIDERS=...` / `OPENCLAW_LIVE_PROVIDERS=...` لتصفية المزوّدين داخل الحاوية
+- `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1` لضمان أن تأتي بيانات الاعتماد من مخزن profile (وليس من env)
+- `OPENCLAW_OPENWEBUI_MODEL=...` لاختيار النموذج الذي تعرضه البوابة لفحص Open WebUI الأساسي
+- `OPENCLAW_OPENWEBUI_PROMPT=...` لتجاوز prompt التحقق من nonce المستخدم في فحص Open WebUI الأساسي
+- `OPENWEBUI_IMAGE=...` لتجاوز وسم صورة Open WebUI المثبّت
 
-## سلامة الوثائق
+## التحقق السريع من الوثائق
 
-شغّل فحوصات الوثائق بعد تعديل الوثائق: `pnpm check:docs`.
-شغّل تحقق Mintlify الكامل للروابط والمرابط عندما تحتاج أيضًا إلى فحوصات العناوين داخل الصفحة: `pnpm docs:check-links:anchors`.
+شغّل فحوصات الوثائق بعد تعديلها: `pnpm check:docs`.
+وشغّل التحقق الكامل من روابط وعناوين Mintlify عندما تحتاج إلى التحقق من عناوين الصفحة الداخلية أيضًا: `pnpm docs:check-links:anchors`.
 
-## اختبار تراجع دون اتصال (آمن لـ CI)
+## اختبارات الانحدار دون اتصال (آمنة لـ CI)
 
-هذه اختبارات تراجع "للمسار الحقيقي" من دون موفرين حقيقيين:
+هذه اختبارات انحدار لـ "مسار حقيقي" من دون مزوّدين حقيقيين:
 
-- استدعاء أدوات البوابة (OpenAI وهمي، بوابة حقيقية + حلقة وكيل): `src/gateway/gateway.test.ts` (الحالة: "runs a mock OpenAI tool call end-to-end via gateway agent loop")
-- معالج البوابة (WS `wizard.start`/`wizard.next`، يكتب config + يفرض auth): `src/gateway/gateway.test.ts` (الحالة: "runs wizard over ws and writes auth token config")
+- استدعاء أدوات البوابة (OpenAI وهمي، مع بوابة حقيقية + حلقة وكيل): `src/gateway/gateway.test.ts` (الحالة: "runs a mock OpenAI tool call end-to-end via gateway agent loop")
+- معالج البوابة (WS `wizard.start`/`wizard.next`، يكتب config + auth enforced): `src/gateway/gateway.test.ts` (الحالة: "runs wizard over ws and writes auth token config")
 
 ## تقييمات موثوقية الوكيل (Skills)
 
 لدينا بالفعل بعض الاختبارات الآمنة لـ CI التي تتصرف مثل "تقييمات موثوقية الوكيل":
 
 - استدعاء أدوات وهمية عبر البوابة الحقيقية + حلقة الوكيل (`src/gateway/gateway.test.ts`).
-- تدفقات wizard من طرف إلى طرف تتحقق من توصيل الجلسة وآثار config (`src/gateway/gateway.test.ts`).
+- تدفقات معالج كاملة من طرف إلى طرف تتحقق من ربط الجلسة وتأثيرات الإعدادات (`src/gateway/gateway.test.ts`).
 
-ما يزال مفقودًا للـ Skills (راجع [Skills](/ar/tools/skills)):
+ما يزال مفقودًا بالنسبة إلى Skills (راجع [Skills](/ar/tools/skills)):
 
-- **اتخاذ القرار:** عندما تُدرج Skills في prompt، هل يختار الوكيل المهارة الصحيحة (أو يتجنب غير المرتبط منها)؟
-- **الامتثال:** هل يقرأ الوكيل `SKILL.md` قبل الاستخدام ويتبع الخطوات/الوسائط المطلوبة؟
-- **عقود سير العمل:** سيناريوهات متعددة الأدوار تتحقق من ترتيب الأدوات، واستمرار سجل الجلسة، وحدود sandbox.
+- **اتخاذ القرار:** عندما تُدرج Skills في prompt، هل يختار الوكيل المهارة الصحيحة (أو يتجنب غير ذات الصلة)؟
+- **الامتثال:** هل يقرأ الوكيل `SKILL.md` قبل الاستخدام ويتبع الخطوات/المعاملات المطلوبة؟
+- **عقود سير العمل:** سيناريوهات متعددة الأدوار تؤكد ترتيب الأدوات، واستمرار سجل الجلسة، وحدود sandbox.
 
-يجب أن تبقى التقييمات المستقبلية حتمية أولًا:
+ينبغي أن تبقى التقييمات المستقبلية حتمية أولًا:
 
-- مشغّل سيناريوهات يستخدم موفرين وهميين للتحقق من استدعاءات الأدوات + ترتيبها، وقراءات ملفات المهارات، وتوصيل الجلسة.
-- جناح صغير من السيناريوهات المركزة على المهارات (استخدم مقابل تجنب، البوابات، حقن prompt).
-- تقييمات حية اختيارية (opt-in، ومحكومة بـ env) فقط بعد وجود الجناح الآمن لـ CI.
+- مشغّل سيناريوهات يستخدم مزوّدين وهميين لتأكيد استدعاءات الأدوات + ترتيبها، وقراءات ملفات المهارة، وربط الجلسات.
+- مجموعة صغيرة من السيناريوهات التي تركّز على المهارات (الاستخدام مقابل التجنب، البوابات، حقن prompt).
+- تقييمات حية اختيارية (opt-in ومحكومة بـ env) فقط بعد توفر المجموعة الآمنة لـ CI.
 
-## اختبارات العقود (شكل الإضافة والقناة)
+## اختبارات العقود (شكل plugin والقناة)
 
-تتحقق اختبارات العقود من أن كل إضافة وقناة مسجلة تطابق
-عقد الواجهة الخاص بها. فهي تتكرر عبر جميع الإضافات المكتشفة وتشغّل مجموعة من
-التحققات الخاصة بالشكل والسلوك. يتخطى مسار unit الافتراضي `pnpm test`
-عمدًا ملفات هذا السطح المشترك واختباراته الدخانية؛ شغّل أوامر العقود صراحةً
-عندما تلمس أسطح القنوات أو الموفّرين المشتركة.
+تتحقق اختبارات العقود من أن كل plugin وقناة مسجلين يلتزمان بعقد
+الواجهة الخاص بهما. فهي تتكرر عبر كل plugins المكتشفة وتشغّل مجموعة من
+تأكيدات الشكل والسلوك. يتخطى مسار unit الافتراضي `pnpm test` عمدًا
+هذه الملفات المشتركة الخاصة بالحدود وملفات الفحص الأساسي؛ شغّل أوامر العقود صراحة
+عندما تلمس أسطح القنوات أو المزوّدين المشتركة.
 
 ### الأوامر
 
 - كل العقود: `pnpm test:contracts`
 - عقود القنوات فقط: `pnpm test:contracts:channels`
-- عقود الموفّرين فقط: `pnpm test:contracts:plugins`
+- عقود المزوّدين فقط: `pnpm test:contracts:plugins`
 
 ### عقود القنوات
 
 توجد في `src/channels/plugins/contracts/*.contract.test.ts`:
 
-- **plugin** - الشكل الأساسي للإضافة (id، name، capabilities)
+- **plugin** - شكل plugin الأساسي (المعرّف، الاسم، القدرات)
 - **setup** - عقد معالج الإعداد
 - **session-binding** - سلوك ربط الجلسة
-- **outbound-payload** - بنية payload الرسالة
+- **outbound-payload** - بنية حمولة الرسائل
 - **inbound** - معالجة الرسائل الواردة
 - **actions** - معالجات إجراءات القناة
-- **threading** - التعامل مع معرّف thread
+- **threading** - معالجة معرّف الخيط
 - **directory** - API الدليل/القائمة
 - **group-policy** - فرض سياسة المجموعة
 
-### عقود حالة الموفّر
+### عقود حالة المزوّد
 
 توجد في `src/plugins/contracts/*.contract.test.ts`.
 
-- **status** - مجسات حالة القناة
-- **registry** - شكل سجل الإضافة
+- **status** - فحوصات حالة القناة
+- **registry** - شكل سجل plugin
 
-### عقود الموفّر
+### عقود المزوّدين
 
 توجد في `src/plugins/contracts/*.contract.test.ts`:
 
 - **auth** - عقد تدفق المصادقة
 - **auth-choice** - اختيار/تحديد المصادقة
-- **catalog** - API كتالوج النماذج
-- **discovery** - اكتشاف الإضافة
-- **loader** - تحميل الإضافة
-- **runtime** - وقت تشغيل الموفّر
-- **shape** - شكل/واجهة الإضافة
+- **catalog** - API فهرس النماذج
+- **discovery** - اكتشاف plugin
+- **loader** - تحميل plugin
+- **runtime** - runtime المزوّد
+- **shape** - شكل/واجهة plugin
 - **wizard** - معالج الإعداد
 
-### متى تُشغّل
+### متى يتم تشغيلها
 
-- بعد تغيير صادرات `plugin-sdk` أو subpaths الخاصة به
-- بعد إضافة أو تعديل إضافة قناة أو موفّر
-- بعد إعادة هيكلة تسجيل الإضافة أو اكتشافها
+- بعد تغيير صادرات plugin-sdk أو المسارات الفرعية
+- بعد إضافة plugin قناة أو مزوّد أو تعديلها
+- بعد إعادة هيكلة تسجيل plugin أو اكتشافها
 
 تعمل اختبارات العقود في CI ولا تتطلب مفاتيح API حقيقية.
 
-## إضافة اختبارات تراجع (إرشادات)
+## إضافة اختبارات الانحدار (إرشادات)
 
-عندما تصلح مشكلة موفر/نموذج اكتُشفت في live:
+عندما تصلح مشكلة مزوّد/نموذج اكتُشفت في live:
 
-- أضف اختبار تراجع آمنًا لـ CI إن أمكن (موفر وهمي/بديل، أو التقاط التحويل الدقيق لشكل الطلب)
-- إذا كانت بطبيعتها مقتصرة على live فقط (حدود المعدل، سياسات المصادقة)، فأبقِ الاختبار الحي ضيقًا ومفعّلًا اختياريًا عبر متغيرات env
-- افضّل استهداف أصغر طبقة تلتقط الخطأ:
-  - خطأ في تحويل/إعادة تشغيل طلب الموفّر → اختبار direct models
-  - خطأ في مسار جلسة/سجل/أدوات البوابة → اختبار دخان live للبوابة أو اختبار وهمي آمن لـ CI للبوابة
-- حاجز حماية اجتياز SecretRef:
-  - يستخلص `src/secrets/exec-secret-ref-id-parity.test.ts` هدفًا نموذجيًا واحدًا لكل فئة SecretRef من metadata الخاصة بالسجل (`listSecretTargetRegistryEntries()`)، ثم يتحقق من رفض معرّفات exec الخاصة بمقاطع الاجتياز.
-  - إذا أضفت عائلة أهداف SecretRef جديدة من نوع `includeInPlan` في `src/secrets/target-registry-data.ts`، فحدّث `classifyTargetClass` في ذلك الاختبار. يفشل الاختبار عمدًا مع معرّفات الأهداف غير المصنفة حتى لا يمكن تخطي الفئات الجديدة بصمت.
+- أضف اختبار انحدار آمنًا لـ CI إن أمكن (مزوّد وهمي/بديل، أو التقط تحويل شكل الطلب الدقيق)
+- إذا كانت المشكلة حية فقط بطبيعتها (حدود المعدل، سياسات المصادقة)، فأبقِ الاختبار الحي ضيقًا واختياريًا عبر متغيرات env
+- فضّل استهداف أصغر طبقة تلتقط الخطأ:
+  - خطأ في تحويل/إعادة تشغيل طلب المزوّد → اختبار النماذج المباشرة
+  - خطأ في مسار جلسة/سجل/أدوات البوابة → فحص البوابة الحي الأساسي أو اختبار بوابة وهمي آمن لـ CI
+- حاجز traversal الخاص بـ SecretRef:
+  - يستخرج `src/secrets/exec-secret-ref-id-parity.test.ts` هدفًا نموذجيًا واحدًا لكل فئة SecretRef من بيانات تعريف السجل (`listSecretTargetRegistryEntries()`)، ثم يؤكد رفض معرّفات exec الخاصة بمقاطع traversal.
+  - إذا أضفت عائلة أهداف SecretRef جديدة من `includeInPlan` في `src/secrets/target-registry-data.ts`، فحدّث `classifyTargetClass` في ذلك الاختبار. يفشل الاختبار عمدًا عند وجود معرّفات أهداف غير مصنفة حتى لا يتم تخطي الفئات الجديدة بصمت.

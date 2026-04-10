@@ -1,15 +1,15 @@
 ---
 read_when:
-    - Chcesz zrozumieć, jak działa `memory_search`
+    - Chcesz zrozumieć, jak działa memory_search
     - Chcesz wybrać dostawcę embeddingów
     - Chcesz dostroić jakość wyszukiwania
-summary: Jak wyszukiwanie pamięci znajduje odpowiednie notatki za pomocą embeddingów i wyszukiwania hybrydowego
+summary: Jak wyszukiwanie w pamięci znajduje odpowiednie notatki za pomocą embeddingów i wyszukiwania hybrydowego
 title: Wyszukiwanie w pamięci
 x-i18n:
-    generated_at: "2026-04-06T03:06:39Z"
+    generated_at: "2026-04-10T09:44:32Z"
     model: gpt-5.4
     provider: openai
-    source_hash: b6541cd702bff41f9a468dad75ea438b70c44db7c65a4b793cbacaf9e583c7e9
+    source_hash: ca0237f4f1ee69dcbfb12e6e9527a53e368c0bf9b429e506831d4af2f3a3ac6f
     source_path: concepts/memory-search.md
     workflow: 15
 ---
@@ -17,8 +17,8 @@ x-i18n:
 # Wyszukiwanie w pamięci
 
 `memory_search` znajduje odpowiednie notatki z Twoich plików pamięci, nawet gdy
-sformułowania różnią się od oryginalnego tekstu. Działa przez indeksowanie pamięci w małych
-fragmentach i przeszukiwanie ich za pomocą embeddingów, słów kluczowych lub obu tych metod.
+sformułowania różnią się od oryginalnego tekstu. Działa poprzez indeksowanie pamięci na małe
+fragmenty i przeszukiwanie ich za pomocą embeddingów, słów kluczowych albo obu tych metod.
 
 ## Szybki start
 
@@ -43,18 +43,18 @@ W przypadku lokalnych embeddingów bez klucza API użyj `provider: "local"` (wym
 ## Obsługiwani dostawcy
 
 | Dostawca | ID        | Wymaga klucza API | Uwagi                                                |
-| -------- | --------- | ------------- | ---------------------------------------------------- |
-| OpenAI   | `openai`  | Tak           | Wykrywany automatycznie, szybki                                  |
-| Gemini   | `gemini`  | Tak           | Obsługuje indeksowanie obrazów i dźwięku                        |
-| Voyage   | `voyage`  | Tak           | Wykrywany automatycznie                                        |
-| Mistral  | `mistral` | Tak           | Wykrywany automatycznie                                        |
-| Bedrock  | `bedrock` | Nie            | Wykrywany automatycznie, gdy łańcuch poświadczeń AWS zostanie rozwiązany |
-| Ollama   | `ollama`  | Nie            | Lokalny, musi być ustawiony jawnie                           |
-| Local    | `local`   | Nie            | Model GGUF, pobieranie ~0.6 GB                         |
+| -------- | --------- | ----------------- | ---------------------------------------------------- |
+| OpenAI   | `openai`  | Tak               | Wykrywany automatycznie, szybki                      |
+| Gemini   | `gemini`  | Tak               | Obsługuje indeksowanie obrazów/dźwięku               |
+| Voyage   | `voyage`  | Tak               | Wykrywany automatycznie                              |
+| Mistral  | `mistral` | Tak               | Wykrywany automatycznie                              |
+| Bedrock  | `bedrock` | Nie               | Wykrywany automatycznie, gdy łańcuch poświadczeń AWS zostanie rozwiązany |
+| Ollama   | `ollama`  | Nie               | Lokalny, trzeba ustawić jawnie                       |
+| Local    | `local`   | Nie               | Model GGUF, pobieranie ~0.6 GB                       |
 
 ## Jak działa wyszukiwanie
 
-OpenClaw uruchamia równolegle dwie ścieżki pobierania i scala wyniki:
+OpenClaw uruchamia równolegle dwie ścieżki pobierania wyników i scala ich rezultaty:
 
 ```mermaid
 flowchart LR
@@ -72,30 +72,30 @@ flowchart LR
 - **Wyszukiwanie słów kluczowych BM25** znajduje dokładne dopasowania (ID, ciągi błędów, klucze
   konfiguracji).
 
-Jeśli dostępna jest tylko jedna ścieżka (brak embeddingów lub brak FTS), druga działa samodzielnie.
+Jeśli dostępna jest tylko jedna ścieżka (brak embeddingów albo brak FTS), działa samodzielnie tylko druga.
 
-## Poprawianie jakości wyszukiwania
+## Poprawa jakości wyszukiwania
 
 Dwie opcjonalne funkcje pomagają, gdy masz dużą historię notatek:
 
 ### Zanikanie czasowe
 
-Stare notatki stopniowo tracą wagę w rankingu, dzięki czemu najpierw pojawiają się nowsze informacje.
-Przy domyślnym okresie półtrwania wynoszącym 30 dni notatka z zeszłego miesiąca uzyskuje wynik równy 50%
-swojej pierwotnej wagi. Stałe pliki, takie jak `MEMORY.md`, nigdy nie podlegają zanikaniu.
+Starsze notatki stopniowo tracą wagę w rankingu, dzięki czemu najpierw pojawiają się nowsze informacje.
+Przy domyślnym okresie półtrwania wynoszącym 30 dni notatka z zeszłego miesiąca ma wynik równy 50% swojej
+pierwotnej wagi. Pliki stałe, takie jak `MEMORY.md`, nigdy nie podlegają zanikaniu.
 
 <Tip>
 Włącz zanikanie czasowe, jeśli Twój agent ma wiele miesięcy codziennych notatek, a nieaktualne
-informacje wciąż są wyżej w rankingu niż nowszy kontekst.
+informacje stale wyprzedzają nowszy kontekst.
 </Tip>
 
 ### MMR (różnorodność)
 
-Ogranicza nadmiarowe wyniki. Jeśli pięć notatek wspomina tę samą konfigurację routera, MMR
-sprawia, że najwyższe wyniki obejmują różne tematy zamiast się powtarzać.
+Ogranicza powtarzające się wyniki. Jeśli pięć notatek wspomina tę samą konfigurację routera, MMR
+sprawia, że najwyższe wyniki obejmują różne tematy, zamiast się powtarzać.
 
 <Tip>
-Włącz MMR, jeśli `memory_search` ciągle zwraca niemal zduplikowane fragmenty z
+Włącz MMR, jeśli `memory_search` stale zwraca niemal identyczne fragmenty z
 różnych codziennych notatek.
 </Tip>
 
@@ -120,16 +120,16 @@ różnych codziennych notatek.
 
 ## Pamięć multimodalna
 
-Dzięki Gemini Embedding 2 możesz indeksować obrazy i pliki audio razem z
-Markdownem. Zapytania wyszukiwania nadal pozostają tekstowe, ale są dopasowywane do treści wizualnych i audio.
-Instrukcje konfiguracji znajdziesz w [Dokumentacji konfiguracji pamięci](/pl/reference/memory-config).
+Z Gemini Embedding 2 możesz indeksować obrazy i pliki audio obok plików
+Markdown. Zapytania wyszukiwania nadal pozostają tekstowe, ale dopasowują się do treści wizualnych i audio.
+Informacje o konfiguracji znajdziesz w [dokumencie referencyjnym konfiguracji pamięci](/pl/reference/memory-config).
 
-## Wyszukiwanie pamięci sesji
+## Wyszukiwanie w pamięci sesji
 
-Opcjonalnie możesz indeksować transkrypcje sesji, aby `memory_search` mogło przypominać sobie
-wcześniejsze rozmowy. Jest to funkcja opcjonalna, włączana przez
+Możesz opcjonalnie indeksować transkrypcje sesji, aby `memory_search` mógł przywoływać
+wcześniejsze rozmowy. Jest to funkcja opt-in dostępna przez
 `memorySearch.experimental.sessionMemory`. Szczegóły znajdziesz w
-[dokumentacji konfiguracji](/pl/reference/memory-config).
+[dokumencie referencyjnym konfiguracji](/pl/reference/memory-config).
 
 ## Rozwiązywanie problemów
 
@@ -139,10 +139,11 @@ wcześniejsze rozmowy. Jest to funkcja opcjonalna, włączana przez
 **Tylko dopasowania słów kluczowych?** Twój dostawca embeddingów może nie być skonfigurowany. Sprawdź
 `openclaw memory status --deep`.
 
-**Nie można znaleźć tekstu CJK?** Odbuduj indeks FTS za pomocą
+**Nie znajduje tekstu CJK?** Odbuduj indeks FTS za pomocą
 `openclaw memory index --force`.
 
 ## Dalsza lektura
 
+- [Aktywna pamięć](/pl/concepts/active-memory) -- pamięć sub-agentów dla interaktywnych sesji czatu
 - [Pamięć](/pl/concepts/memory) -- układ plików, backendy, narzędzia
-- [Dokumentacja konfiguracji pamięci](/pl/reference/memory-config) -- wszystkie opcje konfiguracji
+- [Dokument referencyjny konfiguracji pamięci](/pl/reference/memory-config) -- wszystkie opcje konfiguracji

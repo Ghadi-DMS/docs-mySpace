@@ -1,85 +1,91 @@
 ---
 read_when:
-    - Sie möchten Provider oder Embedding-Modelle für Memory Search konfigurieren
+    - Sie möchten Anbieter für die Speichersuche oder Embedding-Modelle konfigurieren
     - Sie möchten das QMD-Backend einrichten
-    - Sie möchten Hybrid Search, MMR oder zeitlichen Zerfall abstimmen
-    - Sie möchten multimodale Memory-Indexierung aktivieren
-summary: Alle Konfigurationsoptionen für Memory Search, Embedding-Provider, QMD, Hybrid Search und multimodale Indexierung
-title: Konfigurationsreferenz für Memory
+    - Sie möchten die hybride Suche, MMR oder den zeitlichen Zerfall optimieren
+    - Sie möchten die multimodale Speicherindizierung aktivieren
+summary: Alle Konfigurationsoptionen für die Speichersuche, Embedding-Anbieter, QMD, hybride Suche und multimodale Indizierung
+title: Referenz zur Speicherkonfiguration
 x-i18n:
-    generated_at: "2026-04-06T03:12:22Z"
+    generated_at: "2026-04-10T06:21:14Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 0de0b85125443584f4e575cf673ca8d9bd12ecd849d73c537f4a17545afa93fd
+    source_hash: 5f9076bdfad95b87bd70625821bf401326f8eaeb53842b70823881419dbe43cb
     source_path: reference/memory-config.md
     workflow: 15
 ---
 
-# Konfigurationsreferenz für Memory
+# Referenz zur Speicherkonfiguration
 
-Diese Seite listet jede Konfigurationsoption für OpenClaw Memory Search auf. Für
-konzeptionelle Übersichten siehe:
+Diese Seite listet alle Konfigurationsoptionen für die OpenClaw-Speichersuche auf. Konzeptionelle Übersichten finden Sie hier:
 
-- [Memory Overview](/de/concepts/memory) -- wie Memory funktioniert
-- [Builtin Engine](/de/concepts/memory-builtin) -- Standard-Backend auf SQLite-Basis
-- [QMD Engine](/de/concepts/memory-qmd) -- lokaler Sidecar mit Local-first-Ansatz
-- [Memory Search](/de/concepts/memory-search) -- Suchpipeline und Abstimmung
+- [Speicherübersicht](/de/concepts/memory) -- wie Speicher funktioniert
+- [Integrierte Engine](/de/concepts/memory-builtin) -- Standard-SQLite-Backend
+- [QMD-Engine](/de/concepts/memory-qmd) -- lokaler Sidecar mit Local-First-Ansatz
+- [Speichersuche](/de/concepts/memory-search) -- Suchpipeline und Feinabstimmung
+- [Aktiver Speicher](/de/concepts/active-memory) -- Aktivierung des Speicher-Sub-Agents für interaktive Sitzungen
 
-Alle Einstellungen für Memory Search befinden sich unter `agents.defaults.memorySearch` in
-`openclaw.json`, sofern nicht anders angegeben.
+Alle Einstellungen für die Speichersuche befinden sich unter `agents.defaults.memorySearch` in `openclaw.json`, sofern nicht anders angegeben.
+
+Wenn Sie nach dem Funktionsschalter für **aktiven Speicher** und der Konfiguration des Sub-Agents suchen, finden Sie diese unter `plugins.entries.active-memory` statt unter `memorySearch`.
+
+Aktiver Speicher verwendet ein Modell mit zwei Voraussetzungen:
+
+1. das Plugin muss aktiviert sein und auf die aktuelle Agent-ID abzielen
+2. die Anfrage muss eine zulässige interaktive persistente Chat-Sitzung sein
+
+Unter [Aktiver Speicher](/de/concepts/active-memory) finden Sie das Aktivierungsmodell, die Plugin-eigene Konfiguration, die Persistenz von Transkripten und ein sicheres Rollout-Muster.
 
 ---
 
-## Providerauswahl
+## Auswahl des Anbieters
 
-| Key        | Typ       | Standard         | Beschreibung                                                                                |
+| Key        | Type      | Default          | Beschreibung                                                                                |
 | ---------- | --------- | ---------------- | ------------------------------------------------------------------------------------------- |
-| `provider` | `string`  | automatisch erkannt | Embedding-Adapter-ID: `openai`, `gemini`, `voyage`, `mistral`, `bedrock`, `ollama`, `local` |
-| `model`    | `string`  | Standard des Providers | Name des Embedding-Modells                                                             |
-| `fallback` | `string`  | `"none"`         | Fallback-Adapter-ID, wenn der primäre Adapter fehlschlägt                                  |
-| `enabled`  | `boolean` | `true`           | Memory Search aktivieren oder deaktivieren                                                  |
+| `provider` | `string`  | automatisch erkannt | ID des Embedding-Adapters: `openai`, `gemini`, `voyage`, `mistral`, `bedrock`, `ollama`, `local` |
+| `model`    | `string`  | Standard des Anbieters | Name des Embedding-Modells                                                                  |
+| `fallback` | `string`  | `"none"`         | ID des Fallback-Adapters, wenn der primäre fehlschlägt                                      |
+| `enabled`  | `boolean` | `true`           | Speichersuche aktivieren oder deaktivieren                                                  |
 
 ### Reihenfolge der automatischen Erkennung
 
-Wenn `provider` nicht gesetzt ist, wählt OpenClaw den ersten verfügbaren:
+Wenn `provider` nicht gesetzt ist, wählt OpenClaw den ersten verfügbaren Anbieter aus:
 
 1. `local` -- wenn `memorySearch.local.modelPath` konfiguriert ist und die Datei existiert.
 2. `openai` -- wenn ein OpenAI-Schlüssel aufgelöst werden kann.
 3. `gemini` -- wenn ein Gemini-Schlüssel aufgelöst werden kann.
 4. `voyage` -- wenn ein Voyage-Schlüssel aufgelöst werden kann.
 5. `mistral` -- wenn ein Mistral-Schlüssel aufgelöst werden kann.
-6. `bedrock` -- wenn die Zugangsdatenkette des AWS SDK aufgelöst wird (Instanzrolle, Zugriffsschlüssel, Profil, SSO, Web Identity oder gemeinsame Konfiguration).
+6. `bedrock` -- wenn die AWS-SDK-Anmeldeinformationskette aufgelöst wird (Instanzrolle, Zugriffsschlüssel, Profil, SSO, Web-Identität oder gemeinsame Konfiguration).
 
 `ollama` wird unterstützt, aber nicht automatisch erkannt (setzen Sie es explizit).
 
 ### Auflösung von API-Schlüsseln
 
-Entfernte Embeddings erfordern einen API-Schlüssel. Bedrock verwendet stattdessen die Standard-
-Zugangsdatenkette des AWS SDK (Instanzrollen, SSO, Zugriffsschlüssel).
+Remote-Embeddings erfordern einen API-Schlüssel. Bedrock verwendet stattdessen die Standard-Anmeldeinformationskette des AWS SDK (Instanzrollen, SSO, Zugriffsschlüssel).
 
-| Provider | Env var                        | Config-Key                        |
+| Provider | Env var                        | Config key                        |
 | -------- | ------------------------------ | --------------------------------- |
 | OpenAI   | `OPENAI_API_KEY`               | `models.providers.openai.apiKey`  |
 | Gemini   | `GEMINI_API_KEY`               | `models.providers.google.apiKey`  |
 | Voyage   | `VOYAGE_API_KEY`               | `models.providers.voyage.apiKey`  |
 | Mistral  | `MISTRAL_API_KEY`              | `models.providers.mistral.apiKey` |
-| Bedrock  | AWS-Zugangsdatenkette          | Kein API-Schlüssel erforderlich   |
+| Bedrock  | AWS-Anmeldeinformationskette   | Kein API-Schlüssel erforderlich   |
 | Ollama   | `OLLAMA_API_KEY` (Platzhalter) | --                                |
 
-Codex OAuth deckt nur Chat/Completions ab und erfüllt keine Embedding-
-Anfragen.
+Codex OAuth deckt nur Chat/Completions ab und erfüllt keine Embedding-Anfragen.
 
 ---
 
-## Konfiguration entfernter Endpunkte
+## Konfiguration von Remote-Endpunkten
 
-Für benutzerdefinierte OpenAI-kompatible Endpunkte oder zum Überschreiben der Provider-Standards:
+Für benutzerdefinierte OpenAI-kompatible Endpunkte oder zum Überschreiben von Standardwerten des Anbieters:
 
-| Key              | Typ      | Beschreibung                                           |
-| ---------------- | -------- | ------------------------------------------------------ |
-| `remote.baseUrl` | `string` | Benutzerdefinierte API-Basis-URL                       |
-| `remote.apiKey`  | `string` | API-Schlüssel überschreiben                            |
-| `remote.headers` | `object` | Zusätzliche HTTP-Header (mit den Provider-Standards zusammengeführt) |
+| Key              | Type     | Beschreibung                                      |
+| ---------------- | -------- | ------------------------------------------------- |
+| `remote.baseUrl` | `string` | Benutzerdefinierte API-Basis-URL                  |
+| `remote.apiKey`  | `string` | API-Schlüssel überschreiben                       |
+| `remote.headers` | `object` | Zusätzliche HTTP-Header (mit Anbieter-Standards zusammengeführt) |
 
 ```json5
 {
@@ -102,22 +108,22 @@ Für benutzerdefinierte OpenAI-kompatible Endpunkte oder zum Überschreiben der 
 
 ## Gemini-spezifische Konfiguration
 
-| Key                    | Typ      | Standard               | Beschreibung                             |
-| ---------------------- | -------- | ---------------------- | ---------------------------------------- |
+| Key                    | Type     | Default                | Beschreibung                               |
+| ---------------------- | -------- | ---------------------- | ------------------------------------------ |
 | `model`                | `string` | `gemini-embedding-001` | Unterstützt auch `gemini-embedding-2-preview` |
-| `outputDimensionality` | `number` | `3072`                 | Für Embedding 2: 768, 1536 oder 3072     |
+| `outputDimensionality` | `number` | `3072`                 | Für Embedding 2: 768, 1536 oder 3072       |
 
 <Warning>
-Das Ändern von `model` oder `outputDimensionality` löst automatisch eine vollständige Neuindexierung aus.
+Das Ändern von Modell oder `outputDimensionality` löst automatisch eine vollständige Neuindizierung aus.
 </Warning>
 
 ---
 
 ## Bedrock-Embedding-Konfiguration
 
-Bedrock verwendet die Standard-Zugangsdatenkette des AWS SDK -- keine API-Schlüssel erforderlich.
-Wenn OpenClaw auf EC2 mit einer Bedrock-fähigen Instanzrolle läuft, setzen Sie einfach
-Provider und Modell:
+Bedrock verwendet die Standard-Anmeldeinformationskette des AWS SDK -- es werden keine API-Schlüssel benötigt.
+Wenn OpenClaw auf EC2 mit einer Bedrock-aktivierten Instanzrolle ausgeführt wird, setzen Sie einfach den
+Anbieter und das Modell:
 
 ```json5
 {
@@ -132,9 +138,9 @@ Provider und Modell:
 }
 ```
 
-| Key                    | Typ      | Standard                       | Beschreibung                     |
-| ---------------------- | -------- | ------------------------------ | -------------------------------- |
-| `model`                | `string` | `amazon.titan-embed-text-v2:0` | Beliebige Bedrock-Embedding-Modell-ID |
+| Key                    | Type     | Default                        | Beschreibung                    |
+| ---------------------- | -------- | ------------------------------ | ------------------------------- |
+| `model`                | `string` | `amazon.titan-embed-text-v2:0` | Beliebige ID eines Bedrock-Embedding-Modells |
 | `outputDimensionality` | `number` | Modellstandard                 | Für Titan V2: 256, 512 oder 1024 |
 
 ### Unterstützte Modelle
@@ -142,34 +148,34 @@ Provider und Modell:
 Die folgenden Modelle werden unterstützt (mit Familienerkennung und Standardwerten
 für Dimensionen):
 
-| Modell-ID                                  | Provider   | Standard-Dims | Konfigurierbare Dims |
-| ------------------------------------------ | ---------- | ------------- | -------------------- |
-| `amazon.titan-embed-text-v2:0`             | Amazon     | 1024          | 256, 512, 1024       |
-| `amazon.titan-embed-text-v1`               | Amazon     | 1536          | --                   |
-| `amazon.titan-embed-g1-text-02`            | Amazon     | 1536          | --                   |
-| `amazon.titan-embed-image-v1`              | Amazon     | 1024          | --                   |
-| `amazon.nova-2-multimodal-embeddings-v1:0` | Amazon     | 1024          | 256, 384, 1024, 3072 |
-| `cohere.embed-english-v3`                  | Cohere     | 1024          | --                   |
-| `cohere.embed-multilingual-v3`             | Cohere     | 1024          | --                   |
-| `cohere.embed-v4:0`                        | Cohere     | 1536          | 256-1536             |
-| `twelvelabs.marengo-embed-3-0-v1:0`        | TwelveLabs | 512           | --                   |
-| `twelvelabs.marengo-embed-2-7-v1:0`        | TwelveLabs | 1024          | --                   |
+| Model ID                                   | Provider   | Standard-Dimensionen | Konfigurierbare Dimensionen |
+| ------------------------------------------ | ---------- | -------------------- | --------------------------- |
+| `amazon.titan-embed-text-v2:0`             | Amazon     | 1024                 | 256, 512, 1024              |
+| `amazon.titan-embed-text-v1`               | Amazon     | 1536                 | --                          |
+| `amazon.titan-embed-g1-text-02`            | Amazon     | 1536                 | --                          |
+| `amazon.titan-embed-image-v1`              | Amazon     | 1024                 | --                          |
+| `amazon.nova-2-multimodal-embeddings-v1:0` | Amazon     | 1024                 | 256, 384, 1024, 3072        |
+| `cohere.embed-english-v3`                  | Cohere     | 1024                 | --                          |
+| `cohere.embed-multilingual-v3`             | Cohere     | 1024                 | --                          |
+| `cohere.embed-v4:0`                        | Cohere     | 1536                 | 256-1536                    |
+| `twelvelabs.marengo-embed-3-0-v1:0`        | TwelveLabs | 512                  | --                          |
+| `twelvelabs.marengo-embed-2-7-v1:0`        | TwelveLabs | 1024                 | --                          |
 
-Varianten mit Durchsatzsuffix (z. B. `amazon.titan-embed-text-v1:2:8k`) erben
+Varianten mit Durchsatzsuffix (z. B. `amazon.titan-embed-text-v1:2:8k`) übernehmen
 die Konfiguration des Basismodells.
 
 ### Authentifizierung
 
-Die Bedrock-Authentifizierung verwendet die Standardreihenfolge der Zugangsdatenauflösung des AWS SDK:
+Die Bedrock-Authentifizierung verwendet die Standard-Reihenfolge der Anmeldeinformationsauflösung des AWS SDK:
 
 1. Umgebungsvariablen (`AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY`)
 2. SSO-Token-Cache
-3. Zugangsdaten über Web-Identity-Token
-4. Gemeinsame Dateien für Zugangsdaten und Konfiguration
-5. Zugangsdaten aus ECS- oder EC2-Metadaten
+3. Anmeldedaten für Web-Identitätstoken
+4. Gemeinsame Anmeldeinformations- und Konfigurationsdateien
+5. ECS- oder EC2-Metadaten-Anmeldedaten
 
-Die Region wird aus `AWS_REGION`, `AWS_DEFAULT_REGION`, der
-`baseUrl` des `amazon-bedrock`-Providers aufgelöst oder verwendet standardmäßig `us-east-1`.
+Die Region wird aus `AWS_REGION`, `AWS_DEFAULT_REGION`, der `baseUrl` des
+Anbieters `amazon-bedrock` ermittelt oder fällt standardmäßig auf `us-east-1` zurück.
 
 ### IAM-Berechtigungen
 
@@ -183,7 +189,7 @@ Die IAM-Rolle oder der IAM-Benutzer benötigt:
 }
 ```
 
-Für minimale Rechte beschränken Sie `InvokeModel` auf das konkrete Modell:
+Für das Prinzip der geringsten Rechte beschränken Sie `InvokeModel` auf das konkrete Modell:
 
 ```
 arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v2:0
@@ -193,42 +199,42 @@ arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v2:0
 
 ## Lokale Embedding-Konfiguration
 
-| Key                   | Typ      | Standard               | Beschreibung                    |
-| --------------------- | -------- | ---------------------- | ------------------------------- |
-| `local.modelPath`     | `string` | automatisch heruntergeladen | Pfad zur GGUF-Modelldatei   |
+| Key                   | Type     | Default                | Beschreibung                   |
+| --------------------- | -------- | ---------------------- | ------------------------------ |
+| `local.modelPath`     | `string` | automatisch heruntergeladen | Pfad zur GGUF-Modelldatei      |
 | `local.modelCacheDir` | `string` | node-llama-cpp-Standard | Cache-Verzeichnis für heruntergeladene Modelle |
 
 Standardmodell: `embeddinggemma-300m-qat-Q8_0.gguf` (~0,6 GB, wird automatisch heruntergeladen).
-Erfordert nativen Build: `pnpm approve-builds` und dann `pnpm rebuild node-llama-cpp`.
+Erfordert einen nativen Build: `pnpm approve-builds` und dann `pnpm rebuild node-llama-cpp`.
 
 ---
 
-## Hybrid-Search-Konfiguration
+## Konfiguration der hybriden Suche
 
 Alles unter `memorySearch.query.hybrid`:
 
-| Key                   | Typ       | Standard | Beschreibung                        |
-| --------------------- | --------- | -------- | ----------------------------------- |
-| `enabled`             | `boolean` | `true`   | Hybrid BM25 + Vector Search aktivieren |
-| `vectorWeight`        | `number`  | `0.7`    | Gewichtung für Vektor-Scores (0-1)  |
-| `textWeight`          | `number`  | `0.3`    | Gewichtung für BM25-Scores (0-1)    |
-| `candidateMultiplier` | `number`  | `4`      | Multiplikator für Größe des Kandidatenpools |
+| Key                   | Type      | Default | Beschreibung                       |
+| --------------------- | --------- | ------- | ---------------------------------- |
+| `enabled`             | `boolean` | `true`  | Hybride BM25- + Vektorsuche aktivieren |
+| `vectorWeight`        | `number`  | `0.7`   | Gewichtung für Vektorscores (0-1)  |
+| `textWeight`          | `number`  | `0.3`   | Gewichtung für BM25-Scores (0-1)   |
+| `candidateMultiplier` | `number`  | `4`     | Multiplikator für die Größe des Kandidatenpools |
 
 ### MMR (Diversität)
 
-| Key           | Typ       | Standard | Beschreibung                            |
-| ------------- | --------- | -------- | --------------------------------------- |
-| `mmr.enabled` | `boolean` | `false`  | MMR-Re-Ranking aktivieren               |
-| `mmr.lambda`  | `number`  | `0.7`    | 0 = maximale Diversität, 1 = maximale Relevanz |
+| Key           | Type      | Default | Beschreibung                         |
+| ------------- | --------- | ------- | ------------------------------------ |
+| `mmr.enabled` | `boolean` | `false` | MMR-Neurangordnung aktivieren        |
+| `mmr.lambda`  | `number`  | `0.7`   | 0 = maximale Diversität, 1 = maximale Relevanz |
 
 ### Zeitlicher Zerfall (Aktualität)
 
-| Key                          | Typ       | Standard | Beschreibung                    |
-| ---------------------------- | --------- | -------- | ------------------------------- |
-| `temporalDecay.enabled`      | `boolean` | `false`  | Aktualitäts-Boost aktivieren    |
-| `temporalDecay.halfLifeDays` | `number`  | `30`     | Score halbiert sich alle N Tage |
+| Key                          | Type      | Default | Beschreibung               |
+| ---------------------------- | --------- | ------- | ------------------------- |
+| `temporalDecay.enabled`      | `boolean` | `false` | Aktualitäts-Boost aktivieren |
+| `temporalDecay.halfLifeDays` | `number`  | `30`    | Score halbiert sich alle N Tage |
 
-Evergreen-Dateien (`MEMORY.md`, nicht datierte Dateien in `memory/`) unterliegen nie zeitlichem Zerfall.
+Immergrüne Dateien (`MEMORY.md`, nicht datierte Dateien in `memory/`) unterliegen nie einem zeitlichen Zerfall.
 
 ### Vollständiges Beispiel
 
@@ -253,11 +259,11 @@ Evergreen-Dateien (`MEMORY.md`, nicht datierte Dateien in `memory/`) unterliegen
 
 ---
 
-## Zusätzliche Memory-Pfade
+## Zusätzliche Speicherpfade
 
-| Key          | Typ        | Beschreibung                                  |
-| ------------ | ---------- | --------------------------------------------- |
-| `extraPaths` | `string[]` | Zusätzliche Verzeichnisse oder Dateien zum Indexieren |
+| Key          | Type       | Beschreibung                            |
+| ------------ | ---------- | --------------------------------------- |
+| `extraPaths` | `string[]` | Zusätzliche Verzeichnisse oder Dateien zum Indizieren |
 
 ```json5
 {
@@ -273,31 +279,29 @@ Evergreen-Dateien (`MEMORY.md`, nicht datierte Dateien in `memory/`) unterliegen
 
 Pfade können absolut oder relativ zum Workspace sein. Verzeichnisse werden
 rekursiv nach `.md`-Dateien durchsucht. Die Behandlung von Symlinks hängt vom aktiven Backend ab:
-Die Builtin Engine ignoriert Symlinks, während QMD dem zugrunde liegenden Verhalten
-des QMD-Scanners folgt.
+Die integrierte Engine ignoriert Symlinks, während QMD dem Verhalten des zugrunde liegenden QMD-Scanners folgt.
 
-Für agentenspezifische, agentübergreifende Transkript-Suche verwenden Sie
-`agents.list[].memorySearch.qmd.extraCollections` statt `memory.qmd.paths`.
-Diese zusätzlichen Collections folgen derselben Struktur `{ path, name, pattern? }`, werden aber
-pro Agent zusammengeführt und können explizite gemeinsame Namen beibehalten, wenn der Pfad
+Für agentenbezogene agentenübergreifende Transkriptsuche verwenden Sie
+`agents.list[].memorySearch.qmd.extraCollections` anstelle von `memory.qmd.paths`.
+Diese zusätzlichen Sammlungen folgen derselben Form `{ path, name, pattern? }`,
+werden aber pro Agent zusammengeführt und können explizite gemeinsame Namen beibehalten, wenn der Pfad
 außerhalb des aktuellen Workspace liegt.
 Wenn derselbe aufgelöste Pfad sowohl in `memory.qmd.paths` als auch in
-`memorySearch.qmd.extraCollections` erscheint, behält QMD den ersten Eintrag und überspringt
-das Duplikat.
+`memorySearch.qmd.extraCollections` erscheint, behält QMD den ersten Eintrag und überspringt das Duplikat.
 
 ---
 
-## Multimodales Memory (Gemini)
+## Multimodaler Speicher (Gemini)
 
-Indexieren Sie Bilder und Audio zusammen mit Markdown über Gemini Embedding 2:
+Indizieren Sie Bilder und Audio zusammen mit Markdown mithilfe von Gemini Embedding 2:
 
-| Key                       | Typ        | Standard   | Beschreibung                              |
-| ------------------------- | ---------- | ---------- | ----------------------------------------- |
-| `multimodal.enabled`      | `boolean`  | `false`    | Multimodale Indexierung aktivieren        |
-| `multimodal.modalities`   | `string[]` | --         | `["image"]`, `["audio"]` oder `["all"]`   |
-| `multimodal.maxFileBytes` | `number`   | `10000000` | Maximale Dateigröße für die Indexierung   |
+| Key                       | Type       | Default    | Beschreibung                          |
+| ------------------------- | ---------- | ---------- | ------------------------------------- |
+| `multimodal.enabled`      | `boolean`  | `false`    | Multimodale Indizierung aktivieren    |
+| `multimodal.modalities`   | `string[]` | --         | `["image"]`, `["audio"]` oder `["all"]` |
+| `multimodal.maxFileBytes` | `number`   | `10000000` | Maximale Dateigröße für die Indizierung |
 
-Gilt nur für Dateien in `extraPaths`. Standard-Memory-Wurzeln bleiben nur für Markdown.
+Gilt nur für Dateien in `extraPaths`. Standardmäßige Speicherwurzeln bleiben nur für Markdown.
 Erfordert `gemini-embedding-2-preview`. `fallback` muss `"none"` sein.
 
 Unterstützte Formate: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.heic`, `.heif`
@@ -307,64 +311,64 @@ Unterstützte Formate: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.heic`, `.heif
 
 ## Embedding-Cache
 
-| Key                | Typ       | Standard | Beschreibung                          |
-| ------------------ | --------- | -------- | ------------------------------------- |
-| `cache.enabled`    | `boolean` | `false`  | Chunk-Embeddings in SQLite cachen     |
-| `cache.maxEntries` | `number`  | `50000`  | Maximale Anzahl zwischengespeicherter Embeddings |
+| Key                | Type      | Default | Beschreibung                          |
+| ------------------ | --------- | ------- | ------------------------------------- |
+| `cache.enabled`    | `boolean` | `false` | Chunk-Embeddings in SQLite cachen     |
+| `cache.maxEntries` | `number`  | `50000` | Maximale Anzahl gecachter Embeddings  |
 
-Verhindert erneutes Embedding unveränderten Texts bei Neuindexierung oder Transkript-Updates.
-
----
-
-## Batch-Indexierung
-
-| Key                           | Typ       | Standard | Beschreibung                 |
-| ----------------------------- | --------- | -------- | ---------------------------- |
-| `remote.batch.enabled`        | `boolean` | `false`  | Batch-Embedding-API aktivieren |
-| `remote.batch.concurrency`    | `number`  | `2`      | Parallele Batch-Jobs         |
-| `remote.batch.wait`           | `boolean` | `true`   | Auf Abschluss des Batch warten |
-| `remote.batch.pollIntervalMs` | `number`  | --       | Polling-Intervall            |
-| `remote.batch.timeoutMinutes` | `number`  | --       | Batch-Timeout                |
-
-Verfügbar für `openai`, `gemini` und `voyage`. OpenAI-Batches sind typischerweise
-am schnellsten und günstigsten für große Backfills.
+Verhindert das erneute Einbetten unveränderten Texts bei der Neuindizierung oder bei Transkriptaktualisierungen.
 
 ---
 
-## Session Memory Search (experimentell)
+## Batch-Indizierung
 
-Indexieren Sie Sitzungs-Transkripte und machen Sie sie über `memory_search` verfügbar:
+| Key                           | Type      | Default | Beschreibung                  |
+| ----------------------------- | --------- | ------- | ----------------------------- |
+| `remote.batch.enabled`        | `boolean` | `false` | Batch-Embedding-API aktivieren |
+| `remote.batch.concurrency`    | `number`  | `2`     | Parallele Batch-Jobs          |
+| `remote.batch.wait`           | `boolean` | `true`  | Auf Batch-Abschluss warten    |
+| `remote.batch.pollIntervalMs` | `number`  | --      | Abfrageintervall              |
+| `remote.batch.timeoutMinutes` | `number`  | --      | Batch-Timeout                 |
 
-| Key                           | Typ        | Standard     | Beschreibung                              |
-| ----------------------------- | ---------- | ------------ | ----------------------------------------- |
-| `experimental.sessionMemory`  | `boolean`  | `false`      | Sitzungsindexierung aktivieren            |
-| `sources`                     | `string[]` | `["memory"]` | `"sessions"` hinzufügen, um Transkripte einzubeziehen |
-| `sync.sessions.deltaBytes`    | `number`   | `100000`     | Byte-Schwellenwert für Neuindexierung     |
-| `sync.sessions.deltaMessages` | `number`   | `50`         | Nachrichtenschwellenwert für Neuindexierung |
-
-Die Sitzungsindexierung ist ein Opt-in und läuft asynchron. Ergebnisse können leicht
-veraltet sein. Sitzungslogs liegen auf der Festplatte, behandeln Sie daher Dateisystemzugriff als Vertrauensgrenze.
+Verfügbar für `openai`, `gemini` und `voyage`. OpenAI-Batch ist für große Backfills in der Regel
+am schnellsten und günstigsten.
 
 ---
 
-## SQLite-Vektor-Beschleunigung (sqlite-vec)
+## Sitzungsspeichersuche (experimentell)
 
-| Key                          | Typ       | Standard | Beschreibung                        |
-| ---------------------------- | --------- | -------- | ----------------------------------- |
-| `store.vector.enabled`       | `boolean` | `true`   | sqlite-vec für Vektorabfragen verwenden |
-| `store.vector.extensionPath` | `string`  | gebündelt | sqlite-vec-Pfad überschreiben      |
+Indizieren Sie Sitzungsprotokolle und stellen Sie sie über `memory_search` bereit:
+
+| Key                           | Type       | Default      | Beschreibung                                |
+| ----------------------------- | ---------- | ------------ | ------------------------------------------- |
+| `experimental.sessionMemory`  | `boolean`  | `false`      | Sitzungsindizierung aktivieren              |
+| `sources`                     | `string[]` | `["memory"]` | `"sessions"` hinzufügen, um Transkripte einzuschließen |
+| `sync.sessions.deltaBytes`    | `number`   | `100000`     | Byte-Schwellenwert für Neuindizierung       |
+| `sync.sessions.deltaMessages` | `number`   | `50`         | Nachrichten-Schwellenwert für Neuindizierung |
+
+Die Sitzungsindizierung ist Opt-in und läuft asynchron. Ergebnisse können leicht
+veraltet sein. Sitzungsprotokolle liegen auf dem Datenträger, behandeln Sie daher den Dateisystemzugriff als Vertrauensgrenze.
+
+---
+
+## SQLite-Vektorbeschleunigung (sqlite-vec)
+
+| Key                          | Type      | Default | Beschreibung                          |
+| ---------------------------- | --------- | ------- | ------------------------------------- |
+| `store.vector.enabled`       | `boolean` | `true`  | sqlite-vec für Vektorabfragen verwenden |
+| `store.vector.extensionPath` | `string`  | gebündelt | sqlite-vec-Pfad überschreiben         |
 
 Wenn sqlite-vec nicht verfügbar ist, fällt OpenClaw automatisch auf
-Cosine Similarity im Prozess zurück.
+Cosinus-Ähnlichkeit im Prozess zurück.
 
 ---
 
-## Indexspeicherung
+## Indexspeicher
 
-| Key                   | Typ      | Standard                              | Beschreibung                                 |
-| --------------------- | -------- | ------------------------------------ | -------------------------------------------- |
-| `store.path`          | `string` | `~/.openclaw/memory/{agentId}.sqlite` | Speicherort des Indexes (unterstützt Token `{agentId}`) |
-| `store.fts.tokenizer` | `string` | `unicode61`                          | FTS5-Tokenizer (`unicode61` oder `trigram`)  |
+| Key                   | Type     | Default                               | Beschreibung                                   |
+| --------------------- | -------- | ------------------------------------- | ---------------------------------------------- |
+| `store.path`          | `string` | `~/.openclaw/memory/{agentId}.sqlite` | Speicherort des Indexes (unterstützt das Token `{agentId}`) |
+| `store.fts.tokenizer` | `string` | `unicode61`                           | FTS5-Tokenizer (`unicode61` oder `trigram`)    |
 
 ---
 
@@ -373,46 +377,46 @@ Cosine Similarity im Prozess zurück.
 Setzen Sie `memory.backend = "qmd"`, um es zu aktivieren. Alle QMD-Einstellungen befinden sich unter
 `memory.qmd`:
 
-| Key                      | Typ       | Standard | Beschreibung                                  |
-| ------------------------ | --------- | -------- | --------------------------------------------- |
-| `command`                | `string`  | `qmd`    | Pfad zur ausführbaren QMD-Datei               |
-| `searchMode`             | `string`  | `search` | Suchbefehl: `search`, `vsearch`, `query`      |
-| `includeDefaultMemory`   | `boolean` | `true`   | `MEMORY.md` + `memory/**/*.md` automatisch indexieren |
+| Key                      | Type      | Default  | Beschreibung                                 |
+| ------------------------ | --------- | -------- | -------------------------------------------- |
+| `command`                | `string`  | `qmd`    | Pfad zur QMD-ausführbaren Datei              |
+| `searchMode`             | `string`  | `search` | Suchbefehl: `search`, `vsearch`, `query`     |
+| `includeDefaultMemory`   | `boolean` | `true`   | `MEMORY.md` + `memory/**/*.md` automatisch indizieren |
 | `paths[]`                | `array`   | --       | Zusätzliche Pfade: `{ name, path, pattern? }` |
-| `sessions.enabled`       | `boolean` | `false`  | Sitzungs-Transkripte indexieren               |
-| `sessions.retentionDays` | `number`  | --       | Aufbewahrung von Transkripten                 |
-| `sessions.exportDir`     | `string`  | --       | Exportverzeichnis                             |
+| `sessions.enabled`       | `boolean` | `false`  | Sitzungsprotokolle indizieren                |
+| `sessions.retentionDays` | `number`  | --       | Aufbewahrung von Transkripten                |
+| `sessions.exportDir`     | `string`  | --       | Exportverzeichnis                            |
 
-OpenClaw bevorzugt die aktuellen QMD-Collection- und MCP-Abfrageformen, hält
-aber ältere QMD-Releases funktionsfähig, indem bei Bedarf auf veraltete `--mask`-Collection-Flags
-und ältere MCP-Tool-Namen zurückgefallen wird.
+OpenClaw bevorzugt die aktuelle QMD-Sammlung und MCP-Abfrageformen, hält aber
+ältere QMD-Versionen funktionsfähig, indem es bei Bedarf auf ältere `--mask`-Sammlungs-Flags
+und ältere MCP-Toolnamen zurückfällt.
 
 QMD-Modellüberschreibungen bleiben auf der QMD-Seite, nicht in der OpenClaw-Konfiguration. Wenn Sie
-QMD-Modelle global überschreiben müssen, setzen Sie Umgebungsvariablen wie
+die QMD-Modelle global überschreiben müssen, setzen Sie Umgebungsvariablen wie
 `QMD_EMBED_MODEL`, `QMD_RERANK_MODEL` und `QMD_GENERATE_MODEL` in der Gateway-
-Runtime-Umgebung.
+Laufzeitumgebung.
 
 ### Aktualisierungszeitplan
 
-| Key                       | Typ       | Standard | Beschreibung                              |
-| ------------------------- | --------- | -------- | ----------------------------------------- |
-| `update.interval`         | `string`  | `5m`     | Aktualisierungsintervall                  |
-| `update.debounceMs`       | `number`  | `15000`  | Dateiänderungen entprellen                |
-| `update.onBoot`           | `boolean` | `true`   | Beim Start aktualisieren                  |
-| `update.waitForBootSync`  | `boolean` | `false`  | Start blockieren, bis Aktualisierung abgeschlossen ist |
-| `update.embedInterval`    | `string`  | --       | Separate Embedding-Kadenz                 |
-| `update.commandTimeoutMs` | `number`  | --       | Timeout für QMD-Befehle                   |
-| `update.updateTimeoutMs`  | `number`  | --       | Timeout für QMD-Aktualisierungsvorgänge   |
-| `update.embedTimeoutMs`   | `number`  | --       | Timeout für QMD-Embedding-Vorgänge        |
+| Key                       | Type      | Default | Beschreibung                              |
+| ------------------------- | --------- | ------- | ----------------------------------------- |
+| `update.interval`         | `string`  | `5m`    | Aktualisierungsintervall                  |
+| `update.debounceMs`       | `number`  | `15000` | Entprellung für Dateiänderungen           |
+| `update.onBoot`           | `boolean` | `true`  | Beim Start aktualisieren                  |
+| `update.waitForBootSync`  | `boolean` | `false` | Start blockieren, bis die Aktualisierung abgeschlossen ist |
+| `update.embedInterval`    | `string`  | --      | Separater Rhythmus für Embeddings         |
+| `update.commandTimeoutMs` | `number`  | --      | Timeout für QMD-Befehle                   |
+| `update.updateTimeoutMs`  | `number`  | --      | Timeout für QMD-Aktualisierungsvorgänge   |
+| `update.embedTimeoutMs`   | `number`  | --      | Timeout für QMD-Embedding-Vorgänge        |
 
-### Limits
+### Grenzwerte
 
-| Key                       | Typ      | Standard | Beschreibung                     |
-| ------------------------- | -------- | -------- | -------------------------------- |
-| `limits.maxResults`       | `number` | `6`      | Maximale Suchergebnisse          |
-| `limits.maxSnippetChars`  | `number` | --       | Snippet-Länge begrenzen          |
-| `limits.maxInjectedChars` | `number` | --       | Gesamtzahl injizierter Zeichen begrenzen |
-| `limits.timeoutMs`        | `number` | `4000`   | Such-Timeout                     |
+| Key                       | Type     | Default | Beschreibung                    |
+| ------------------------- | -------- | ------- | ------------------------------- |
+| `limits.maxResults`       | `number` | `6`     | Maximale Suchergebnisse         |
+| `limits.maxSnippetChars`  | `number` | --      | Snippet-Länge begrenzen         |
+| `limits.maxInjectedChars` | `number` | --      | Insgesamt eingefügte Zeichen begrenzen |
+| `limits.timeoutMs`        | `number` | `4000`  | Such-Timeout                    |
 
 ### Geltungsbereich
 
@@ -432,18 +436,18 @@ Steuert, welche Sitzungen QMD-Suchergebnisse erhalten können. Dasselbe Schema w
 }
 ```
 
-Standard ist nur DM. `match.keyPrefix` gleicht den normalisierten Sitzungsschlüssel ab;
-`match.rawKeyPrefix` gleicht den rohen Schlüssel einschließlich `agent:<id>:` ab.
+Standard ist nur Direktnachrichten. `match.keyPrefix` entspricht dem normalisierten Sitzungsschlüssel;
+`match.rawKeyPrefix` entspricht dem Rohschlüssel einschließlich `agent:<id>:`.
 
 ### Quellenangaben
 
 `memory.citations` gilt für alle Backends:
 
-| Wert             | Verhalten                                           |
+| Value            | Verhalten                                           |
 | ---------------- | --------------------------------------------------- |
-| `auto` (Standard) | `Source: <path#line>`-Footer in Snippets einfügen  |
-| `on`             | Footer immer einfügen                               |
-| `off`            | Footer weglassen (Pfad wird intern weiterhin an den Agenten übergeben) |
+| `auto` (Standard) | `Source: <path#line>`-Fußzeile in Snippets einfügen |
+| `on`             | Fußzeile immer einfügen                             |
+| `off`            | Fußzeile weglassen (Pfad wird intern trotzdem an den Agenten übergeben) |
 
 ### Vollständiges QMD-Beispiel
 
@@ -473,17 +477,17 @@ Standard ist nur DM. `match.keyPrefix` gleicht den normalisierten Sitzungsschlü
 Dreaming wird unter `plugins.entries.memory-core.config.dreaming` konfiguriert,
 nicht unter `agents.defaults.memorySearch`.
 
-Dreaming läuft als ein geplanter Durchlauf und verwendet interne Light-/Deep-/REM-Phasen als
+Dreaming läuft als ein geplanter Durchlauf und verwendet interne Light-, Deep- und REM-Phasen als
 Implementierungsdetail.
 
-Für konzeptionelles Verhalten und Slash-Befehle siehe [Dreaming](/concepts/dreaming).
+Konzeptionelles Verhalten und Slash-Befehle finden Sie unter [Dreaming](/de/concepts/dreaming).
 
 ### Benutzereinstellungen
 
-| Key         | Typ       | Standard    | Beschreibung                                  |
-| ----------- | --------- | ----------- | --------------------------------------------- |
+| Key         | Type      | Default     | Beschreibung                                      |
+| ----------- | --------- | ----------- | ------------------------------------------------- |
 | `enabled`   | `boolean` | `false`     | Dreaming vollständig aktivieren oder deaktivieren |
-| `frequency` | `string`  | `0 3 * * *` | Optionale Cron-Kadenz für den vollständigen Dreaming-Durchlauf |
+| `frequency` | `string`  | `0 3 * * *` | Optionaler Cron-Rhythmus für den vollständigen Dreaming-Durchlauf |
 
 ### Beispiel
 
@@ -507,5 +511,5 @@ Für konzeptionelles Verhalten und Slash-Befehle siehe [Dreaming](/concepts/drea
 Hinweise:
 
 - Dreaming schreibt Maschinenzustand nach `memory/.dreams/`.
-- Dreaming schreibt menschenlesbare narrative Ausgabe nach `DREAMS.md` (oder vorhandenes `dreams.md`).
-- Die Richtlinie und Schwellenwerte für Light-/Deep-/REM-Phasen sind internes Verhalten, keine benutzerseitige Konfiguration.
+- Dreaming schreibt menschenlesbare narrative Ausgaben nach `DREAMS.md` (oder in eine vorhandene `dreams.md`).
+- Die Richtlinie und Schwellenwerte für Light-, Deep- und REM-Phasen sind internes Verhalten und keine benutzerseitige Konfiguration.

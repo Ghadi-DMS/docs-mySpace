@@ -1,36 +1,36 @@
 ---
 read_when:
-    - OpenClaw で fal の画像生成を使いたい場合
-    - FAL_KEY の認証フローが必要な場合
-    - image_generate または video_generate 向けの fal デフォルトを使いたい場合
-summary: OpenClaw での fal 画像・動画生成のセットアップ
+    - OpenClawでfal画像生成を使用したいです
+    - '`FAL_KEY`認証フローが必要です'
+    - '`image_generate`または`video_generate`向けのfalデフォルト設定が必要です'
+summary: OpenClawでのfal画像生成および動画生成の設定
 title: fal
 x-i18n:
-    generated_at: "2026-04-06T03:11:20Z"
+    generated_at: "2026-04-11T02:48:00Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 1922907d2c8360c5877a56495323d54bd846d47c27a801155e3d11e3f5706fbd
+    source_hash: 9bfe4f69124e922a79a516a1bd78f0c00f7a45f3c6f68b6d39e0d196fa01beb3
     source_path: providers/fal.md
     workflow: 15
 ---
 
 # fal
 
-OpenClaw には、ホスト型の画像生成および動画生成向けのバンドル `fal` provider が含まれています。
+OpenClawには、ホスト型の画像生成および動画生成向けにバンドル版`fal`プロバイダーが含まれています。
 
-- Provider: `fal`
-- 認証: `FAL_KEY`（正式。`FAL_API_KEY` もフォールバックとして動作します）
-- API: fal model endpoint
+- プロバイダー: `fal`
+- 認証: `FAL_KEY`（正規。`FAL_API_KEY`もフォールバックとして動作）
+- API: falモデルエンドポイント
 
 ## クイックスタート
 
-1. API キーを設定します:
+1. APIキーを設定します:
 
 ```bash
 openclaw onboard --auth-choice fal-api-key
 ```
 
-2. デフォルトの画像 model を設定します:
+2. デフォルトの画像モデルを設定します:
 
 ```json5
 {
@@ -46,15 +46,16 @@ openclaw onboard --auth-choice fal-api-key
 
 ## 画像生成
 
-バンドル `fal` image-generation provider のデフォルトは
-`fal/fal-ai/flux/dev` です。
+バンドル版`fal`画像生成プロバイダーのデフォルトは
+`fal/fal-ai/flux/dev`です。
 
-- Generate: リクエストごとに最大 4 枚の画像
-- Edit mode: 有効、参照画像は 1 枚
-- `size`、`aspectRatio`、`resolution` をサポート
-- 現在の edit に関する注意点: fal の画像 edit endpoint は **`aspectRatio` の上書きに対応していません**
+- 生成: 1回のリクエストで最大4枚の画像
+- 編集モード: 有効、参照画像は1枚
+- `size`、`aspectRatio`、`resolution`をサポート
+- 現在の編集時の注意点: fal画像編集エンドポイントは
+  `aspectRatio`上書きをサポートしていません
 
-fal をデフォルトの画像 provider として使うには:
+falをデフォルト画像プロバイダーとして使用するには:
 
 ```json5
 {
@@ -70,20 +71,41 @@ fal をデフォルトの画像 provider として使うには:
 
 ## 動画生成
 
-バンドル `fal` video-generation provider のデフォルトは
-`fal/fal-ai/minimax/video-01-live` です。
+バンドル版`fal`動画生成プロバイダーのデフォルトは
+`fal/fal-ai/minimax/video-01-live`です。
 
-- モード: text-to-video と単一画像参照フロー
-- 実行時: 長時間実行ジョブ向けの queue ベース submit/status/result フロー
+- モード: テキストから動画、および単一画像参照フロー
+- ランタイム: 長時間実行ジョブ向けのキュー対応submit/status/resultフロー
+- HeyGen video-agentモデル参照:
+  - `fal/fal-ai/heygen/v2/video-agent`
+- Seedance 2.0モデル参照:
+  - `fal/bytedance/seedance-2.0/fast/text-to-video`
+  - `fal/bytedance/seedance-2.0/fast/image-to-video`
+  - `fal/bytedance/seedance-2.0/text-to-video`
+  - `fal/bytedance/seedance-2.0/image-to-video`
 
-fal をデフォルトの動画 provider として使うには:
+Seedance 2.0をデフォルト動画モデルとして使用するには:
 
 ```json5
 {
   agents: {
     defaults: {
       videoGenerationModel: {
-        primary: "fal/fal-ai/minimax/video-01-live",
+        primary: "fal/bytedance/seedance-2.0/fast/text-to-video",
+      },
+    },
+  },
+}
+```
+
+HeyGen video-agentをデフォルト動画モデルとして使用するには:
+
+```json5
+{
+  agents: {
+    defaults: {
+      videoGenerationModel: {
+        primary: "fal/fal-ai/heygen/v2/video-agent",
       },
     },
   },
@@ -92,6 +114,6 @@ fal をデフォルトの動画 provider として使うには:
 
 ## 関連
 
-- [画像生成](/ja-JP/tools/image-generation)
-- [動画生成](/tools/video-generation)
-- [設定リファレンス](/ja-JP/gateway/configuration-reference#agent-defaults)
+- [Image Generation](/ja-JP/tools/image-generation)
+- [Video Generation](/ja-JP/tools/video-generation)
+- [Configuration Reference](/ja-JP/gateway/configuration-reference#agent-defaults)

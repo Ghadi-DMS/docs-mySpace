@@ -1,43 +1,51 @@
 ---
 read_when:
-    - qa-labまたはqa-channelの拡張
-    - リポジトリ連動のQAシナリオの追加
-    - Gatewayダッシュボードを中心とした、より現実に近いQA自動化の構築
-summary: qa-lab、qa-channel、シード済みシナリオ、プロトコルレポート向けの非公開QA自動化の構成
-title: QA E2E自動化
+    - qa-lab または qa-channel の拡張
+    - リポジトリに裏付けられた QA シナリオの追加
+    - Gateway ダッシュボードを中心とした、より現実性の高い QA 自動化の構築
+summary: qa-lab、qa-channel、シード済みシナリオ、およびプロトコルレポート向けの非公開 QA 自動化の構成
+title: QA E2E 自動化
 x-i18n:
-    generated_at: "2026-04-11T02:44:18Z"
+    generated_at: "2026-04-12T23:28:12Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 5427b505e26bfd542e984e3920c3f7cb825473959195ba9737eff5da944c60d0
+    source_hash: b9fe27dc049823d5e3eb7ae1eac6aad21ed9e917425611fb1dbcb28ab9210d5e
     source_path: concepts/qa-e2e-automation.md
     workflow: 15
 ---
 
-# QA E2E自動化
+# QA E2E 自動化
 
-非公開のQAスタックは、単一のユニットテストよりも現実のチャネルに近い形でOpenClawを検証することを目的としています。
+この非公開 QA スタックは、単一のユニットテストではできない、より現実的で、
+チャネルに沿った形で OpenClaw を検証することを目的としています。
 
 現在の構成要素:
 
-- `extensions/qa-channel`: DM、チャネル、スレッド、リアクション、編集、削除の各サーフェスを備えた合成メッセージチャネル。
-- `extensions/qa-lab`: トランスクリプトの観察、受信メッセージの注入、Markdownレポートのエクスポートを行うためのデバッガUIとQAバス。
-- `qa/`: キックオフタスクとベースラインQAシナリオ用の、リポジトリ連動のシード資産。
+- `extensions/qa-channel`: DM、channel、thread、
+  reaction、edit、delete の各サーフェスを備えた合成メッセージチャネル。
+- `extensions/qa-lab`: transcript の観察、
+  受信メッセージの注入、Markdown レポートのエクスポートのためのデバッガ UI と QA バス。
+- `qa/`: キックオフタスクおよびベースライン QA
+  シナリオ向けの、リポジトリに裏付けられたシードアセット。
 
-現在のQAオペレーターのフローは、2ペインのQAサイトです:
+現在の QA オペレーターのフローは、2 ペインの QA サイトです:
 
-- 左: エージェントを表示するGatewayダッシュボード（Control UI）。
-- 右: Slack風のトランスクリプトとシナリオ計画を表示するQA Lab。
+- 左: エージェントを表示する Gateway ダッシュボード（Control UI）。
+- 右: Slack 風の transcript と scenario plan を表示する QA Lab。
 
-次のコマンドで実行します:
+実行方法:
 
 ```bash
 pnpm qa:lab:up
 ```
 
-これによりQAサイトがビルドされ、DockerベースのGatewayレーンが起動し、オペレーターまたは自動化ループがエージェントにQAミッションを与え、実際のチャネルの挙動を観察し、何が機能し、何が失敗し、何がブロックされたままかを記録できるQA Labページが公開されます。
+これにより QA サイトがビルドされ、Docker ベースの gateway レーンが起動し、
+QA Lab ページが公開されます。ここでオペレーターまたは自動化ループがエージェントに QA
+ミッションを与え、実際のチャネル動作を観察し、何が機能したか、何が失敗したか、
+何がブロックされたままだったかを記録できます。
 
-Dockerイメージを毎回再ビルドせずにQA Lab UIをより高速に反復したい場合は、QA Labバンドルをバインドマウントした状態でスタックを起動します:
+Docker イメージを毎回再ビルドせずに QA Lab UI をより高速に反復したい場合は、
+バインドマウントされた QA Lab バンドルでスタックを起動します:
 
 ```bash
 pnpm openclaw qa docker-build-image
@@ -46,76 +54,132 @@ pnpm qa:lab:up:fast
 pnpm qa:lab:watch
 ```
 
-`qa:lab:up:fast` は、Dockerサービスを事前ビルド済みイメージ上で維持しつつ、`extensions/qa-lab/web/dist` を `qa-lab` コンテナにバインドマウントします。`qa:lab:watch` は変更時にそのバンドルを再ビルドし、QA Labのアセットハッシュが変わるとブラウザが自動再読み込みされます。
+`qa:lab:up:fast` は、Docker サービスをビルド済みイメージ上で維持し、
+`extensions/qa-lab/web/dist` を `qa-lab` コンテナにバインドマウントします。
+`qa:lab:watch` は変更時にそのバンドルを再ビルドし、
+QA Lab のアセットハッシュが変わるとブラウザは自動リロードします。
 
-実際のトランスポートを使うMatrixスモークレーンを実行するには、次を実行します:
+transport-real な Matrix スモークレーンを実行するには、次を実行します:
 
 ```bash
 pnpm openclaw qa matrix
 ```
 
-このレーンはDocker内に使い捨てのTuwunelホームサーバーをプロビジョニングし、一時的なドライバー、SUT、オブザーバーユーザーを登録し、1つのプライベートルームを作成したうえで、実際のMatrixプラグインをQA Gateway子プロセス内で実行します。ライブトランスポートレーンでは、子設定をテスト対象トランスポートに限定するため、Matrixは子設定内で `qa-channel` なしで実行されます。
+このレーンは、Docker 内で使い捨ての Tuwunel homeserver をプロビジョニングし、
+一時的な driver、SUT、observer ユーザーを登録し、1 つの private room を作成したうえで、
+実際の Matrix Plugin を QA gateway child 内で実行します。ライブ transport レーンは、
+child config をテスト対象の transport に限定して保持するため、
+child config 内で `qa-channel` なしで Matrix が動作します。
 
-実際のトランスポートを使うTelegramスモークレーンを実行するには、次を実行します:
+transport-real な Telegram スモークレーンを実行するには、次を実行します:
 
 ```bash
 pnpm openclaw qa telegram
 ```
 
-このレーンは使い捨てサーバーをプロビジョニングする代わりに、実在する1つのプライベートTelegramグループを対象にします。`OPENCLAW_QA_TELEGRAM_GROUP_ID`、`OPENCLAW_QA_TELEGRAM_DRIVER_BOT_TOKEN`、`OPENCLAW_QA_TELEGRAM_SUT_BOT_TOKEN` が必要で、同じプライベートグループ内に2つの異なるボットが必要です。SUTボットにはTelegramユーザー名が必要で、ボット同士の観察は、両方のボットで `@BotFather` のBot-to-Bot Communication Modeが有効になっていると最もうまく機能します。
+このレーンは、使い捨てサーバーをプロビジョニングする代わりに、1 つの実在する
+private Telegram group を対象にします。これには `OPENCLAW_QA_TELEGRAM_GROUP_ID`、
+`OPENCLAW_QA_TELEGRAM_DRIVER_BOT_TOKEN`、
+`OPENCLAW_QA_TELEGRAM_SUT_BOT_TOKEN` が必要で、
+同じ private group 内に 2 つの異なる bot が必要です。SUT bot は Telegram username を
+持っている必要があり、両方の bot で `@BotFather` 内の Bot-to-Bot Communication Mode
+が有効になっていると、bot 間観察が最もよく機能します。
 
-ライブトランスポートレーンは、それぞれが独自のシナリオリスト形状を考案する代わりに、より小さな1つの共通契約を共有するようになりました:
+ライブ transport レーンは現在、それぞれが独自の scenario list 形状を考案する代わりに、
+1 つのより小さな contract を共有します:
 
-`qa-channel` は引き続き広範な合成プロダクト挙動スイートであり、ライブトランスポートのカバレッジマトリクスには含まれません。
+`qa-channel` は依然として広範な合成 product-behavior スイートであり、
+ライブ transport coverage matrix には含まれません。
 
-| レーン | Canary | メンションのゲーティング | 許可リストのブロック | トップレベル返信 | 再起動後の再開 | スレッドでのフォローアップ | スレッドの分離 | リアクションの観察 | ヘルプコマンド |
-| ------- | ------ | ------------------------ | -------------------- | ---------------- | -------------- | -------------------------- | -------------- | ------------------ | -------------- |
-| Matrix   | x      | x                        | x                    | x                | x              | x                          | x              | x                  |                |
-| Telegram | x      |                          |                      |                  |                |                            |                |                    | x              |
+| レーン   | Canary | Mention gating | Allowlist block | Top-level reply | Restart resume | Thread follow-up | Thread isolation | Reaction observation | Help command |
+| -------- | ------ | -------------- | --------------- | --------------- | -------------- | ---------------- | ---------------- | -------------------- | ------------ |
+| Matrix   | x      | x              | x               | x               | x              | x                | x                | x                    |              |
+| Telegram | x      |                |                 |                 |                |                  |                  |                      | x            |
 
-これにより、`qa-channel` は広範なプロダクト挙動スイートとして維持されつつ、Matrix、Telegram、および今後のライブトランスポートが、明示的なトランスポート契約チェックリストを共有できます。
+これにより、`qa-channel` は広範な product-behavior スイートとして維持される一方で、
+Matrix、Telegram、および将来のライブ transport は、1 つの明示的な
+transport-contract チェックリストを共有します。
 
-DockerをQAパスに持ち込まずに使い捨てのLinux VMレーンを実行するには、次を実行します:
+Docker を QA パスに持ち込まずに使い捨て Linux VM レーンを実行するには、
+次を実行します:
 
 ```bash
 pnpm openclaw qa suite --runner multipass --scenario channel-chat-baseline
 ```
 
-これにより新しいMultipassゲストが起動し、そのゲスト内で依存関係のインストールとOpenClawのビルドが行われ、`qa suite` が実行された後、通常のQAレポートとサマリーがホスト側の `.artifacts/qa-e2e/...` にコピーされます。  
-シナリオ選択の挙動は、ホスト上の `qa suite` と同じものを再利用します。  
-ホストとMultipassのスイート実行は、デフォルトで分離されたGatewayワーカーを使って複数の選択シナリオを並列実行し、最大64ワーカーまたは選択シナリオ数のいずれか小さい方まで利用します。ワーカー数を調整するには `--concurrency <count>` を使用し、直列実行には `--concurrency 1` を使用します。  
-ライブ実行では、ゲストにとって実用的な対応QA認証入力が転送されます。具体的には、環境変数ベースのプロバイダーキー、QAライブプロバイダー設定パス、存在する場合の `CODEX_HOME` です。ゲストがマウントされたワークスペース経由で書き戻せるように、`--output-dir` はリポジトリルート配下に維持してください。
+これにより新しい Multipass guest が起動し、依存関係がインストールされ、
+guest 内で OpenClaw がビルドされて `qa suite` が実行され、その後通常の QA レポートと
+summary がホスト上の `.artifacts/qa-e2e/...` にコピーされます。
+これは、ホスト上の `qa suite` と同じ scenario selection 動作を再利用します。
+ホストおよび Multipass の suite 実行では、選択された複数のシナリオを、分離された
+gateway worker によってデフォルトで並列実行します。最大 64 worker、
+または選択された scenario 数のいずれか少ない方までです。
+worker 数を調整するには `--concurrency <count>` を使用し、
+直列実行には `--concurrency 1` を使用してください。
+ライブ実行では、guest で現実的に扱えるサポート対象の QA auth 入力が転送されます:
+env ベースの provider key、QA live provider config path、
+および存在する場合の `CODEX_HOME` です。guest がマウントされた workspace を通じて
+書き戻せるように、`--output-dir` はリポジトリルート配下に維持してください。
 
-## リポジトリ連動のシード
+## リポジトリに裏付けられたシード
 
-シード資産は `qa/` にあります:
+シードアセットは `qa/` にあります:
 
 - `qa/scenarios/index.md`
 - `qa/scenarios/*.md`
 
-これらは、QA計画が人間とエージェントの両方から見えるように、意図的にgitに含められています。ベースライン一覧は、次をカバーできる程度に十分広く保つ必要があります:
+これらは意図的に git に置かれており、QA plan が人間とエージェントの両方から
+見えるようになっています。
 
-- DMとチャネルチャット
-- スレッド動作
-- メッセージアクションのライフサイクル
-- cronコールバック
-- メモリー想起
-- モデル切り替え
-- サブエージェントのハンドオフ
-- リポジトリ読み取りとドキュメント読み取り
-- Lobster Invadersのような小さなビルドタスク1つ
+`qa-lab` は汎用の markdown runner のままであるべきです。各 scenario markdown file は、
+1 回のテスト実行に対する source of truth であり、次を定義する必要があります:
+
+- scenario metadata
+- docs および code ref
+- 任意の Plugin 要件
+- 任意の gateway config patch
+- 実行可能な `qa-flow`
+
+ベースライン一覧は、少なくとも次をカバーできる十分な広さを保つ必要があります:
+
+- DM と channel chat
+- thread の動作
+- message action lifecycle
+- Cron callback
+- memory recall
+- model switching
+- subagent handoff
+- repo 読み取りと docs 読み取り
+- Lobster Invaders のような小さなビルドタスク 1 つ
+
+## transport adapter
+
+`qa-lab` は markdown QA シナリオ向けの汎用 transport seam を管理します。
+`qa-channel` はその seam 上の最初の adapter ですが、設計上の目標はより広く、
+将来の実チャネルまたは合成チャネルも、transport 固有の QA runner を追加するのではなく、
+同じ suite runner に接続できるようにすることです。
+
+アーキテクチャレベルでの分割は次のとおりです:
+
+- `qa-lab` は汎用 scenario execution、worker concurrency、artifact writing、reporting を管理します。
+- transport adapter は gateway config、readiness、受信および送信の観察、transport action、正規化された transport state を管理します。
+- `qa/scenarios/` 配下の markdown scenario file がテスト実行を定義し、それを実行する再利用可能な runtime surface は `qa-lab` が提供します。
+
+新しいチャネル adapter 向けの maintainer 向け導入ガイダンスは
+[Testing](/ja-JP/help/testing#adding-a-channel-to-qa) にあります。
 
 ## レポート
 
-`qa-lab` は、観察されたバスタイムラインからMarkdown形式のプロトコルレポートをエクスポートします。  
-レポートでは、次の点に答える必要があります:
+`qa-lab` は、観察された bus timeline から Markdown protocol report をエクスポートします。
+このレポートは次に答えるべきです:
 
 - 何が機能したか
 - 何が失敗したか
 - 何がブロックされたままだったか
-- どのフォローアップシナリオを追加する価値があるか
+- どの follow-up scenario を追加する価値があるか
 
-キャラクターとスタイルのチェックを行うには、同じシナリオを複数のライブモデル参照で実行し、評価済みMarkdownレポートを書き出します:
+キャラクターとスタイルのチェックについては、同じ scenario を複数の live model
+ref に対して実行し、判定付きの Markdown レポートを書き出します:
 
 ```bash
 pnpm openclaw qa character-eval \
@@ -134,13 +198,39 @@ pnpm openclaw qa character-eval \
   --judge-concurrency 16
 ```
 
-このコマンドはDockerではなく、ローカルのQA Gateway子プロセスを実行します。キャラクター評価シナリオでは、`SOUL.md` を通じてペルソナを設定し、その後、チャット、ワークスペースヘルプ、小さなファイルタスクのような通常のユーザーターンを実行する必要があります。候補モデルには、評価されていることを伝えないでください。このコマンドは各完全トランスクリプトを保持し、基本的な実行統計を記録したうえで、ジャッジモデルに高速モードかつ `xhigh` 推論で、自然さ、雰囲気、ユーモアに基づいて各実行を順位付けするよう求めます。  
-プロバイダー比較時には `--blind-judge-models` を使用してください。ジャッジプロンプトには引き続きすべてのトランスクリプトと実行ステータスが渡されますが、候補参照は `candidate-01` のような中立ラベルに置き換えられ、レポートは解析後に順位を実際の参照へ対応付け直します。  
-候補実行の思考レベルはデフォルトで `high` であり、それをサポートするOpenAIモデルでは `xhigh` が使われます。特定の候補を個別に上書きするには、`--model provider/model,thinking=<level>` をインラインで指定します。`--thinking <level>` は引き続きグローバルなフォールバックを設定し、旧形式の `--model-thinking <provider/model=level>` も互換性のために維持されています。  
-OpenAI候補参照は、プロバイダーが対応している場合に優先処理が使われるよう、デフォルトで高速モードになります。個別の候補またはジャッジで上書きしたい場合は、`,fast`、`,no-fast`、または `,fast=false` をインラインで追加してください。すべての候補モデルで高速モードを強制的に有効にしたい場合にのみ `--fast` を渡してください。候補とジャッジの所要時間はベンチマーク分析のためにレポートへ記録されますが、ジャッジプロンプトでは速度で順位付けしないよう明示的に指示されています。  
-候補モデル実行とジャッジモデル実行はいずれも、デフォルトで並列数16です。プロバイダー制限やローカルGateway負荷によって実行がうるさくなりすぎる場合は、`--concurrency` または `--judge-concurrency` を下げてください。  
-候補の `--model` が渡されない場合、キャラクター評価ではデフォルトで `openai/gpt-5.4`、`openai/gpt-5.2`、`openai/gpt-5`、`anthropic/claude-opus-4-6`、`anthropic/claude-sonnet-4-6`、`zai/glm-5.1`、`moonshot/kimi-k2.5`、`google/gemini-3.1-pro-preview` が使用されます。  
-`--judge-model` が渡されない場合、ジャッジはデフォルトで `openai/gpt-5.4,thinking=xhigh,fast` と `anthropic/claude-opus-4-6,thinking=high` になります。
+このコマンドは Docker ではなく、ローカルの QA gateway child process を実行します。
+character eval シナリオでは、`SOUL.md` を通じて persona を設定し、
+その後 chat、workspace help、小さな file task などの通常の user turn を実行する必要があります。
+候補 model には、それが評価中であることを伝えてはいけません。
+このコマンドは各完全 transcript を保持し、基本的な run stats を記録したうえで、
+judge model に fast mode と `xhigh` reasoning で、
+自然さ、雰囲気、ユーモアに基づいて run を順位付けするよう求めます。
+provider を比較する際は `--blind-judge-models` を使用してください:
+judge prompt は依然としてすべての transcript と run status を受け取りますが、
+candidate ref は `candidate-01` のような中立ラベルに置き換えられます。
+レポートはパース後に順位を実際の ref に再マッピングします。
+candidate run の thinking はデフォルトで `high` であり、
+それをサポートする OpenAI model では `xhigh` になります。
+特定の candidate をインラインで上書きするには、
+`--model provider/model,thinking=<level>` を使ってください。
+`--thinking <level>` は引き続きグローバルなフォールバックを設定し、
+古い `--model-thinking <provider/model=level>` 形式も互換性のために維持されています。
+OpenAI candidate ref は、provider がサポートする場合に priority processing を使うため、
+デフォルトで fast mode です。単一の candidate または judge に上書きが必要な場合は、
+`,fast`、`,no-fast`、または `,fast=false` をインラインで追加してください。
+すべての candidate model に対して fast mode を強制的に有効にしたい場合のみ、
+`--fast` を渡してください。candidate と judge の duration はベンチマーク分析のために
+レポートに記録されますが、judge prompt では明示的に速度で順位付けしないよう指示します。
+candidate と judge の model run はどちらもデフォルトで concurrency 16 です。
+provider 制限またはローカル gateway 負荷によって実行がノイジーになりすぎる場合は、
+`--concurrency` または `--judge-concurrency` を下げてください。
+candidate の `--model` が渡されない場合、character eval のデフォルトは
+`openai/gpt-5.4`、`openai/gpt-5.2`、`openai/gpt-5`、`anthropic/claude-opus-4-6`、
+`anthropic/claude-sonnet-4-6`、`zai/glm-5.1`、
+`moonshot/kimi-k2.5`、`google/gemini-3.1-pro-preview` です。
+judge の `--judge-model` が渡されない場合、judge のデフォルトは
+`openai/gpt-5.4,thinking=xhigh,fast` と
+`anthropic/claude-opus-4-6,thinking=high` です。
 
 ## 関連ドキュメント
 

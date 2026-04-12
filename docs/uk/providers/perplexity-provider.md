@@ -1,69 +1,132 @@
 ---
 read_when:
-    - Ви хочете налаштувати Perplexity як провайдера вебпошуку
-    - Вам потрібен API key Perplexity або налаштування проксі OpenRouter
-summary: Налаштування провайдера вебпошуку Perplexity (API key, режими пошуку, фільтрація)
-title: Perplexity (провайдер)
+    - Ви хочете налаштувати Perplexity як вебпровайдера пошуку
+    - Вам потрібен ключ API Perplexity або налаштування проксі OpenRouter
+summary: Налаштування вебпровайдера пошуку Perplexity (ключ API, режими пошуку, фільтрація)
+title: Perplexity (Provider)
 x-i18n:
-    generated_at: "2026-04-05T18:14:42Z"
+    generated_at: "2026-04-12T10:36:42Z"
     model: gpt-5.4
     provider: openai
-    source_hash: df9082d15d6a36a096e21efe8cee78e4b8643252225520f5b96a0b99cf5a7a4b
+    source_hash: 9a6cfa63541e875869db26e407c9433442b954933a5658f443be206a496aac83
     source_path: providers/perplexity-provider.md
     workflow: 15
 ---
 
-# Perplexity (провайдер вебпошуку)
+# Perplexity (вебпровайдер пошуку)
 
-Плагін Perplexity надає можливості вебпошуку через Search API Perplexity
+Плагін Perplexity надає можливості вебпошуку через API пошуку Perplexity
 або Perplexity Sonar через OpenRouter.
 
 <Note>
 Ця сторінка описує налаштування **провайдера** Perplexity. Для **інструмента**
-Perplexity (як агент його використовує) див. [інструмент Perplexity](/tools/perplexity-search).
+Perplexity (як агент його використовує) див. [інструмент Perplexity](/uk/tools/perplexity-search).
 </Note>
 
-- Тип: провайдер вебпошуку (не провайдер моделей)
-- Автентифікація: `PERPLEXITY_API_KEY` (напряму) або `OPENROUTER_API_KEY` (через OpenRouter)
-- Шлях конфігурації: `plugins.entries.perplexity.config.webSearch.apiKey`
+| Властивість | Значення                                                               |
+| ----------- | ---------------------------------------------------------------------- |
+| Тип         | Вебпровайдер пошуку (не провайдер моделей)                             |
+| Автентифікація | `PERPLEXITY_API_KEY` (напряму) або `OPENROUTER_API_KEY` (через OpenRouter) |
+| Шлях конфігурації | `plugins.entries.perplexity.config.webSearch.apiKey`                   |
 
-## Швидкий старт
+## Початок роботи
 
-1. Установіть API key:
+<Steps>
+  <Step title="Установіть ключ API">
+    Запустіть інтерактивний процес налаштування вебпошуку:
 
-```bash
-openclaw configure --section web
-```
+    ```bash
+    openclaw configure --section web
+    ```
 
-Або задайте його напряму:
+    Або встановіть ключ безпосередньо:
 
-```bash
-openclaw config set plugins.entries.perplexity.config.webSearch.apiKey "pplx-xxxxxxxxxxxx"
-```
+    ```bash
+    openclaw config set plugins.entries.perplexity.config.webSearch.apiKey "pplx-xxxxxxxxxxxx"
+    ```
 
-2. Агент автоматично використовуватиме Perplexity для вебпошуку, якщо його налаштовано.
+  </Step>
+  <Step title="Почніть шукати">
+    Агент автоматично використовуватиме Perplexity для вебпошуку, щойно ключ
+    буде налаштовано. Додаткових кроків не потрібно.
+  </Step>
+</Steps>
 
 ## Режими пошуку
 
-Плагін автоматично вибирає транспорт за префіксом API key:
+Плагін автоматично вибирає транспорт на основі префікса ключа API:
+
+<Tabs>
+  <Tab title="Власний API Perplexity (pplx-)">
+    Коли ваш ключ починається з `pplx-`, OpenClaw використовує власний API пошуку
+    Perplexity. Цей транспорт повертає структуровані результати та підтримує
+    фільтри домену, мови й дати (див. параметри фільтрації нижче).
+  </Tab>
+  <Tab title="OpenRouter / Sonar (sk-or-)">
+    Коли ваш ключ починається з `sk-or-`, OpenClaw спрямовує запити через
+    OpenRouter, використовуючи модель Perplexity Sonar. Цей транспорт повертає
+    синтезовані ШІ відповіді з посиланнями на джерела.
+  </Tab>
+</Tabs>
 
 | Префікс ключа | Транспорт                   | Можливості                                      |
 | ------------- | --------------------------- | ----------------------------------------------- |
-| `pplx-`       | Нативний Search API Perplexity | Структуровані результати, фільтри доменів/мови/дати |
-| `sk-or-`      | OpenRouter (Sonar)          | AI-синтезовані відповіді з цитуванням           |
+| `pplx-`       | Власний API пошуку Perplexity | Структуровані результати, фільтри домену/мови/дати |
+| `sk-or-`      | OpenRouter (Sonar)          | Синтезовані ШІ відповіді з посиланнями на джерела |
 
-## Фільтрація нативного API
+## Фільтрація у власному API
 
-При використанні нативного API Perplexity (ключ `pplx-`) пошук підтримує:
+<Note>
+Параметри фільтрації доступні лише під час використання власного API Perplexity
+(ключ `pplx-`). Пошук через OpenRouter/Sonar не підтримує ці параметри.
+</Note>
 
-- **Країна**: дволітерний код країни
-- **Мова**: код мови ISO 639-1
-- **Діапазон дат**: день, тиждень, місяць, рік
-- **Фільтри доменів**: allowlist/denylist (максимум 20 доменів)
-- **Бюджет вмісту**: `max_tokens`, `max_tokens_per_page`
+Під час використання власного API Perplexity пошук підтримує такі фільтри:
 
-## Примітка щодо середовища
+| Фільтр         | Опис                                      | Приклад                             |
+| -------------- | ----------------------------------------- | ----------------------------------- |
+| Країна         | 2-літерний код країни                     | `us`, `de`, `jp`                    |
+| Мова           | Код мови ISO 639-1                        | `en`, `fr`, `zh`                    |
+| Діапазон дат   | Вікно актуальності                        | `day`, `week`, `month`, `year`      |
+| Фільтри доменів | Список дозволених або заборонених доменів (макс. 20 доменів) | `example.com`                       |
+| Бюджет вмісту  | Обмеження токенів на відповідь / на сторінку | `max_tokens`, `max_tokens_per_page` |
 
-Якщо Gateway працює як daemon (launchd/systemd), переконайтеся, що
-`PERPLEXITY_API_KEY` доступна для цього процесу (наприклад, у
-`~/.openclaw/.env` або через `env.shellEnv`).
+## Додаткові примітки
+
+<AccordionGroup>
+  <Accordion title="Змінна середовища для фонових процесів">
+    Якщо Gateway OpenClaw працює як фоновий процес (launchd/systemd), переконайтеся,
+    що `PERPLEXITY_API_KEY` доступний для цього процесу.
+
+    <Warning>
+    Ключ, заданий лише в `~/.profile`, не буде видимий для демона launchd/systemd,
+    якщо це середовище не було явно імпортовано. Установіть ключ у
+    `~/.openclaw/.env` або через `env.shellEnv`, щоб процес gateway міг його
+    прочитати.
+    </Warning>
+
+  </Accordion>
+
+  <Accordion title="Налаштування проксі OpenRouter">
+    Якщо ви хочете спрямовувати пошук Perplexity через OpenRouter, установіть
+    `OPENROUTER_API_KEY` (префікс `sk-or-`) замість власного ключа Perplexity.
+    OpenClaw виявить префікс і автоматично переключиться на транспорт Sonar.
+
+    <Tip>
+    Транспорт OpenRouter корисний, якщо у вас уже є обліковий запис OpenRouter
+    і ви хочете консолідоване виставлення рахунків для кількох провайдерів.
+    </Tip>
+
+  </Accordion>
+</AccordionGroup>
+
+## Пов’язані матеріали
+
+<CardGroup cols={2}>
+  <Card title="Інструмент пошуку Perplexity" href="/uk/tools/perplexity-search" icon="magnifying-glass">
+    Як агент викликає пошук Perplexity та інтерпретує результати.
+  </Card>
+  <Card title="Довідник із конфігурації" href="/uk/gateway/configuration-reference" icon="gear">
+    Повний довідник із конфігурації, включно із записами плагінів.
+  </Card>
+</CardGroup>

@@ -1,142 +1,174 @@
 ---
 read_when:
-    - Ви хочете запускати OpenClaw із хмарними або локальними моделями через Ollama
-    - Вам потрібні вказівки з налаштування та конфігурації Ollama
-summary: Запуск OpenClaw з Ollama (хмарні та локальні моделі)
+    - Ви хочете запустити OpenClaw із хмарними або локальними моделями через Ollama
+    - Вам потрібні вказівки щодо налаштування та конфігурації Ollama
+summary: Запустіть OpenClaw з Ollama (хмарні та локальні моделі)
 title: Ollama
 x-i18n:
-    generated_at: "2026-04-08T06:29:09Z"
+    generated_at: "2026-04-12T10:03:22Z"
     model: gpt-5.4
     provider: openai
-    source_hash: d3295a7c879d3636a2ffdec05aea6e670e54a990ef52bd9b0cae253bc24aa3f7
+    source_hash: 48c956d7b933d2ac637784eff1f0613b15a2b3eb5da7c030133427a73b064117
     source_path: providers/ollama.md
     workflow: 15
 ---
 
 # Ollama
 
-Ollama — це локальне середовище виконання LLM, яке полегшує запуск моделей з відкритим кодом на вашому комп’ютері. OpenClaw інтегрується з нативним API Ollama (`/api/chat`), підтримує потокове передавання та виклик інструментів, а також може автоматично виявляти локальні моделі Ollama, якщо ви вкажете `OLLAMA_API_KEY` (або профіль автентифікації) і не визначите явний запис `models.providers.ollama`.
+Ollama — це локальне середовище виконання LLM, яке спрощує запуск моделей із відкритим кодом на вашому комп’ютері. OpenClaw інтегрується з рідним API Ollama (`/api/chat`), підтримує потокову передачу та виклик інструментів, а також може автоматично виявляти локальні моделі Ollama, коли ви вмикаєте це за допомогою `OLLAMA_API_KEY` (або профілю автентифікації) і не визначаєте явний запис `models.providers.ollama`.
 
 <Warning>
-**Користувачі віддаленої Ollama**: не використовуйте URL OpenAI-сумісного `/v1` (`http://host:11434/v1`) з OpenClaw. Це ламає виклик інструментів, і моделі можуть виводити сирий JSON інструментів як звичайний текст. Натомість використовуйте URL нативного API Ollama: `baseUrl: "http://host:11434"` (без `/v1`).
+**Користувачі віддаленого Ollama**: Не використовуйте OpenAI-сумісну URL-адресу `/v1` (`http://host:11434/v1`) з OpenClaw. Це ламає виклик інструментів, і моделі можуть виводити необроблений JSON інструментів як звичайний текст. Натомість використовуйте рідну URL-адресу API Ollama: `baseUrl: "http://host:11434"` (без `/v1`).
 </Warning>
 
-## Швидкий початок
+## Початок роботи
 
-### Онбординг (рекомендовано)
+Виберіть бажаний спосіб налаштування та режим.
 
-Найшвидший спосіб налаштувати Ollama — через онбординг:
+<Tabs>
+  <Tab title="Onboarding (recommended)">
+    **Найкраще для:** найшвидшого способу отримати працездатне налаштування Ollama з автоматичним виявленням моделей.
+
+    <Steps>
+      <Step title="Run onboarding">
+        ```bash
+        openclaw onboard
+        ```
+
+        Виберіть **Ollama** зі списку постачальників.
+      </Step>
+      <Step title="Choose your mode">
+        - **Cloud + Local** — хмарні та локальні моделі разом
+        - **Local** — лише локальні моделі
+
+        Якщо ви виберете **Cloud + Local** і не ввійшли в ollama.com, під час онбордингу відкриється потік входу через браузер.
+      </Step>
+      <Step title="Select a model">
+        Під час онбордингу виявляються доступні моделі та пропонуються типові значення. Якщо вибрана модель недоступна локально, її буде автоматично завантажено.
+      </Step>
+      <Step title="Verify the model is available">
+        ```bash
+        openclaw models list --provider ollama
+        ```
+      </Step>
+    </Steps>
+
+    ### Неінтерактивний режим
+
+    ```bash
+    openclaw onboard --non-interactive \
+      --auth-choice ollama \
+      --accept-risk
+    ```
+
+    За потреби вкажіть власну базову URL-адресу або модель:
+
+    ```bash
+    openclaw onboard --non-interactive \
+      --auth-choice ollama \
+      --custom-base-url "http://ollama-host:11434" \
+      --custom-model-id "qwen3.5:27b" \
+      --accept-risk
+    ```
+
+  </Tab>
+
+  <Tab title="Manual setup">
+    **Найкраще для:** повного контролю над встановленням, завантаженням моделей і конфігурацією.
+
+    <Steps>
+      <Step title="Install Ollama">
+        Завантажте з [ollama.com/download](https://ollama.com/download).
+      </Step>
+      <Step title="Pull a local model">
+        ```bash
+        ollama pull gemma4
+        # або
+        ollama pull gpt-oss:20b
+        # або
+        ollama pull llama3.3
+        ```
+      </Step>
+      <Step title="Sign in for cloud models (optional)">
+        Якщо вам також потрібні хмарні моделі:
+
+        ```bash
+        ollama signin
+        ```
+      </Step>
+      <Step title="Enable Ollama for OpenClaw">
+        Установіть будь-яке значення для ключа API (Ollama не вимагає справжнього ключа):
+
+        ```bash
+        # Установіть змінну середовища
+        export OLLAMA_API_KEY="ollama-local"
+
+        # Або налаштуйте у своєму файлі конфігурації
+        openclaw config set models.providers.ollama.apiKey "ollama-local"
+        ```
+      </Step>
+      <Step title="Inspect and set your model">
+        ```bash
+        openclaw models list
+        openclaw models set ollama/gemma4
+        ```
+
+        Або встановіть типове значення в конфігурації:
+
+        ```json5
+        {
+          agents: {
+            defaults: {
+              model: { primary: "ollama/gemma4" },
+            },
+          },
+        }
+        ```
+      </Step>
+    </Steps>
+
+  </Tab>
+</Tabs>
+
+## Хмарні моделі
+
+<Tabs>
+  <Tab title="Cloud + Local">
+    Хмарні моделі дають змогу запускати хмарні моделі разом із локальними моделями. Приклади: `kimi-k2.5:cloud`, `minimax-m2.7:cloud` і `glm-5.1:cloud` -- для них **не** потрібен локальний `ollama pull`.
+
+    Під час налаштування виберіть режим **Cloud + Local**. Майстер перевіряє, чи ви ввійшли в систему, і за потреби відкриває потік входу через браузер. Якщо не вдається перевірити автентифікацію, майстер повертається до типових значень локальних моделей.
+
+    Ви також можете ввійти безпосередньо на [ollama.com/signin](https://ollama.com/signin).
+
+    Зараз OpenClaw пропонує такі хмарні типові значення: `kimi-k2.5:cloud`, `minimax-m2.7:cloud`, `glm-5.1:cloud`.
+
+  </Tab>
+
+  <Tab title="Local only">
+    У режимі лише локальних моделей OpenClaw виявляє моделі з локального екземпляра Ollama. Вхід у хмару не потрібен.
+
+    Зараз OpenClaw пропонує `gemma4` як локальне типове значення.
+
+  </Tab>
+</Tabs>
+
+## Виявлення моделей (неявний постачальник)
+
+Коли ви встановлюєте `OLLAMA_API_KEY` (або профіль автентифікації) і **не** визначаєте `models.providers.ollama`, OpenClaw виявляє моделі з локального екземпляра Ollama за адресою `http://127.0.0.1:11434`.
+
+| Поведінка             | Докладно                                                                                                                                                             |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Запит каталогу        | Виконує запити до `/api/tags`                                                                                                                                         |
+| Визначення можливостей | Використовує найкращі зусилля з пошуком через `/api/show`, щоб зчитати `contextWindow` і визначити можливості (зокрема підтримку зображень)                       |
+| Моделі з підтримкою зображень | Моделі з можливістю `vision`, про яку повідомляє `/api/show`, позначаються як такі, що підтримують зображення (`input: ["text", "image"]`), тому OpenClaw автоматично додає зображення в запит |
+| Визначення міркування | Позначає `reasoning` за допомогою евристики на основі назви моделі (`r1`, `reasoning`, `think`)                                                                     |
+| Ліміти токенів        | Установлює `maxTokens` на типове максимальне обмеження токенів Ollama, яке використовує OpenClaw                                                                    |
+| Вартість              | Установлює всю вартість у `0`                                                                                                                                         |
+
+Це дає змогу уникнути ручного додавання моделей і водночас зберігати каталог узгодженим із локальним екземпляром Ollama.
 
 ```bash
-openclaw onboard
-```
-
-Виберіть **Ollama** зі списку провайдерів. Під час онбордингу буде зроблено таке:
-
-1. Запитано базовий URL Ollama, за яким можна звернутися до вашого екземпляра (типово `http://127.0.0.1:11434`).
-2. Запропоновано вибрати **Cloud + Local** (хмарні та локальні моделі) або **Local** (лише локальні моделі).
-3. Відкрито в браузері потік входу, якщо ви виберете **Cloud + Local** і не ввійшли в ollama.com.
-4. Виявлено доступні моделі та запропоновано типові варіанти.
-5. Автоматично завантажено вибрану модель, якщо вона недоступна локально.
-
-Також підтримується неінтерактивний режим:
-
-```bash
-openclaw onboard --non-interactive \
-  --auth-choice ollama \
-  --accept-risk
-```
-
-За потреби можна вказати власний базовий URL або модель:
-
-```bash
-openclaw onboard --non-interactive \
-  --auth-choice ollama \
-  --custom-base-url "http://ollama-host:11434" \
-  --custom-model-id "qwen3.5:27b" \
-  --accept-risk
-```
-
-### Ручне налаштування
-
-1. Установіть Ollama: [https://ollama.com/download](https://ollama.com/download)
-
-2. Завантажте локальну модель, якщо хочете використовувати локальний інференс:
-
-```bash
-ollama pull gemma4
-# або
-ollama pull gpt-oss:20b
-# або
-ollama pull llama3.3
-```
-
-3. Якщо ви також хочете використовувати хмарні моделі, увійдіть:
-
-```bash
-ollama signin
-```
-
-4. Запустіть онбординг і виберіть `Ollama`:
-
-```bash
-openclaw onboard
-```
-
-- `Local`: лише локальні моделі
-- `Cloud + Local`: локальні моделі та хмарні моделі
-- Хмарні моделі, як-от `kimi-k2.5:cloud`, `minimax-m2.7:cloud` і `glm-5.1:cloud`, **не** потребують локального `ollama pull`
-
-Наразі OpenClaw пропонує:
-
-- типовий локальний варіант: `gemma4`
-- типові хмарні варіанти: `kimi-k2.5:cloud`, `minimax-m2.7:cloud`, `glm-5.1:cloud`
-
-5. Якщо ви віддаєте перевагу ручному налаштуванню, увімкніть Ollama для OpenClaw напряму (підійде будь-яке значення; Ollama не потребує справжнього ключа):
-
-```bash
-# Встановіть змінну середовища
-export OLLAMA_API_KEY="ollama-local"
-
-# Або налаштуйте у вашому файлі конфігурації
-openclaw config set models.providers.ollama.apiKey "ollama-local"
-```
-
-6. Перегляньте або перемкніть моделі:
-
-```bash
-openclaw models list
-openclaw models set ollama/gemma4
-```
-
-7. Або встановіть типову модель у конфігурації:
-
-```json5
-{
-  agents: {
-    defaults: {
-      model: { primary: "ollama/gemma4" },
-    },
-  },
-}
-```
-
-## Виявлення моделей (неявний провайдер)
-
-Коли ви задаєте `OLLAMA_API_KEY` (або профіль автентифікації) і **не** визначаєте `models.providers.ollama`, OpenClaw виявляє моделі з локального екземпляра Ollama за адресою `http://127.0.0.1:11434`:
-
-- Виконує запити до `/api/tags`
-- Використовує best-effort запити до `/api/show`, щоб зчитати `contextWindow` і визначити можливості (зокрема vision), коли це доступно
-- Моделі з можливістю `vision`, про яку повідомляє `/api/show`, позначаються як здатні працювати із зображеннями (`input: ["text", "image"]`), тож OpenClaw автоматично додає зображення до підказки для таких моделей
-- Позначає `reasoning` за евристикою назви моделі (`r1`, `reasoning`, `think`)
-- Встановлює `maxTokens` на типове максимальне обмеження токенів Ollama, яке використовує OpenClaw
-- Встановлює всі вартості в `0`
-
-Це дає змогу уникнути ручного додавання моделей, зберігаючи каталог узгодженим із локальним екземпляром Ollama.
-
-Щоб побачити, які моделі доступні:
-
-```bash
+# Подивитися, які моделі доступні
 ollama list
 openclaw models list
 ```
@@ -147,76 +179,81 @@ openclaw models list
 ollama pull mistral
 ```
 
-Нова модель буде автоматично виявлена та стане доступною для використання.
+Нова модель буде автоматично виявлена і стане доступною для використання.
 
-Якщо ви явно задаєте `models.providers.ollama`, автоматичне виявлення вимикається, і вам потрібно визначати моделі вручну (див. нижче).
+<Note>
+Якщо ви явно задаєте `models.providers.ollama`, автоматичне виявлення пропускається, і вам доведеться визначати моделі вручну. Дивіться розділ явної конфігурації нижче.
+</Note>
 
 ## Конфігурація
 
-### Базове налаштування (неявне виявлення)
+<Tabs>
+  <Tab title="Basic (implicit discovery)">
+    Найпростіший спосіб увімкнути Ollama — через змінну середовища:
 
-Найпростіший спосіб увімкнути Ollama — через змінну середовища:
+    ```bash
+    export OLLAMA_API_KEY="ollama-local"
+    ```
 
-```bash
-export OLLAMA_API_KEY="ollama-local"
-```
+    <Tip>
+    Якщо `OLLAMA_API_KEY` задано, ви можете не вказувати `apiKey` у записі постачальника, і OpenClaw підставить його для перевірок доступності.
+    </Tip>
 
-### Явне налаштування (ручні моделі)
+  </Tab>
 
-Використовуйте явну конфігурацію, якщо:
+  <Tab title="Explicit (manual models)">
+    Використовуйте явну конфігурацію, якщо Ollama працює на іншому хості або порту, ви хочете примусово вказати певні контекстні вікна чи списки моделей, або вам потрібні повністю ручні визначення моделей.
 
-- Ollama працює на іншому хості або порту.
-- Ви хочете примусово задати конкретні контекстні вікна або списки моделей.
-- Ви хочете повністю ручні визначення моделей.
-
-```json5
-{
-  models: {
-    providers: {
-      ollama: {
-        baseUrl: "http://ollama-host:11434",
-        apiKey: "ollama-local",
-        api: "ollama",
-        models: [
-          {
-            id: "gpt-oss:20b",
-            name: "GPT-OSS 20B",
-            reasoning: false,
-            input: ["text"],
-            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-            contextWindow: 8192,
-            maxTokens: 8192 * 10
+    ```json5
+    {
+      models: {
+        providers: {
+          ollama: {
+            baseUrl: "http://ollama-host:11434",
+            apiKey: "ollama-local",
+            api: "ollama",
+            models: [
+              {
+                id: "gpt-oss:20b",
+                name: "GPT-OSS 20B",
+                reasoning: false,
+                input: ["text"],
+                cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+                contextWindow: 8192,
+                maxTokens: 8192 * 10
+              }
+            ]
           }
-        ]
+        }
       }
     }
-  }
-}
-```
+    ```
 
-Якщо задано `OLLAMA_API_KEY`, ви можете не вказувати `apiKey` у записі провайдера, і OpenClaw підставить його для перевірок доступності.
+  </Tab>
 
-### Власний базовий URL (явна конфігурація)
+  <Tab title="Custom base URL">
+    Якщо Ollama працює на іншому хості або порту (явна конфігурація вимикає автоматичне виявлення, тому визначайте моделі вручну):
 
-Якщо Ollama працює на іншому хості або порту (явна конфігурація вимикає автоматичне виявлення, тож визначте моделі вручну):
-
-```json5
-{
-  models: {
-    providers: {
-      ollama: {
-        apiKey: "ollama-local",
-        baseUrl: "http://ollama-host:11434", // Без /v1 - використовуйте URL нативного API Ollama
-        api: "ollama", // Вкажіть явно, щоб гарантувати нативну поведінку виклику інструментів
+    ```json5
+    {
+      models: {
+        providers: {
+          ollama: {
+            apiKey: "ollama-local",
+            baseUrl: "http://ollama-host:11434", // Без /v1 - використовуйте рідну URL-адресу API Ollama
+            api: "ollama", // Укажіть явно, щоб гарантувати рідну поведінку виклику інструментів
+          },
+        },
       },
-    },
-  },
-}
-```
+    }
+    ```
 
-<Warning>
-Не додавайте `/v1` до URL. Шлях `/v1` використовує OpenAI-сумісний режим, у якому виклик інструментів працює ненадійно. Використовуйте базовий URL Ollama без суфікса шляху.
-</Warning>
+    <Warning>
+    Не додавайте `/v1` до URL-адреси. Шлях `/v1` використовує OpenAI-сумісний режим, у якому виклик інструментів працює ненадійно. Використовуйте базову URL-адресу Ollama без суфікса шляху.
+    </Warning>
+
+  </Tab>
+</Tabs>
 
 ### Вибір моделі
 
@@ -235,24 +272,17 @@ export OLLAMA_API_KEY="ollama-local"
 }
 ```
 
-## Хмарні моделі
+## Вебпошук Ollama
 
-Хмарні моделі дають змогу запускати розміщені в хмарі моделі (наприклад, `kimi-k2.5:cloud`, `minimax-m2.7:cloud`, `glm-5.1:cloud`) разом із вашими локальними моделями.
+OpenClaw підтримує **Ollama Web Search** як вбудований постачальник `web_search`.
 
-Щоб використовувати хмарні моделі, виберіть режим **Cloud + Local** під час налаштування. Майстер перевіряє, чи ви ввійшли, і за потреби відкриває в браузері потік входу. Якщо автентифікацію неможливо перевірити, майстер повертається до типових локальних моделей.
+| Властивість | Докладно                                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| Хост        | Використовує налаштований хост Ollama (`models.providers.ollama.baseUrl`, якщо задано, інакше `http://127.0.0.1:11434`) |
+| Автентифікація | Без ключа                                                                                                       |
+| Вимога      | Ollama має працювати, і ви повинні бути авторизовані через `ollama signin`                                        |
 
-Ви також можете ввійти безпосередньо на [ollama.com/signin](https://ollama.com/signin).
-
-## Ollama Web Search
-
-OpenClaw також підтримує **Ollama Web Search** як вбудований провайдер `web_search`.
-
-- Він використовує налаштований вами хост Ollama (`models.providers.ollama.baseUrl`, якщо задано, інакше `http://127.0.0.1:11434`).
-- Для нього не потрібен ключ.
-- Потрібно, щоб Ollama була запущена і щоб ви ввійшли через `ollama signin`.
-
-Виберіть **Ollama Web Search** під час `openclaw onboard` або
-`openclaw configure --section web`, або задайте:
+Виберіть **Ollama Web Search** під час `openclaw onboard` або `openclaw configure --section web`, або задайте:
 
 ```json5
 {
@@ -266,120 +296,169 @@ OpenClaw також підтримує **Ollama Web Search** як вбудова
 }
 ```
 
+<Note>
 Повні відомості про налаштування та поведінку дивіться в [Ollama Web Search](/uk/tools/ollama-search).
+</Note>
 
-## Додатково
+## Розширена конфігурація
 
-### Моделі з reasoning
+<AccordionGroup>
+  <Accordion title="Legacy OpenAI-compatible mode">
+    <Warning>
+    **Виклик інструментів в OpenAI-сумісному режимі працює ненадійно.** Використовуйте цей режим лише тоді, коли вам потрібен формат OpenAI для проксі й ви не залежите від рідної поведінки виклику інструментів.
+    </Warning>
 
-OpenClaw за замовчуванням вважає моделі з назвами на кшталт `deepseek-r1`, `reasoning` або `think` здатними до reasoning:
+    Якщо вам потрібно використовувати натомість OpenAI-сумісну кінцеву точку (наприклад, за проксі, який підтримує лише формат OpenAI), явно встановіть `api: "openai-completions"`:
 
-```bash
-ollama pull deepseek-r1:32b
-```
-
-### Вартість моделей
-
-Ollama є безкоштовною та працює локально, тому вартість усіх моделей встановлено в $0.
-
-### Налаштування потокового передавання
-
-Інтеграція Ollama в OpenClaw типово використовує **нативний API Ollama** (`/api/chat`), який повністю підтримує одночасно потокове передавання та виклик інструментів. Додаткового налаштування не потрібно.
-
-#### Застарілий OpenAI-сумісний режим
-
-<Warning>
-**Виклик інструментів в OpenAI-сумісному режимі працює ненадійно.** Використовуйте цей режим лише якщо вам потрібен формат OpenAI для проксі й ви не покладаєтеся на нативну поведінку виклику інструментів.
-</Warning>
-
-Якщо замість цього вам потрібно використовувати OpenAI-сумісну кінцеву точку (наприклад, за проксі, який підтримує лише формат OpenAI), явно задайте `api: "openai-completions"`:
-
-```json5
-{
-  models: {
-    providers: {
-      ollama: {
-        baseUrl: "http://ollama-host:11434/v1",
-        api: "openai-completions",
-        injectNumCtxForOpenAICompat: true, // типово: true
-        apiKey: "ollama-local",
-        models: [...]
+    ```json5
+    {
+      models: {
+        providers: {
+          ollama: {
+            baseUrl: "http://ollama-host:11434/v1",
+            api: "openai-completions",
+            injectNumCtxForOpenAICompat: true, // типово: true
+            apiKey: "ollama-local",
+            models: [...]
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
 
-У цьому режимі може не підтримуватися одночасне потокове передавання та виклик інструментів. Можливо, вам доведеться вимкнути потокове передавання за допомогою `params: { streaming: false }` у конфігурації моделі.
+    Цей режим може не підтримувати одночасно потокову передачу й виклик інструментів. Можливо, вам доведеться вимкнути потокову передачу за допомогою `params: { streaming: false }` у конфігурації моделі.
 
-Коли з Ollama використовується `api: "openai-completions"`, OpenClaw типово додає `options.num_ctx`, щоб Ollama не переходила мовчки до контекстного вікна 4096. Якщо ваш проксі або upstream відхиляє невідомі поля `options`, вимкніть цю поведінку:
+    Коли `api: "openai-completions"` використовується з Ollama, OpenClaw типово додає `options.num_ctx`, щоб Ollama непомітно не повертався до контекстного вікна 4096. Якщо ваш проксі або upstream відхиляє невідомі поля `options`, вимкніть цю поведінку:
 
-```json5
-{
-  models: {
-    providers: {
-      ollama: {
-        baseUrl: "http://ollama-host:11434/v1",
-        api: "openai-completions",
-        injectNumCtxForOpenAICompat: false,
-        apiKey: "ollama-local",
-        models: [...]
+    ```json5
+    {
+      models: {
+        providers: {
+          ollama: {
+            baseUrl: "http://ollama-host:11434/v1",
+            api: "openai-completions",
+            injectNumCtxForOpenAICompat: false,
+            apiKey: "ollama-local",
+            models: [...]
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
 
-### Контекстні вікна
+  </Accordion>
 
-Для автоматично виявлених моделей OpenClaw використовує контекстне вікно, про яке повідомляє Ollama, коли воно доступне; інакше використовується типове контекстне вікно Ollama, яке застосовує OpenClaw. Ви можете перевизначити `contextWindow` і `maxTokens` в явній конфігурації провайдера.
+  <Accordion title="Context windows">
+    Для автоматично виявлених моделей OpenClaw використовує контекстне вікно, про яке повідомляє Ollama, якщо воно доступне; інакше використовується типове контекстне вікно Ollama, яке застосовує OpenClaw.
+
+    Ви можете перевизначити `contextWindow` і `maxTokens` в явній конфігурації постачальника:
+
+    ```json5
+    {
+      models: {
+        providers: {
+          ollama: {
+            models: [
+              {
+                id: "llama3.3",
+                contextWindow: 131072,
+                maxTokens: 65536,
+              }
+            ]
+          }
+        }
+      }
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Моделі з міркуванням">
+    OpenClaw типово вважає моделі з назвами на кшталт `deepseek-r1`, `reasoning` або `think` такими, що підтримують міркування.
+
+    ```bash
+    ollama pull deepseek-r1:32b
+    ```
+
+    Додаткова конфігурація не потрібна -- OpenClaw позначає їх автоматично.
+
+  </Accordion>
+
+  <Accordion title="Вартість моделей">
+    Ollama є безкоштовним і працює локально, тому для всіх моделей установлено вартість $0. Це стосується як автоматично виявлених, так і вручну визначених моделей.
+  </Accordion>
+
+  <Accordion title="Конфігурація потокової передачі">
+    Інтеграція Ollama в OpenClaw типово використовує **рідний API Ollama** (`/api/chat`), який повністю підтримує одночасно потокову передачу та виклик інструментів. Жодної спеціальної конфігурації не потрібно.
+
+    <Tip>
+    Якщо вам потрібно використовувати OpenAI-сумісну кінцеву точку, дивіться розділ "Legacy OpenAI-compatible mode" вище. У цьому режимі потокова передача та виклик інструментів можуть не працювати одночасно.
+    </Tip>
+
+  </Accordion>
+</AccordionGroup>
 
 ## Усунення несправностей
 
-### Ollama не виявлено
+<AccordionGroup>
+  <Accordion title="Ollama не виявлено">
+    Переконайтеся, що Ollama запущено, що ви встановили `OLLAMA_API_KEY` (або профіль автентифікації) і що ви **не** визначили явний запис `models.providers.ollama`:
 
-Переконайтеся, що Ollama запущена, що ви задали `OLLAMA_API_KEY` (або профіль автентифікації), і що ви **не** визначили явний запис `models.providers.ollama`:
+    ```bash
+    ollama serve
+    ```
 
-```bash
-ollama serve
-```
+    Перевірте, що API доступний:
 
-А також що API доступне:
+    ```bash
+    curl http://localhost:11434/api/tags
+    ```
 
-```bash
-curl http://localhost:11434/api/tags
-```
+  </Accordion>
 
-### Немає доступних моделей
+  <Accordion title="Немає доступних моделей">
+    Якщо вашу модель не вказано у списку, або завантажте її локально, або визначте її явно в `models.providers.ollama`.
 
-Якщо вашу модель не показано в списку, зробіть одне з такого:
+    ```bash
+    ollama list  # Подивитися, що встановлено
+    ollama pull gemma4
+    ollama pull gpt-oss:20b
+    ollama pull llama3.3     # Або іншу модель
+    ```
 
-- Завантажте модель локально, або
-- Явно визначте модель у `models.providers.ollama`.
+  </Accordion>
 
-Щоб додати моделі:
+  <Accordion title="У з’єднанні відмовлено">
+    Переконайтеся, що Ollama працює на правильному порту:
 
-```bash
-ollama list  # Подивіться, що встановлено
-ollama pull gemma4
-ollama pull gpt-oss:20b
-ollama pull llama3.3     # Або іншу модель
-```
+    ```bash
+    # Перевірити, чи запущено Ollama
+    ps aux | grep ollama
 
-### У з’єднанні відмовлено
+    # Або перезапустити Ollama
+    ollama serve
+    ```
 
-Перевірте, що Ollama працює на правильному порту:
+  </Accordion>
+</AccordionGroup>
 
-```bash
-# Перевірте, чи запущена Ollama
-ps aux | grep ollama
+<Note>
+Більше довідки: [Усунення несправностей](/uk/help/troubleshooting) і [FAQ](/uk/help/faq).
+</Note>
 
-# Або перезапустіть Ollama
-ollama serve
-```
+## Пов’язане
 
-## Дивіться також
-
-- [Провайдери моделей](/uk/concepts/model-providers) - Огляд усіх провайдерів
-- [Вибір моделі](/uk/concepts/models) - Як вибирати моделі
-- [Конфігурація](/uk/gateway/configuration) - Повний довідник із конфігурації
+<CardGroup cols={2}>
+  <Card title="Постачальники моделей" href="/uk/concepts/model-providers" icon="layers">
+    Огляд усіх постачальників, посилань на моделі та поведінки перемикання при відмові.
+  </Card>
+  <Card title="Вибір моделі" href="/uk/concepts/models" icon="brain">
+    Як вибирати та налаштовувати моделі.
+  </Card>
+  <Card title="Ollama Web Search" href="/uk/tools/ollama-search" icon="magnifying-glass">
+    Повні відомості про налаштування та поведінку вебпошуку на основі Ollama.
+  </Card>
+  <Card title="Конфігурація" href="/uk/gateway/configuration" icon="gear">
+    Повний довідник із конфігурації.
+  </Card>
+</CardGroup>

@@ -53,6 +53,10 @@
   },
   "redirects": [
     {
+      "source": "/mcp",
+      "destination": "/cli/mcp"
+    },
+    {
       "source": "/providers/modelstudio",
       "destination": "/providers/qwen"
     },
@@ -1128,6 +1132,8 @@
                   "plugins/codex-harness",
                   "plugins/webhooks",
                   "plugins/voice-call",
+                  "plugins/memory-wiki",
+                  "plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -1200,6 +1206,7 @@
                       "tools/gemini-search",
                       "tools/grok-search",
                       "tools/kimi-search",
+                      "tools/minimax-search",
                       "tools/ollama-search",
                       "tools/perplexity-search",
                       "tools/searxng-search",
@@ -1267,10 +1274,12 @@
                   "providers/deepgram",
                   "providers/deepseek",
                   "providers/fal",
+                  "providers/fireworks",
                   "providers/github-copilot",
                   "providers/glm",
                   "providers/google",
                   "providers/groq",
+                  "providers/inferrs",
                   "providers/huggingface",
                   "providers/kilocode",
                   "providers/litellm",
@@ -1488,6 +1497,7 @@
                       "cli/agent",
                       "cli/agents",
                       "cli/hooks",
+                      "cli/infer",
                       "cli/memory",
                       "cli/message",
                       "cli/models",
@@ -1548,7 +1558,8 @@
                       "cli/completion",
                       "cli/dns",
                       "cli/docs",
-                      "cli/mcp"
+                      "cli/mcp",
+                      "cli/wiki"
                     ]
                   }
                 ]
@@ -1585,6 +1596,7 @@
                   "reference/api-usage-costs",
                   "reference/transcript-hygiene",
                   "reference/memory-config",
+                  "reference/rich-output-protocol",
                   "date-time"
                 ]
               },
@@ -2499,6 +2511,8 @@
                   "ja-JP/plugins/codex-harness",
                   "ja-JP/plugins/webhooks",
                   "ja-JP/plugins/voice-call",
+                  "ja-JP/plugins/memory-wiki",
+                  "ja-JP/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -2571,6 +2585,7 @@
                       "ja-JP/tools/gemini-search",
                       "ja-JP/tools/grok-search",
                       "ja-JP/tools/kimi-search",
+                      "ja-JP/tools/minimax-search",
                       "ja-JP/tools/ollama-search",
                       "ja-JP/tools/perplexity-search",
                       "ja-JP/tools/searxng-search",
@@ -2638,10 +2653,12 @@
                   "ja-JP/providers/deepgram",
                   "ja-JP/providers/deepseek",
                   "ja-JP/providers/fal",
+                  "ja-JP/providers/fireworks",
                   "ja-JP/providers/github-copilot",
                   "ja-JP/providers/glm",
                   "ja-JP/providers/google",
                   "ja-JP/providers/groq",
+                  "ja-JP/providers/inferrs",
                   "ja-JP/providers/huggingface",
                   "ja-JP/providers/kilocode",
                   "ja-JP/providers/litellm",
@@ -2859,6 +2876,7 @@
                       "ja-JP/cli/agent",
                       "ja-JP/cli/agents",
                       "ja-JP/cli/hooks",
+                      "ja-JP/cli/infer",
                       "ja-JP/cli/memory",
                       "ja-JP/cli/message",
                       "ja-JP/cli/models",
@@ -2919,7 +2937,8 @@
                       "ja-JP/cli/completion",
                       "ja-JP/cli/dns",
                       "ja-JP/cli/docs",
-                      "ja-JP/cli/mcp"
+                      "ja-JP/cli/mcp",
+                      "ja-JP/cli/wiki"
                     ]
                   }
                 ]
@@ -2956,6 +2975,7 @@
                   "ja-JP/reference/api-usage-costs",
                   "ja-JP/reference/transcript-hygiene",
                   "ja-JP/reference/memory-config",
+                  "ja-JP/reference/rich-output-protocol",
                   "ja-JP/date-time"
                 ]
               },
@@ -3255,6 +3275,8 @@
                   "es/plugins/codex-harness",
                   "es/plugins/webhooks",
                   "es/plugins/voice-call",
+                  "es/plugins/memory-wiki",
+                  "es/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -3327,6 +3349,7 @@
                       "es/tools/gemini-search",
                       "es/tools/grok-search",
                       "es/tools/kimi-search",
+                      "es/tools/minimax-search",
                       "es/tools/ollama-search",
                       "es/tools/perplexity-search",
                       "es/tools/searxng-search",
@@ -3394,10 +3417,12 @@
                   "es/providers/deepgram",
                   "es/providers/deepseek",
                   "es/providers/fal",
+                  "es/providers/fireworks",
                   "es/providers/github-copilot",
                   "es/providers/glm",
                   "es/providers/google",
                   "es/providers/groq",
+                  "es/providers/inferrs",
                   "es/providers/huggingface",
                   "es/providers/kilocode",
                   "es/providers/litellm",
@@ -3615,6 +3640,7 @@
                       "es/cli/agent",
                       "es/cli/agents",
                       "es/cli/hooks",
+                      "es/cli/infer",
                       "es/cli/memory",
                       "es/cli/message",
                       "es/cli/models",
@@ -3675,7 +3701,8 @@
                       "es/cli/completion",
                       "es/cli/dns",
                       "es/cli/docs",
-                      "es/cli/mcp"
+                      "es/cli/mcp",
+                      "es/cli/wiki"
                     ]
                   }
                 ]
@@ -3712,6 +3739,7 @@
                   "es/reference/api-usage-costs",
                   "es/reference/transcript-hygiene",
                   "es/reference/memory-config",
+                  "es/reference/rich-output-protocol",
                   "es/date-time"
                 ]
               },
@@ -4011,6 +4039,8 @@
                   "pt-BR/plugins/codex-harness",
                   "pt-BR/plugins/webhooks",
                   "pt-BR/plugins/voice-call",
+                  "pt-BR/plugins/memory-wiki",
+                  "pt-BR/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -4083,6 +4113,7 @@
                       "pt-BR/tools/gemini-search",
                       "pt-BR/tools/grok-search",
                       "pt-BR/tools/kimi-search",
+                      "pt-BR/tools/minimax-search",
                       "pt-BR/tools/ollama-search",
                       "pt-BR/tools/perplexity-search",
                       "pt-BR/tools/searxng-search",
@@ -4150,10 +4181,12 @@
                   "pt-BR/providers/deepgram",
                   "pt-BR/providers/deepseek",
                   "pt-BR/providers/fal",
+                  "pt-BR/providers/fireworks",
                   "pt-BR/providers/github-copilot",
                   "pt-BR/providers/glm",
                   "pt-BR/providers/google",
                   "pt-BR/providers/groq",
+                  "pt-BR/providers/inferrs",
                   "pt-BR/providers/huggingface",
                   "pt-BR/providers/kilocode",
                   "pt-BR/providers/litellm",
@@ -4371,6 +4404,7 @@
                       "pt-BR/cli/agent",
                       "pt-BR/cli/agents",
                       "pt-BR/cli/hooks",
+                      "pt-BR/cli/infer",
                       "pt-BR/cli/memory",
                       "pt-BR/cli/message",
                       "pt-BR/cli/models",
@@ -4431,7 +4465,8 @@
                       "pt-BR/cli/completion",
                       "pt-BR/cli/dns",
                       "pt-BR/cli/docs",
-                      "pt-BR/cli/mcp"
+                      "pt-BR/cli/mcp",
+                      "pt-BR/cli/wiki"
                     ]
                   }
                 ]
@@ -4468,6 +4503,7 @@
                   "pt-BR/reference/api-usage-costs",
                   "pt-BR/reference/transcript-hygiene",
                   "pt-BR/reference/memory-config",
+                  "pt-BR/reference/rich-output-protocol",
                   "pt-BR/date-time"
                 ]
               },
@@ -4767,6 +4803,8 @@
                   "ko/plugins/codex-harness",
                   "ko/plugins/webhooks",
                   "ko/plugins/voice-call",
+                  "ko/plugins/memory-wiki",
+                  "ko/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -4839,6 +4877,7 @@
                       "ko/tools/gemini-search",
                       "ko/tools/grok-search",
                       "ko/tools/kimi-search",
+                      "ko/tools/minimax-search",
                       "ko/tools/ollama-search",
                       "ko/tools/perplexity-search",
                       "ko/tools/searxng-search",
@@ -4906,10 +4945,12 @@
                   "ko/providers/deepgram",
                   "ko/providers/deepseek",
                   "ko/providers/fal",
+                  "ko/providers/fireworks",
                   "ko/providers/github-copilot",
                   "ko/providers/glm",
                   "ko/providers/google",
                   "ko/providers/groq",
+                  "ko/providers/inferrs",
                   "ko/providers/huggingface",
                   "ko/providers/kilocode",
                   "ko/providers/litellm",
@@ -5127,6 +5168,7 @@
                       "ko/cli/agent",
                       "ko/cli/agents",
                       "ko/cli/hooks",
+                      "ko/cli/infer",
                       "ko/cli/memory",
                       "ko/cli/message",
                       "ko/cli/models",
@@ -5187,7 +5229,8 @@
                       "ko/cli/completion",
                       "ko/cli/dns",
                       "ko/cli/docs",
-                      "ko/cli/mcp"
+                      "ko/cli/mcp",
+                      "ko/cli/wiki"
                     ]
                   }
                 ]
@@ -5224,6 +5267,7 @@
                   "ko/reference/api-usage-costs",
                   "ko/reference/transcript-hygiene",
                   "ko/reference/memory-config",
+                  "ko/reference/rich-output-protocol",
                   "ko/date-time"
                 ]
               },
@@ -5523,6 +5567,8 @@
                   "de/plugins/codex-harness",
                   "de/plugins/webhooks",
                   "de/plugins/voice-call",
+                  "de/plugins/memory-wiki",
+                  "de/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -5595,6 +5641,7 @@
                       "de/tools/gemini-search",
                       "de/tools/grok-search",
                       "de/tools/kimi-search",
+                      "de/tools/minimax-search",
                       "de/tools/ollama-search",
                       "de/tools/perplexity-search",
                       "de/tools/searxng-search",
@@ -5662,10 +5709,12 @@
                   "de/providers/deepgram",
                   "de/providers/deepseek",
                   "de/providers/fal",
+                  "de/providers/fireworks",
                   "de/providers/github-copilot",
                   "de/providers/glm",
                   "de/providers/google",
                   "de/providers/groq",
+                  "de/providers/inferrs",
                   "de/providers/huggingface",
                   "de/providers/kilocode",
                   "de/providers/litellm",
@@ -5883,6 +5932,7 @@
                       "de/cli/agent",
                       "de/cli/agents",
                       "de/cli/hooks",
+                      "de/cli/infer",
                       "de/cli/memory",
                       "de/cli/message",
                       "de/cli/models",
@@ -5943,7 +5993,8 @@
                       "de/cli/completion",
                       "de/cli/dns",
                       "de/cli/docs",
-                      "de/cli/mcp"
+                      "de/cli/mcp",
+                      "de/cli/wiki"
                     ]
                   }
                 ]
@@ -5980,6 +6031,7 @@
                   "de/reference/api-usage-costs",
                   "de/reference/transcript-hygiene",
                   "de/reference/memory-config",
+                  "de/reference/rich-output-protocol",
                   "de/date-time"
                 ]
               },
@@ -6279,6 +6331,8 @@
                   "fr/plugins/codex-harness",
                   "fr/plugins/webhooks",
                   "fr/plugins/voice-call",
+                  "fr/plugins/memory-wiki",
+                  "fr/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -6351,6 +6405,7 @@
                       "fr/tools/gemini-search",
                       "fr/tools/grok-search",
                       "fr/tools/kimi-search",
+                      "fr/tools/minimax-search",
                       "fr/tools/ollama-search",
                       "fr/tools/perplexity-search",
                       "fr/tools/searxng-search",
@@ -6418,10 +6473,12 @@
                   "fr/providers/deepgram",
                   "fr/providers/deepseek",
                   "fr/providers/fal",
+                  "fr/providers/fireworks",
                   "fr/providers/github-copilot",
                   "fr/providers/glm",
                   "fr/providers/google",
                   "fr/providers/groq",
+                  "fr/providers/inferrs",
                   "fr/providers/huggingface",
                   "fr/providers/kilocode",
                   "fr/providers/litellm",
@@ -6639,6 +6696,7 @@
                       "fr/cli/agent",
                       "fr/cli/agents",
                       "fr/cli/hooks",
+                      "fr/cli/infer",
                       "fr/cli/memory",
                       "fr/cli/message",
                       "fr/cli/models",
@@ -6699,7 +6757,8 @@
                       "fr/cli/completion",
                       "fr/cli/dns",
                       "fr/cli/docs",
-                      "fr/cli/mcp"
+                      "fr/cli/mcp",
+                      "fr/cli/wiki"
                     ]
                   }
                 ]
@@ -6736,6 +6795,7 @@
                   "fr/reference/api-usage-costs",
                   "fr/reference/transcript-hygiene",
                   "fr/reference/memory-config",
+                  "fr/reference/rich-output-protocol",
                   "fr/date-time"
                 ]
               },
@@ -7035,6 +7095,8 @@
                   "ar/plugins/codex-harness",
                   "ar/plugins/webhooks",
                   "ar/plugins/voice-call",
+                  "ar/plugins/memory-wiki",
+                  "ar/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -7107,6 +7169,7 @@
                       "ar/tools/gemini-search",
                       "ar/tools/grok-search",
                       "ar/tools/kimi-search",
+                      "ar/tools/minimax-search",
                       "ar/tools/ollama-search",
                       "ar/tools/perplexity-search",
                       "ar/tools/searxng-search",
@@ -7174,10 +7237,12 @@
                   "ar/providers/deepgram",
                   "ar/providers/deepseek",
                   "ar/providers/fal",
+                  "ar/providers/fireworks",
                   "ar/providers/github-copilot",
                   "ar/providers/glm",
                   "ar/providers/google",
                   "ar/providers/groq",
+                  "ar/providers/inferrs",
                   "ar/providers/huggingface",
                   "ar/providers/kilocode",
                   "ar/providers/litellm",
@@ -7395,6 +7460,7 @@
                       "ar/cli/agent",
                       "ar/cli/agents",
                       "ar/cli/hooks",
+                      "ar/cli/infer",
                       "ar/cli/memory",
                       "ar/cli/message",
                       "ar/cli/models",
@@ -7455,7 +7521,8 @@
                       "ar/cli/completion",
                       "ar/cli/dns",
                       "ar/cli/docs",
-                      "ar/cli/mcp"
+                      "ar/cli/mcp",
+                      "ar/cli/wiki"
                     ]
                   }
                 ]
@@ -7492,6 +7559,7 @@
                   "ar/reference/api-usage-costs",
                   "ar/reference/transcript-hygiene",
                   "ar/reference/memory-config",
+                  "ar/reference/rich-output-protocol",
                   "ar/date-time"
                 ]
               },
@@ -7791,6 +7859,8 @@
                   "it/plugins/codex-harness",
                   "it/plugins/webhooks",
                   "it/plugins/voice-call",
+                  "it/plugins/memory-wiki",
+                  "it/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -7863,6 +7933,7 @@
                       "it/tools/gemini-search",
                       "it/tools/grok-search",
                       "it/tools/kimi-search",
+                      "it/tools/minimax-search",
                       "it/tools/ollama-search",
                       "it/tools/perplexity-search",
                       "it/tools/searxng-search",
@@ -7930,10 +8001,12 @@
                   "it/providers/deepgram",
                   "it/providers/deepseek",
                   "it/providers/fal",
+                  "it/providers/fireworks",
                   "it/providers/github-copilot",
                   "it/providers/glm",
                   "it/providers/google",
                   "it/providers/groq",
+                  "it/providers/inferrs",
                   "it/providers/huggingface",
                   "it/providers/kilocode",
                   "it/providers/litellm",
@@ -8151,6 +8224,7 @@
                       "it/cli/agent",
                       "it/cli/agents",
                       "it/cli/hooks",
+                      "it/cli/infer",
                       "it/cli/memory",
                       "it/cli/message",
                       "it/cli/models",
@@ -8211,7 +8285,8 @@
                       "it/cli/completion",
                       "it/cli/dns",
                       "it/cli/docs",
-                      "it/cli/mcp"
+                      "it/cli/mcp",
+                      "it/cli/wiki"
                     ]
                   }
                 ]
@@ -8248,6 +8323,7 @@
                   "it/reference/api-usage-costs",
                   "it/reference/transcript-hygiene",
                   "it/reference/memory-config",
+                  "it/reference/rich-output-protocol",
                   "it/date-time"
                 ]
               },
@@ -8547,6 +8623,8 @@
                   "tr/plugins/codex-harness",
                   "tr/plugins/webhooks",
                   "tr/plugins/voice-call",
+                  "tr/plugins/memory-wiki",
+                  "tr/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -8619,6 +8697,7 @@
                       "tr/tools/gemini-search",
                       "tr/tools/grok-search",
                       "tr/tools/kimi-search",
+                      "tr/tools/minimax-search",
                       "tr/tools/ollama-search",
                       "tr/tools/perplexity-search",
                       "tr/tools/searxng-search",
@@ -8686,10 +8765,12 @@
                   "tr/providers/deepgram",
                   "tr/providers/deepseek",
                   "tr/providers/fal",
+                  "tr/providers/fireworks",
                   "tr/providers/github-copilot",
                   "tr/providers/glm",
                   "tr/providers/google",
                   "tr/providers/groq",
+                  "tr/providers/inferrs",
                   "tr/providers/huggingface",
                   "tr/providers/kilocode",
                   "tr/providers/litellm",
@@ -8907,6 +8988,7 @@
                       "tr/cli/agent",
                       "tr/cli/agents",
                       "tr/cli/hooks",
+                      "tr/cli/infer",
                       "tr/cli/memory",
                       "tr/cli/message",
                       "tr/cli/models",
@@ -8967,7 +9049,8 @@
                       "tr/cli/completion",
                       "tr/cli/dns",
                       "tr/cli/docs",
-                      "tr/cli/mcp"
+                      "tr/cli/mcp",
+                      "tr/cli/wiki"
                     ]
                   }
                 ]
@@ -9004,6 +9087,7 @@
                   "tr/reference/api-usage-costs",
                   "tr/reference/transcript-hygiene",
                   "tr/reference/memory-config",
+                  "tr/reference/rich-output-protocol",
                   "tr/date-time"
                 ]
               },
@@ -9303,6 +9387,8 @@
                   "uk/plugins/codex-harness",
                   "uk/plugins/webhooks",
                   "uk/plugins/voice-call",
+                  "uk/plugins/memory-wiki",
+                  "uk/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -9375,6 +9461,7 @@
                       "uk/tools/gemini-search",
                       "uk/tools/grok-search",
                       "uk/tools/kimi-search",
+                      "uk/tools/minimax-search",
                       "uk/tools/ollama-search",
                       "uk/tools/perplexity-search",
                       "uk/tools/searxng-search",
@@ -9442,10 +9529,12 @@
                   "uk/providers/deepgram",
                   "uk/providers/deepseek",
                   "uk/providers/fal",
+                  "uk/providers/fireworks",
                   "uk/providers/github-copilot",
                   "uk/providers/glm",
                   "uk/providers/google",
                   "uk/providers/groq",
+                  "uk/providers/inferrs",
                   "uk/providers/huggingface",
                   "uk/providers/kilocode",
                   "uk/providers/litellm",
@@ -9663,6 +9752,7 @@
                       "uk/cli/agent",
                       "uk/cli/agents",
                       "uk/cli/hooks",
+                      "uk/cli/infer",
                       "uk/cli/memory",
                       "uk/cli/message",
                       "uk/cli/models",
@@ -9723,7 +9813,8 @@
                       "uk/cli/completion",
                       "uk/cli/dns",
                       "uk/cli/docs",
-                      "uk/cli/mcp"
+                      "uk/cli/mcp",
+                      "uk/cli/wiki"
                     ]
                   }
                 ]
@@ -9760,6 +9851,7 @@
                   "uk/reference/api-usage-costs",
                   "uk/reference/transcript-hygiene",
                   "uk/reference/memory-config",
+                  "uk/reference/rich-output-protocol",
                   "uk/date-time"
                 ]
               },
@@ -10059,6 +10151,8 @@
                   "id/plugins/codex-harness",
                   "id/plugins/webhooks",
                   "id/plugins/voice-call",
+                  "id/plugins/memory-wiki",
+                  "id/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -10131,6 +10225,7 @@
                       "id/tools/gemini-search",
                       "id/tools/grok-search",
                       "id/tools/kimi-search",
+                      "id/tools/minimax-search",
                       "id/tools/ollama-search",
                       "id/tools/perplexity-search",
                       "id/tools/searxng-search",
@@ -10198,10 +10293,12 @@
                   "id/providers/deepgram",
                   "id/providers/deepseek",
                   "id/providers/fal",
+                  "id/providers/fireworks",
                   "id/providers/github-copilot",
                   "id/providers/glm",
                   "id/providers/google",
                   "id/providers/groq",
+                  "id/providers/inferrs",
                   "id/providers/huggingface",
                   "id/providers/kilocode",
                   "id/providers/litellm",
@@ -10419,6 +10516,7 @@
                       "id/cli/agent",
                       "id/cli/agents",
                       "id/cli/hooks",
+                      "id/cli/infer",
                       "id/cli/memory",
                       "id/cli/message",
                       "id/cli/models",
@@ -10479,7 +10577,8 @@
                       "id/cli/completion",
                       "id/cli/dns",
                       "id/cli/docs",
-                      "id/cli/mcp"
+                      "id/cli/mcp",
+                      "id/cli/wiki"
                     ]
                   }
                 ]
@@ -10516,6 +10615,7 @@
                   "id/reference/api-usage-costs",
                   "id/reference/transcript-hygiene",
                   "id/reference/memory-config",
+                  "id/reference/rich-output-protocol",
                   "id/date-time"
                 ]
               },
@@ -10815,6 +10915,8 @@
                   "pl/plugins/codex-harness",
                   "pl/plugins/webhooks",
                   "pl/plugins/voice-call",
+                  "pl/plugins/memory-wiki",
+                  "pl/plugins/zalouser",
                   {
                     "group": "Building Plugins",
                     "pages": [
@@ -10887,6 +10989,7 @@
                       "pl/tools/gemini-search",
                       "pl/tools/grok-search",
                       "pl/tools/kimi-search",
+                      "pl/tools/minimax-search",
                       "pl/tools/ollama-search",
                       "pl/tools/perplexity-search",
                       "pl/tools/searxng-search",
@@ -10954,10 +11057,12 @@
                   "pl/providers/deepgram",
                   "pl/providers/deepseek",
                   "pl/providers/fal",
+                  "pl/providers/fireworks",
                   "pl/providers/github-copilot",
                   "pl/providers/glm",
                   "pl/providers/google",
                   "pl/providers/groq",
+                  "pl/providers/inferrs",
                   "pl/providers/huggingface",
                   "pl/providers/kilocode",
                   "pl/providers/litellm",
@@ -11175,6 +11280,7 @@
                       "pl/cli/agent",
                       "pl/cli/agents",
                       "pl/cli/hooks",
+                      "pl/cli/infer",
                       "pl/cli/memory",
                       "pl/cli/message",
                       "pl/cli/models",
@@ -11235,7 +11341,8 @@
                       "pl/cli/completion",
                       "pl/cli/dns",
                       "pl/cli/docs",
-                      "pl/cli/mcp"
+                      "pl/cli/mcp",
+                      "pl/cli/wiki"
                     ]
                   }
                 ]
@@ -11272,6 +11379,7 @@
                   "pl/reference/api-usage-costs",
                   "pl/reference/transcript-hygiene",
                   "pl/reference/memory-config",
+                  "pl/reference/rich-output-protocol",
                   "pl/date-time"
                 ]
               },

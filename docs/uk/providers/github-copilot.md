@@ -1,87 +1,121 @@
 ---
 read_when:
-    - Ви хочете використовувати GitHub Copilot як провайдера моделей
-    - Вам потрібен процес `openclaw models auth login-github-copilot`
+    - Ви хочете використовувати GitHub Copilot як постачальника моделі
+    - Вам потрібен потік `openclaw models auth login-github-copilot`
 summary: Увійдіть у GitHub Copilot з OpenClaw за допомогою device flow
 title: GitHub Copilot
 x-i18n:
-    generated_at: "2026-04-05T18:14:03Z"
+    generated_at: "2026-04-12T10:30:03Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 92857c119c314e698f922dbdbbc15d21b64d33a25979a2ec0ac1e82e586db6d6
+    source_hash: 147a3c2d37919a36e54fb2739a54500be7ebd34eeed0efe3bde448da7376d541
     source_path: providers/github-copilot.md
     workflow: 15
 ---
 
 # GitHub Copilot
 
-## Що таке GitHub Copilot?
+GitHub Copilot — це AI-асистент GitHub для програмування. Він надає доступ до моделей
+Copilot для вашого облікового запису GitHub і тарифного плану. OpenClaw може використовувати Copilot як
+постачальника моделі двома різними способами.
 
-GitHub Copilot — це AI-асистент для програмування від GitHub. Він надає доступ до
-моделей Copilot для вашого облікового запису GitHub і тарифного плану. OpenClaw може використовувати Copilot як
-провайдера моделей двома різними способами.
+## Два способи використання Copilot в OpenClaw
 
-## Два способи використовувати Copilot в OpenClaw
+<Tabs>
+  <Tab title="Вбудований постачальник (github-copilot)">
+    Використовуйте нативний потік входу через device-login, щоб отримати токен GitHub, а потім обмінювати його на
+    API-токени Copilot під час роботи OpenClaw. Це **типовий** і найпростіший шлях,
+    оскільки він не потребує VS Code.
 
-### 1) Вбудований провайдер GitHub Copilot (`github-copilot`)
+    <Steps>
+      <Step title="Запустіть команду входу">
+        ```bash
+        openclaw models auth login-github-copilot
+        ```
 
-Використовуйте нативний процес входу через device flow, щоб отримати токен GitHub, а потім обмінювати його на
-API-токени Copilot під час роботи OpenClaw. Це **типовий** і найпростіший шлях,
-оскільки він не потребує VS Code.
+        Вам буде запропоновано перейти за URL-адресою та ввести одноразовий код. Не закривайте
+        термінал, доки процес не завершиться.
+      </Step>
+      <Step title="Установіть модель за замовчуванням">
+        ```bash
+        openclaw models set github-copilot/gpt-4o
+        ```
 
-### 2) Плагін Copilot Proxy (`copilot-proxy`)
+        Або в конфігурації:
 
-Використовуйте розширення VS Code **Copilot Proxy** як локальний міст. OpenClaw взаємодіє з
-кінцевою точкою проксі `/v1` і використовує список моделей, який ви там налаштуєте. Обирайте цей варіант,
-якщо ви вже запускаєте Copilot Proxy у VS Code або вам потрібно маршрутизувати через нього.
-Ви маєте ввімкнути плагін і тримати розширення VS Code запущеним.
+        ```json5
+        {
+          agents: { defaults: { model: { primary: "github-copilot/gpt-4o" } } },
+        }
+        ```
+      </Step>
+    </Steps>
 
-Використовуйте GitHub Copilot як провайдера моделей (`github-copilot`). Команда входу запускає
-GitHub device flow, зберігає профіль автентифікації та оновлює вашу конфігурацію для використання цього
-профілю.
+  </Tab>
 
-## Налаштування CLI
+  <Tab title="Плагін Copilot Proxy (copilot-proxy)">
+    Використовуйте розширення VS Code **Copilot Proxy** як локальний міст. OpenClaw звертається до
+    кінцевої точки `/v1` проксі й використовує список моделей, який ви там налаштуєте.
+
+    <Note>
+    Обирайте цей варіант, якщо ви вже використовуєте Copilot Proxy у VS Code або вам потрібно маршрутизувати
+    через нього. Ви повинні ввімкнути Plugin і тримати розширення VS Code запущеним.
+    </Note>
+
+  </Tab>
+</Tabs>
+
+## Необов’язкові прапорці
+
+| Flag            | Опис                                                |
+| --------------- | --------------------------------------------------- |
+| `--yes`         | Пропустити запит підтвердження                      |
+| `--set-default` | Також застосувати рекомендовану модель постачальника за замовчуванням |
 
 ```bash
-openclaw models auth login-github-copilot
-```
-
-Вам буде запропоновано відвідати URL-адресу й ввести одноразовий код. Не закривайте термінал,
-доки процес не завершиться.
-
-### Необов’язкові прапорці
-
-```bash
+# Пропустити підтвердження
 openclaw models auth login-github-copilot --yes
-```
 
-Щоб також застосувати рекомендовану типову модель провайдера за один крок, використовуйте
-натомість загальну команду автентифікації:
-
-```bash
+# Увійти й одразу встановити модель за замовчуванням
 openclaw models auth login --provider github-copilot --method device --set-default
 ```
 
-## Установлення типової моделі
+<AccordionGroup>
+  <Accordion title="Потрібен інтерактивний TTY">
+    Потік входу через device-login потребує інтерактивного TTY. Запускайте його безпосередньо в
+    терміналі, а не в неінтерактивному скрипті чи CI-конвеєрі.
+  </Accordion>
 
-```bash
-openclaw models set github-copilot/gpt-4o
-```
+  <Accordion title="Доступність моделей залежить від вашого тарифного плану">
+    Доступність моделей Copilot залежить від вашого тарифного плану GitHub. Якщо модель
+    відхиляється, спробуйте інший ідентифікатор (наприклад, `github-copilot/gpt-4.1`).
+  </Accordion>
 
-### Фрагмент конфігурації
+  <Accordion title="Вибір транспорту">
+    Ідентифікатори моделей Claude автоматично використовують транспорт Anthropic Messages. Моделі GPT,
+    o-series і Gemini використовують транспорт OpenAI Responses. OpenClaw
+    вибирає правильний транспорт на основі посилання на модель.
+  </Accordion>
 
-```json5
-{
-  agents: { defaults: { model: { primary: "github-copilot/gpt-4o" } } },
-}
-```
+  <Accordion title="Зберігання токенів">
+    Під час входу токен GitHub зберігається в сховищі профілів автентифікації та обмінюється
+    на API-токен Copilot під час роботи OpenClaw. Вам не потрібно керувати
+    токеном вручну.
+  </Accordion>
+</AccordionGroup>
 
-## Примітки
+<Warning>
+Потрібен інтерактивний TTY. Запускайте команду входу безпосередньо в терміналі, а не
+всередині headless-скрипту чи завдання CI.
+</Warning>
 
-- Потрібен інтерактивний TTY; запускайте команду безпосередньо в терміналі.
-- Доступність моделей Copilot залежить від вашого тарифного плану; якщо модель відхиляється, спробуйте
-  інший ідентифікатор (наприклад, `github-copilot/gpt-4.1`).
-- Ідентифікатори моделей Claude автоматично використовують транспорт Anthropic Messages; моделі GPT, o-series
-  і Gemini зберігають транспорт OpenAI Responses.
-- Вхід зберігає токен GitHub у сховищі профілів автентифікації та обмінює його на
-  API-токен Copilot під час роботи OpenClaw.
+## Пов’язане
+
+<CardGroup cols={2}>
+  <Card title="Вибір моделі" href="/uk/concepts/model-providers" icon="layers">
+    Вибір постачальників, посилань на моделі та поведінки резервного перемикання.
+  </Card>
+  <Card title="OAuth і автентифікація" href="/uk/gateway/authentication" icon="key">
+    Докладно про автентифікацію та правила повторного використання облікових даних.
+  </Card>
+</CardGroup>

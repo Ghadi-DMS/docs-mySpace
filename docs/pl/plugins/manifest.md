@@ -1,77 +1,75 @@
 ---
 read_when:
     - Tworzysz Plugin OpenClaw
-    - Musisz dostarczyć schemat konfiguracji pluginu lub debugować błędy walidacji pluginu
-summary: Wymagania dotyczące manifestu Plugin + schematu JSON (ścisła walidacja konfiguracji)
-title: Manifest Plugin
+    - Musisz dostarczyć schemat konfiguracji Pluginu albo debugować błędy walidacji Pluginu
+summary: Manifest Pluginu + wymagania schematu JSON (ścisła walidacja konfiguracji)
+title: Manifest Pluginu
 x-i18n:
-    generated_at: "2026-04-12T09:33:29Z"
+    generated_at: "2026-04-12T23:28:43Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 4074b3639bf24606d6087597f28e29afc85f4ea628a713e9d984b441a16f1c13
+    source_hash: 93b57c7373e4ccd521b10945346db67991543bd2bed4cc8b6641e1f215b48579
     source_path: plugins/manifest.md
     workflow: 15
 ---
 
-# Manifest Plugin (`openclaw.plugin.json`)
+# Manifest Pluginu (`openclaw.plugin.json`)
 
-Ta strona dotyczy wyłącznie **natywnego manifestu Plugin OpenClaw**.
+Ta strona dotyczy wyłącznie **natywnego manifestu Pluginu OpenClaw**.
 
-Informacje o zgodnych układach pakietów znajdziesz tutaj: [Pakiety Plugin](/pl/plugins/bundles).
+Informacje o zgodnych układach bundli znajdziesz tutaj: [Bundle Pluginów](/pl/plugins/bundles).
 
-Zgodne formaty pakietów używają innych plików manifestu:
+Zgodne formaty bundli używają innych plików manifestu:
 
-- Pakiet Codex: `.codex-plugin/plugin.json`
-- Pakiet Claude: `.claude-plugin/plugin.json` lub domyślny układ komponentu Claude
+- Bundle Codex: `.codex-plugin/plugin.json`
+- Bundle Claude: `.claude-plugin/plugin.json` albo domyślny układ komponentów Claude
   bez manifestu
-- Pakiet Cursor: `.cursor-plugin/plugin.json`
+- Bundle Cursor: `.cursor-plugin/plugin.json`
 
-OpenClaw automatycznie wykrywa także te układy pakietów, ale nie są one walidowane
+OpenClaw automatycznie wykrywa również te układy bundli, ale nie są one walidowane
 względem opisanego tutaj schematu `openclaw.plugin.json`.
 
-W przypadku zgodnych pakietów OpenClaw obecnie odczytuje metadane pakietu oraz zadeklarowane
-korzenie Skills, korzenie poleceń Claude, domyślne ustawienia `settings.json` pakietu Claude,
-domyślne ustawienia LSP pakietu Claude oraz obsługiwane zestawy hooków, gdy układ odpowiada
+W przypadku zgodnych bundli OpenClaw obecnie odczytuje metadane bundla oraz zadeklarowane
+korzenie Skills, korzenie poleceń Claude, domyślne wartości `settings.json` bundla Claude,
+domyślne wartości LSP bundla Claude oraz obsługiwane pakiety hooków, gdy układ odpowiada
 oczekiwaniom środowiska uruchomieniowego OpenClaw.
 
-Każdy natywny Plugin OpenClaw **musi** zawierać plik `openclaw.plugin.json` w
-**katalogu głównym pluginu**. OpenClaw używa tego manifestu do walidacji konfiguracji
-**bez wykonywania kodu pluginu**. Brakujące lub nieprawidłowe manifesty są traktowane jako
-błędy pluginu i blokują walidację konfiguracji.
+Każdy natywny Plugin OpenClaw **musi** dostarczać plik `openclaw.plugin.json` w
+**katalogu głównym Pluginu**. OpenClaw używa tego manifestu do walidacji konfiguracji
+**bez wykonywania kodu Pluginu**. Brakujące lub nieprawidłowe manifesty są traktowane jako
+błędy Pluginu i blokują walidację konfiguracji.
 
-Zobacz pełny przewodnik po systemie pluginów: [Plugins](/pl/tools/plugin).
-Informacje o natywnym modelu możliwości i aktualnych wytycznych zgodności zewnętrznej:
-[Model możliwości](/pl/plugins/architecture#public-capability-model).
+Zobacz pełny przewodnik po systemie Pluginów: [Pluginy](/pl/tools/plugin).
+Informacje o natywnym modelu capabilities i aktualnych wskazówkach dotyczących zgodności zewnętrznej:
+[Model capabilities](/pl/plugins/architecture#public-capability-model).
 
 ## Do czego służy ten plik
 
-`openclaw.plugin.json` to metadane, które OpenClaw odczytuje przed załadowaniem
-kodu twojego pluginu.
+`openclaw.plugin.json` to metadane, które OpenClaw odczytuje, zanim załaduje kod
+Twojego Pluginu.
 
 Używaj go do:
 
-- tożsamości pluginu
+- tożsamości Pluginu
 - walidacji konfiguracji
-- metadanych uwierzytelniania i onboardingu, które powinny być dostępne bez uruchamiania
-  środowiska uruchomieniowego pluginu
-- tanich wskazówek aktywacji, które powierzchnie płaszczyzny sterowania mogą sprawdzać przed załadowaniem środowiska uruchomieniowego
-- tanich deskryptorów konfiguracji, które powierzchnie konfiguracji/onboardingu mogą sprawdzać przed załadowaniem
-  środowiska uruchomieniowego
-- metadanych aliasów i automatycznego włączania, które powinny być rozstrzygane przed załadowaniem środowiska uruchomieniowego pluginu
-- skróconych metadanych własności rodziny modeli, które powinny automatycznie aktywować
-  plugin przed załadowaniem środowiska uruchomieniowego
-- statycznych migawek własności możliwości używanych do zgodnego okablowania pakietów i pokrycia kontraktów
-- metadanych konfiguracji specyficznych dla kanału, które powinny być scalane z katalogiem i powierzchniami walidacji
+- metadanych auth i onboardingu, które powinny być dostępne bez uruchamiania środowiska uruchomieniowego Pluginu
+- lekkich wskazówek aktywacji, które powierzchnie płaszczyzny sterowania mogą sprawdzać przed załadowaniem środowiska uruchomieniowego
+- lekkich deskryptorów konfiguracji, które powierzchnie konfiguracji/onboardingu mogą sprawdzać przed załadowaniem środowiska uruchomieniowego
+- metadanych aliasów i auto-enable, które powinny zostać rozstrzygnięte przed załadowaniem środowiska uruchomieniowego Pluginu
+- skróconych metadanych własności rodzin modeli, które powinny auto-activate
+  Plugin przed załadowaniem środowiska uruchomieniowego
+- statycznych snapshotów własności capabilities używanych do zgodnego okablowania bundli i pokrycia kontraktów
+- metadanych konfiguracji specyficznych dla kanału, które powinny zostać scalone z powierzchniami katalogu i walidacji
   bez ładowania środowiska uruchomieniowego
 - wskazówek UI konfiguracji
 
 Nie używaj go do:
 
 - rejestrowania zachowania środowiska uruchomieniowego
-- deklarowania punktów wejścia kodu
+- deklarowania entrypointów kodu
 - metadanych instalacji npm
 
-To należy do kodu twojego pluginu i `package.json`.
+To należy do kodu Pluginu i `package.json`.
 
 ## Minimalny przykład
 
@@ -142,64 +140,64 @@ To należy do kodu twojego pluginu i `package.json`.
 }
 ```
 
-## Odwołanie do pól najwyższego poziomu
+## Informacje o polach najwyższego poziomu
 
-| Pole                                | Wymagane | Typ                              | Co oznacza                                                                                                                                                                                                    |
-| ----------------------------------- | -------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                                | Tak      | `string`                         | Kanoniczny identyfikator pluginu. Jest to identyfikator używany w `plugins.entries.<id>`.                                                                                                                    |
-| `configSchema`                      | Tak      | `object`                         | Wbudowany schemat JSON dla konfiguracji tego pluginu.                                                                                                                                                         |
-| `enabledByDefault`                  | Nie      | `true`                           | Oznacza plugin pakietowy jako domyślnie włączony. Pomiń to pole lub ustaw dowolną wartość inną niż `true`, aby plugin pozostał domyślnie wyłączony.                                                        |
-| `legacyPluginIds`                   | Nie      | `string[]`                       | Starsze identyfikatory, które są normalizowane do tego kanonicznego identyfikatora pluginu.                                                                                                                  |
-| `autoEnableWhenConfiguredProviders` | Nie      | `string[]`                       | Identyfikatory dostawców, które powinny automatycznie włączać ten plugin, gdy uwierzytelnianie, konfiguracja lub odwołania do modeli o nich wspominają.                                                    |
-| `kind`                              | Nie      | `"memory"` \| `"context-engine"` | Deklaruje wyłączny rodzaj pluginu używany przez `plugins.slots.*`.                                                                                                                                            |
-| `channels`                          | Nie      | `string[]`                       | Identyfikatory kanałów należących do tego pluginu. Używane do wykrywania i walidacji konfiguracji.                                                                                                           |
-| `providers`                         | Nie      | `string[]`                       | Identyfikatory dostawców należących do tego pluginu.                                                                                                                                                          |
-| `modelSupport`                      | Nie      | `object`                         | Skrócone metadane rodziny modeli należące do manifestu, używane do automatycznego ładowania pluginu przed środowiskiem uruchomieniowym.                                                                    |
-| `cliBackends`                       | Nie      | `string[]`                       | Identyfikatory backendów inferencji CLI należących do tego pluginu. Używane do automatycznej aktywacji przy uruchomieniu na podstawie jawnych odwołań w konfiguracji.                                      |
-| `commandAliases`                    | Nie      | `object[]`                       | Nazwy poleceń należące do tego pluginu, które powinny generować świadome pluginu diagnostyki konfiguracji i CLI przed załadowaniem środowiska uruchomieniowego.                                            |
-| `providerAuthEnvVars`               | Nie      | `Record<string, string[]>`       | Lekkie metadane env uwierzytelniania dostawcy, które OpenClaw może sprawdzić bez ładowania kodu pluginu.                                                                                                     |
-| `providerAuthAliases`               | Nie      | `Record<string, string>`         | Identyfikatory dostawców, które powinny używać ponownie innego identyfikatora dostawcy do wyszukiwania uwierzytelniania, na przykład dostawca programistyczny współdzielący bazowy klucz API i profile uwierzytelniania dostawcy. |
-| `channelEnvVars`                    | Nie      | `Record<string, string[]>`       | Lekkie metadane env kanału, które OpenClaw może sprawdzić bez ładowania kodu pluginu. Użyj tego dla konfiguracji kanału sterowanej przez env lub powierzchni uwierzytelniania, które ogólne pomocniki uruchamiania/konfiguracji powinny widzieć. |
-| `providerAuthChoices`               | Nie      | `object[]`                       | Lekkie metadane wyboru uwierzytelniania dla selektorów onboardingu, rozstrzygania preferowanego dostawcy i prostego mapowania flag CLI.                                                                     |
-| `activation`                        | Nie      | `object`                         | Lekkie wskazówki aktywacji dla ładowania wyzwalanego przez dostawcę, polecenie, kanał, trasę i możliwości. Tylko metadane; rzeczywiste zachowanie nadal należy do środowiska uruchomieniowego pluginu.   |
-| `setup`                             | Nie      | `object`                         | Lekkie deskryptory konfiguracji/onboardingu, które powierzchnie wykrywania i konfiguracji mogą sprawdzać bez ładowania środowiska uruchomieniowego pluginu.                                                |
-| `contracts`                         | Nie      | `object`                         | Statyczna migawka możliwości pakietowych dla własności mowy, transkrypcji w czasie rzeczywistym, głosu w czasie rzeczywistym, rozumienia mediów, generowania obrazów, generowania muzyki, generowania wideo, pobierania z sieci, wyszukiwania w sieci i narzędzi. |
-| `channelConfigs`                    | Nie      | `Record<string, object>`         | Metadane konfiguracji kanału należące do manifestu, scalane z powierzchniami wykrywania i walidacji przed załadowaniem środowiska uruchomieniowego.                                                        |
-| `skills`                            | Nie      | `string[]`                       | Katalogi Skills do załadowania, względnie do katalogu głównego pluginu.                                                                                                                                      |
-| `name`                              | Nie      | `string`                         | Czytelna dla człowieka nazwa pluginu.                                                                                                                                                                         |
-| `description`                       | Nie      | `string`                         | Krótkie podsumowanie wyświetlane na powierzchniach pluginu.                                                                                                                                                   |
-| `version`                           | Nie      | `string`                         | Informacyjna wersja pluginu.                                                                                                                                                                                  |
-| `uiHints`                           | Nie      | `Record<string, object>`         | Etykiety UI, placeholdery i wskazówki dotyczące wrażliwości dla pól konfiguracji.                                                                                                                             |
+| Pole                                | Wymagane | Typ                              | Co oznacza                                                                                                                                                                                                   |
+| ----------------------------------- | -------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`                                | Tak      | `string`                         | Kanoniczny identyfikator Pluginu. To identyfikator używany w `plugins.entries.<id>`.                                                                                                                        |
+| `configSchema`                      | Tak      | `object`                         | Wbudowany schemat JSON dla konfiguracji tego Pluginu.                                                                                                                                                        |
+| `enabledByDefault`                  | Nie      | `true`                           | Oznacza bundlowy Plugin jako domyślnie włączony. Pomiń to pole albo ustaw dowolną wartość inną niż `true`, aby pozostawić Plugin domyślnie wyłączony.                                                     |
+| `legacyPluginIds`                   | Nie      | `string[]`                       | Starsze identyfikatory, które są normalizowane do tego kanonicznego identyfikatora Pluginu.                                                                                                                 |
+| `autoEnableWhenConfiguredProviders` | Nie      | `string[]`                       | Identyfikatory dostawców, które powinny automatycznie włączać ten Plugin, gdy auth, konfiguracja lub odwołania do modeli na nie wskazują.                                                                  |
+| `kind`                              | Nie      | `"memory"` \| `"context-engine"` | Deklaruje wyłączny rodzaj Pluginu używany przez `plugins.slots.*`.                                                                                                                                          |
+| `channels`                          | Nie      | `string[]`                       | Identyfikatory kanałów należących do tego Pluginu. Używane do wykrywania i walidacji konfiguracji.                                                                                                          |
+| `providers`                         | Nie      | `string[]`                       | Identyfikatory dostawców należących do tego Pluginu.                                                                                                                                                         |
+| `modelSupport`                      | Nie      | `object`                         | Należące do manifestu skrócone metadane rodzin modeli używane do automatycznego załadowania Pluginu przed środowiskiem uruchomieniowym.                                                                    |
+| `cliBackends`                       | Nie      | `string[]`                       | Identyfikatory backendów inferencji CLI należących do tego Pluginu. Używane do automatycznej aktywacji przy uruchomieniu na podstawie jawnych odwołań w konfiguracji.                                     |
+| `commandAliases`                    | Nie      | `object[]`                       | Nazwy poleceń należące do tego Pluginu, które powinny generować diagnostykę konfiguracji i CLI uwzględniającą Plugin jeszcze przed załadowaniem środowiska uruchomieniowego.                              |
+| `providerAuthEnvVars`               | Nie      | `Record<string, string[]>`       | Lekkie metadane env dla auth dostawców, które OpenClaw może sprawdzać bez ładowania kodu Pluginu.                                                                                                          |
+| `providerAuthAliases`               | Nie      | `Record<string, string>`         | Identyfikatory dostawców, które powinny ponownie używać innego identyfikatora dostawcy do wyszukiwania auth, na przykład dostawca kodowania, który współdzieli bazowy klucz API dostawcy i profile auth. |
+| `channelEnvVars`                    | Nie      | `Record<string, string[]>`       | Lekkie metadane env dla kanałów, które OpenClaw może sprawdzać bez ładowania kodu Pluginu. Używaj tego dla konfiguracji kanałów sterowanej przez env albo powierzchni auth, które powinny widzieć ogólne pomocniki uruchamiania/konfiguracji. |
+| `providerAuthChoices`               | Nie      | `object[]`                       | Lekkie metadane wyboru auth dla selektorów onboardingu, rozstrzygania preferowanego dostawcy i prostego okablowania flag CLI.                                                                             |
+| `activation`                        | Nie      | `object`                         | Lekkie wskazówki aktywacji dla ładowania wyzwalanego przez dostawcę, polecenie, kanał, trasę i capability. Tylko metadane; rzeczywiste zachowanie nadal należy do środowiska uruchomieniowego Pluginu.   |
+| `setup`                             | Nie      | `object`                         | Lekkie deskryptory konfiguracji/onboardingu, które powierzchnie wykrywania i konfiguracji mogą sprawdzać bez ładowania środowiska uruchomieniowego Pluginu.                                               |
+| `contracts`                         | Nie      | `object`                         | Statyczny snapshot bundlowych capabilities dla speech, realtime transcription, realtime voice, media-understanding, image-generation, music-generation, video-generation, web-fetch, web search i własności narzędzi. |
+| `channelConfigs`                    | Nie      | `Record<string, object>`         | Metadane konfiguracji kanału należące do manifestu, scalane z powierzchniami wykrywania i walidacji przed załadowaniem środowiska uruchomieniowego.                                                       |
+| `skills`                            | Nie      | `string[]`                       | Katalogi Skills do załadowania, względne względem katalogu głównego Pluginu.                                                                                                                                |
+| `name`                              | Nie      | `string`                         | Przyjazna dla człowieka nazwa Pluginu.                                                                                                                                                                       |
+| `description`                       | Nie      | `string`                         | Krótkie podsumowanie wyświetlane na powierzchniach Pluginu.                                                                                                                                                  |
+| `version`                           | Nie      | `string`                         | Informacyjna wersja Pluginu.                                                                                                                                                                                 |
+| `uiHints`                           | Nie      | `Record<string, object>`         | Etykiety UI, placeholdery i wskazówki dotyczące wrażliwości dla pól konfiguracji.                                                                                                                           |
 
-## Odwołanie do `providerAuthChoices`
+## Informacje o `providerAuthChoices`
 
-Każdy wpis `providerAuthChoices` opisuje jeden wybór onboardingu lub uwierzytelniania.
-OpenClaw odczytuje to przed załadowaniem środowiska uruchomieniowego dostawcy.
+Każdy wpis `providerAuthChoices` opisuje jeden wybór onboardingu lub auth.
+OpenClaw odczytuje to, zanim załaduje się środowisko uruchomieniowe dostawcy.
 
 | Pole                  | Wymagane | Typ                                             | Co oznacza                                                                                               |
 | --------------------- | -------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `provider`            | Tak      | `string`                                        | Identyfikator dostawcy, do którego należy ten wybór.                                                     |
-| `method`              | Tak      | `string`                                        | Identyfikator metody uwierzytelniania, do której należy przekazać żądanie.                               |
-| `choiceId`            | Tak      | `string`                                        | Stabilny identyfikator wyboru uwierzytelniania używany przez onboarding i przepływy CLI.                |
-| `choiceLabel`         | Nie      | `string`                                        | Etykieta widoczna dla użytkownika. Jeśli zostanie pominięta, OpenClaw użyje wartości `choiceId`.        |
+| `method`              | Tak      | `string`                                        | Identyfikator metody auth, do której należy przekazać sterowanie.                                        |
+| `choiceId`            | Tak      | `string`                                        | Stabilny identyfikator wyboru auth używany przez onboarding i przepływy CLI.                             |
+| `choiceLabel`         | Nie      | `string`                                        | Etykieta widoczna dla użytkownika. Jeśli zostanie pominięta, OpenClaw użyje `choiceId`.                 |
 | `choiceHint`          | Nie      | `string`                                        | Krótki tekst pomocniczy dla selektora.                                                                   |
 | `assistantPriority`   | Nie      | `number`                                        | Niższe wartości są sortowane wcześniej w interaktywnych selektorach sterowanych przez asystenta.        |
-| `assistantVisibility` | Nie      | `"visible"` \| `"manual-only"`                  | Ukrywa wybór w selektorach asystenta, ale nadal pozwala na ręczny wybór w CLI.                          |
-| `deprecatedChoiceIds` | Nie      | `string[]`                                      | Starsze identyfikatory wyboru, które powinny przekierowywać użytkowników do tego zamiennego wyboru.     |
+| `assistantVisibility` | Nie      | `"visible"` \| `"manual-only"`                  | Ukrywa wybór w selektorach asystenta, nadal pozwalając na ręczny wybór w CLI.                            |
+| `deprecatedChoiceIds` | Nie      | `string[]`                                      | Starsze identyfikatory wyboru, które powinny przekierowywać użytkowników do tego wyboru zastępczego.    |
 | `groupId`             | Nie      | `string`                                        | Opcjonalny identyfikator grupy do grupowania powiązanych wyborów.                                        |
-| `groupLabel`          | Nie      | `string`                                        | Etykieta widoczna dla użytkownika dla tej grupy.                                                         |
+| `groupLabel`          | Nie      | `string`                                        | Etykieta tej grupy widoczna dla użytkownika.                                                             |
 | `groupHint`           | Nie      | `string`                                        | Krótki tekst pomocniczy dla grupy.                                                                       |
-| `optionKey`           | Nie      | `string`                                        | Wewnętrzny klucz opcji dla prostych przepływów uwierzytelniania z jedną flagą.                          |
-| `cliFlag`             | Nie      | `string`                                        | Nazwa flagi CLI, na przykład `--openrouter-api-key`.                                                     |
-| `cliOption`           | Nie      | `string`                                        | Pełna postać opcji CLI, na przykład `--openrouter-api-key <key>`.                                        |
+| `optionKey`           | Nie      | `string`                                        | Wewnętrzny klucz opcji dla prostych przepływów auth z jedną flagą.                                       |
+| `cliFlag`             | Nie      | `string`                                        | Nazwa flagi CLI, taka jak `--openrouter-api-key`.                                                        |
+| `cliOption`           | Nie      | `string`                                        | Pełna postać opcji CLI, taka jak `--openrouter-api-key <key>`.                                           |
 | `cliDescription`      | Nie      | `string`                                        | Opis używany w pomocy CLI.                                                                               |
 | `onboardingScopes`    | Nie      | `Array<"text-inference" \| "image-generation">` | Na których powierzchniach onboardingu ten wybór powinien się pojawiać. Jeśli zostanie pominięte, domyślnie używane jest `["text-inference"]`. |
 
-## Odwołanie do `commandAliases`
+## Informacje o `commandAliases`
 
-Użyj `commandAliases`, gdy plugin jest właścicielem nazwy polecenia środowiska uruchomieniowego, którą użytkownicy mogą
-omyłkowo umieścić w `plugins.allow` lub próbować uruchomić jako główne polecenie CLI. OpenClaw
-używa tych metadanych do diagnostyki bez importowania kodu środowiska uruchomieniowego pluginu.
+Używaj `commandAliases`, gdy Plugin posiada nazwę polecenia środowiska uruchomieniowego, którą użytkownicy mogą
+omyłkowo umieścić w `plugins.allow` albo próbować uruchomić jako główne polecenie CLI. OpenClaw
+używa tych metadanych do diagnostyki bez importowania kodu środowiska uruchomieniowego Pluginu.
 
 ```json
 {
@@ -213,22 +211,22 @@ używa tych metadanych do diagnostyki bez importowania kodu środowiska uruchomi
 }
 ```
 
-| Pole         | Wymagane | Typ               | Co oznacza                                                                  |
-| ------------ | -------- | ----------------- | --------------------------------------------------------------------------- |
-| `name`       | Tak      | `string`          | Nazwa polecenia należąca do tego pluginu.                                   |
-| `kind`       | Nie      | `"runtime-slash"` | Oznacza alias jako polecenie slash czatu, a nie główne polecenie CLI.       |
+| Pole         | Wymagane | Typ               | Co oznacza                                                                          |
+| ------------ | -------- | ----------------- | ----------------------------------------------------------------------------------- |
+| `name`       | Tak      | `string`          | Nazwa polecenia należąca do tego Pluginu.                                           |
+| `kind`       | Nie      | `"runtime-slash"` | Oznacza alias jako polecenie ukośnikowe czatu, a nie główne polecenie CLI.         |
 | `cliCommand` | Nie      | `string`          | Powiązane główne polecenie CLI, które należy zasugerować dla operacji CLI, jeśli istnieje. |
 
-## Odwołanie do `activation`
+## Informacje o `activation`
 
-Użyj `activation`, gdy plugin może w prosty sposób zadeklarować, które zdarzenia płaszczyzny sterowania
+Używaj `activation`, gdy Plugin może w prosty sposób zadeklarować, które zdarzenia płaszczyzny sterowania
 powinny aktywować go później.
 
-Ten blok zawiera tylko metadane. Nie rejestruje zachowania środowiska uruchomieniowego i nie
-zastępuje `register(...)`, `setupEntry` ani innych punktów wejścia środowiska uruchomieniowego/pluginu.
-Obecni konsumenci używają go jako wskazówki zawężającej przed szerszym ładowaniem pluginu, więc
-brak metadanych aktywacji wpływa tylko na wydajność; nie powinien zmieniać
-poprawności.
+Ten blok zawiera wyłącznie metadane. Nie rejestruje zachowania środowiska uruchomieniowego i nie
+zastępuje `register(...)`, `setupEntry` ani innych entrypointów środowiska uruchomieniowego/Pluginu.
+Obecni konsumenci używają go jako wskazówki zawężającej przed szerszym ładowaniem Pluginów, więc
+brak metadanych aktywacji zwykle wpływa tylko na wydajność; nie powinien zmieniać
+poprawności, dopóki nadal istnieją starsze fallbacki własności manifestu.
 
 ```json
 {
@@ -242,21 +240,27 @@ poprawności.
 }
 ```
 
-| Pole             | Wymagane | Typ                                                  | Co oznacza                                                            |
-| ---------------- | -------- | ---------------------------------------------------- | --------------------------------------------------------------------- |
-| `onProviders`    | Nie      | `string[]`                                           | Identyfikatory dostawców, które powinny aktywować ten plugin po żądaniu. |
-| `onCommands`     | Nie      | `string[]`                                           | Identyfikatory poleceń, które powinny aktywować ten plugin.           |
-| `onChannels`     | Nie      | `string[]`                                           | Identyfikatory kanałów, które powinny aktywować ten plugin.           |
-| `onRoutes`       | Nie      | `string[]`                                           | Rodzaje tras, które powinny aktywować ten plugin.                     |
-| `onCapabilities` | Nie      | `Array<"provider" \| "channel" \| "tool" \| "hook">` | Ogólne wskazówki dotyczące możliwości używane przy planowaniu aktywacji płaszczyzny sterowania. |
+| Pole             | Wymagane | Typ                                                  | Co oznacza                                                          |
+| ---------------- | -------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| `onProviders`    | Nie      | `string[]`                                           | Identyfikatory dostawców, które powinny aktywować ten Plugin po zażądaniu. |
+| `onCommands`     | Nie      | `string[]`                                           | Identyfikatory poleceń, które powinny aktywować ten Plugin.         |
+| `onChannels`     | Nie      | `string[]`                                           | Identyfikatory kanałów, które powinny aktywować ten Plugin.         |
+| `onRoutes`       | Nie      | `string[]`                                           | Rodzaje tras, które powinny aktywować ten Plugin.                   |
+| `onCapabilities` | Nie      | `Array<"provider" \| "channel" \| "tool" \| "hook">` | Szerokie wskazówki capabilities używane przez planowanie aktywacji płaszczyzny sterowania. |
 
-W przypadku planowania wyzwalanego poleceniem OpenClaw nadal korzysta z awaryjnego mechanizmu
-opartego na starszych `commandAliases[].cliCommand` lub `commandAliases[].name`, gdy plugin
-nie dodał jeszcze jawnych metadanych `activation.onCommands`.
+Obecni aktywni konsumenci:
 
-## Odwołanie do `setup`
+- planowanie CLI wyzwalane poleceniem wraca awaryjnie do starszych
+  `commandAliases[].cliCommand` albo `commandAliases[].name`
+- planowanie konfiguracji/kanałów wyzwalane kanałem wraca awaryjnie do starszej własności
+  `channels[]`, gdy brakuje jawnych metadanych aktywacji kanału
+- planowanie konfiguracji/środowiska uruchomieniowego wyzwalane dostawcą wraca awaryjnie do starszej
+  własności `providers[]` i `cliBackends[]` najwyższego poziomu, gdy brakuje jawnych metadanych
+  aktywacji dostawcy
 
-Użyj `setup`, gdy powierzchnie konfiguracji i onboardingu potrzebują prostych metadanych należących do pluginu
+## Informacje o `setup`
+
+Używaj `setup`, gdy powierzchnie konfiguracji i onboardingu potrzebują lekkich metadanych należących do Pluginu
 przed załadowaniem środowiska uruchomieniowego.
 
 ```json
@@ -276,39 +280,39 @@ przed załadowaniem środowiska uruchomieniowego.
 }
 ```
 
-Pole najwyższego poziomu `cliBackends` pozostaje prawidłowe i nadal opisuje backendy inferencji CLI.
-`setup.cliBackends` to powierzchnia deskryptorów specyficzna dla konfiguracji dla
-przepływów płaszczyzny sterowania/konfiguracji, które powinny pozostać wyłącznie metadanymi.
+`cliBackends` najwyższego poziomu pozostaje prawidłowe i nadal opisuje backendy
+inferencji CLI. `setup.cliBackends` to powierzchnia deskryptorów specyficzna dla konfiguracji
+dla przepływów płaszczyzny sterowania/konfiguracji, które powinny pozostać wyłącznie metadanymi.
 
-Gdy są obecne, `setup.providers` i `setup.cliBackends` są preferowaną
-powierzchnią wyszukiwania opartą najpierw na deskryptorach dla wykrywania konfiguracji. Jeśli deskryptor
-jedynie zawęża kandydujący plugin, a konfiguracja nadal potrzebuje bogatszych hooków czasu konfiguracji,
+Jeśli są obecne, `setup.providers` i `setup.cliBackends` są preferowaną
+powierzchnią wyszukiwania najpierw po deskryptorach dla wykrywania konfiguracji. Jeśli deskryptor tylko
+zawęża kandydujący Plugin, a konfiguracja nadal potrzebuje bogatszych hooków środowiska uruchomieniowego w czasie konfiguracji,
 ustaw `requiresRuntime: true` i pozostaw `setup-api` jako
 awaryjną ścieżkę wykonania.
 
-Ponieważ wyszukiwanie konfiguracji może wykonywać kod `setup-api` należący do pluginu,
+Ponieważ wyszukiwanie konfiguracji może wykonywać należący do Pluginu kod `setup-api`,
 znormalizowane wartości `setup.providers[].id` i `setup.cliBackends[]` muszą pozostać unikalne globalnie
-wśród wykrytych pluginów. Niejednoznaczna własność kończy się bezpieczną odmową zamiast wybierania
-zwycięzcy na podstawie kolejności wykrywania.
+wśród wykrytych Pluginów. Niejednoznaczna własność kończy się bez wyboru zwycięzcy
+według kolejności wykrycia.
 
-### Odwołanie do `setup.providers`
+### Informacje o `setup.providers`
 
-| Pole          | Wymagane | Typ        | Co oznacza                                                                              |
-| ------------- | -------- | ---------- | --------------------------------------------------------------------------------------- |
-| `id`          | Tak      | `string`   | Identyfikator dostawcy udostępniany podczas konfiguracji lub onboardingu. Zachowaj globalną unikalność znormalizowanych identyfikatorów. |
-| `authMethods` | Nie      | `string[]` | Identyfikatory metod konfiguracji/uwierzytelniania obsługiwanych przez tego dostawcę bez ładowania pełnego środowiska uruchomieniowego. |
-| `envVars`     | Nie      | `string[]` | Zmienne env, które ogólne powierzchnie konfiguracji/statusu mogą sprawdzać przed załadowaniem środowiska uruchomieniowego pluginu.      |
+| Pole          | Wymagane | Typ        | Co oznacza                                                                                  |
+| ------------- | -------- | ---------- | -------------------------------------------------------------------------------------------- |
+| `id`          | Tak      | `string`   | Identyfikator dostawcy udostępniany podczas konfiguracji lub onboardingu. Znormalizowane identyfikatory muszą być globalnie unikalne. |
+| `authMethods` | Nie      | `string[]` | Identyfikatory metod konfiguracji/auth obsługiwanych przez tego dostawcę bez ładowania pełnego środowiska uruchomieniowego. |
+| `envVars`     | Nie      | `string[]` | Zmienne env, które ogólne powierzchnie konfiguracji/statusu mogą sprawdzać przed załadowaniem środowiska uruchomieniowego Pluginu. |
 
 ### Pola `setup`
 
 | Pole               | Wymagane | Typ        | Co oznacza                                                                                          |
-| ------------------ | -------- | ---------- | --------------------------------------------------------------------------------------------------- |
-| `providers`        | Nie      | `object[]` | Deskryptory konfiguracji dostawców udostępniane podczas konfiguracji i onboardingu.                |
-| `cliBackends`      | Nie      | `string[]` | Identyfikatory backendów czasu konfiguracji używane do wyszukiwania konfiguracji opartego najpierw na deskryptorach. Zachowaj globalną unikalność znormalizowanych identyfikatorów. |
-| `configMigrations` | Nie      | `string[]` | Identyfikatory migracji konfiguracji należące do powierzchni konfiguracji tego pluginu.            |
-| `requiresRuntime`  | Nie      | `boolean`  | Czy konfiguracja nadal wymaga wykonania `setup-api` po wyszukaniu deskryptora.                     |
+| ------------------ | -------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `providers`        | Nie      | `object[]` | Deskryptory konfiguracji dostawców udostępniane podczas konfiguracji i onboardingu.                 |
+| `cliBackends`      | Nie      | `string[]` | Identyfikatory backendów czasu konfiguracji używane do wyszukiwania konfiguracji najpierw po deskryptorach. Znormalizowane identyfikatory muszą być globalnie unikalne. |
+| `configMigrations` | Nie      | `string[]` | Identyfikatory migracji konfiguracji należące do powierzchni konfiguracji tego Pluginu.             |
+| `requiresRuntime`  | Nie      | `boolean`  | Czy konfiguracja nadal wymaga wykonania `setup-api` po wyszukaniu deskryptora.                      |
 
-## Odwołanie do `uiHints`
+## Informacje o `uiHints`
 
 `uiHints` to mapa od nazw pól konfiguracji do małych wskazówek renderowania.
 
@@ -327,19 +331,19 @@ zwycięzcy na podstawie kolejności wykrywania.
 
 Każda wskazówka pola może zawierać:
 
-| Pole          | Typ        | Co oznacza                              |
-| ------------- | ---------- | --------------------------------------- |
-| `label`       | `string`   | Etykieta pola widoczna dla użytkownika. |
-| `help`        | `string`   | Krótki tekst pomocniczy.                |
-| `tags`        | `string[]` | Opcjonalne tagi UI.                     |
-| `advanced`    | `boolean`  | Oznacza pole jako zaawansowane.         |
-| `sensitive`   | `boolean`  | Oznacza pole jako tajne lub wrażliwe.   |
-| `placeholder` | `string`   | Tekst placeholdera dla pól formularza.  |
+| Pole          | Typ        | Co oznacza                               |
+| ------------- | ---------- | ---------------------------------------- |
+| `label`       | `string`   | Etykieta pola widoczna dla użytkownika.  |
+| `help`        | `string`   | Krótki tekst pomocniczy.                 |
+| `tags`        | `string[]` | Opcjonalne tagi UI.                      |
+| `advanced`    | `boolean`  | Oznacza pole jako zaawansowane.          |
+| `sensitive`   | `boolean`  | Oznacza pole jako sekretne lub wrażliwe. |
+| `placeholder` | `string`   | Tekst placeholdera dla pól formularza.   |
 
-## Odwołanie do `contracts`
+## Informacje o `contracts`
 
-Używaj `contracts` tylko dla statycznych metadanych własności możliwości, które OpenClaw może
-odczytać bez importowania środowiska uruchomieniowego pluginu.
+Używaj `contracts` wyłącznie dla statycznych metadanych własności capabilities, które OpenClaw może
+odczytać bez importowania środowiska uruchomieniowego Pluginu.
 
 ```json
 {
@@ -359,21 +363,21 @@ odczytać bez importowania środowiska uruchomieniowego pluginu.
 
 Każda lista jest opcjonalna:
 
-| Pole                             | Typ        | Co oznacza                                                      |
-| -------------------------------- | ---------- | --------------------------------------------------------------- |
-| `speechProviders`                | `string[]` | Identyfikatory dostawców mowy należących do tego pluginu.       |
-| `realtimeTranscriptionProviders` | `string[]` | Identyfikatory dostawców transkrypcji w czasie rzeczywistym należących do tego pluginu. |
-| `realtimeVoiceProviders`         | `string[]` | Identyfikatory dostawców głosu w czasie rzeczywistym należących do tego pluginu. |
-| `mediaUnderstandingProviders`    | `string[]` | Identyfikatory dostawców rozumienia mediów należących do tego pluginu. |
-| `imageGenerationProviders`       | `string[]` | Identyfikatory dostawców generowania obrazów należących do tego pluginu. |
-| `videoGenerationProviders`       | `string[]` | Identyfikatory dostawców generowania wideo należących do tego pluginu. |
-| `webFetchProviders`              | `string[]` | Identyfikatory dostawców pobierania z sieci należących do tego pluginu. |
-| `webSearchProviders`             | `string[]` | Identyfikatory dostawców wyszukiwania w sieci należących do tego pluginu. |
-| `tools`                          | `string[]` | Nazwy narzędzi agenta należących do tego pluginu na potrzeby kontroli kontraktów pakietowych. |
+| Pole                             | Typ        | Co oznacza                                                   |
+| -------------------------------- | ---------- | ------------------------------------------------------------ |
+| `speechProviders`                | `string[]` | Identyfikatory dostawców speech należących do tego Pluginu.  |
+| `realtimeTranscriptionProviders` | `string[]` | Identyfikatory dostawców realtime transcription należących do tego Pluginu. |
+| `realtimeVoiceProviders`         | `string[]` | Identyfikatory dostawców realtime voice należących do tego Pluginu. |
+| `mediaUnderstandingProviders`    | `string[]` | Identyfikatory dostawców media-understanding należących do tego Pluginu. |
+| `imageGenerationProviders`       | `string[]` | Identyfikatory dostawców image-generation należących do tego Pluginu. |
+| `videoGenerationProviders`       | `string[]` | Identyfikatory dostawców video-generation należących do tego Pluginu. |
+| `webFetchProviders`              | `string[]` | Identyfikatory dostawców web-fetch należących do tego Pluginu. |
+| `webSearchProviders`             | `string[]` | Identyfikatory dostawców web search należących do tego Pluginu. |
+| `tools`                          | `string[]` | Nazwy narzędzi agenta należących do tego Pluginu dla bundlowych kontroli kontraktów. |
 
-## Odwołanie do `channelConfigs`
+## Informacje o `channelConfigs`
 
-Użyj `channelConfigs`, gdy plugin kanału potrzebuje prostych metadanych konfiguracji przed
+Używaj `channelConfigs`, gdy Plugin kanału potrzebuje lekkich metadanych konfiguracji przed
 załadowaniem środowiska uruchomieniowego.
 
 ```json
@@ -389,12 +393,12 @@ załadowaniem środowiska uruchomieniowego.
       },
       "uiHints": {
         "homeserverUrl": {
-          "label": "URL homeserwera",
+          "label": "URL Homeservera",
           "placeholder": "https://matrix.example.com"
         }
       },
       "label": "Matrix",
-      "description": "Połączenie z homeserwerem Matrix",
+      "description": "Połączenie z homeserverem Matrix",
       "preferOver": ["matrix-legacy"]
     }
   }
@@ -403,19 +407,18 @@ załadowaniem środowiska uruchomieniowego.
 
 Każdy wpis kanału może zawierać:
 
-| Pole          | Typ                      | Co oznacza                                                                                 |
-| ------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
+| Pole          | Typ                      | Co oznacza                                                                                  |
+| ------------- | ------------------------ | -------------------------------------------------------------------------------------------- |
 | `schema`      | `object`                 | Schemat JSON dla `channels.<id>`. Wymagany dla każdego zadeklarowanego wpisu konfiguracji kanału. |
 | `uiHints`     | `Record<string, object>` | Opcjonalne etykiety UI/placeholdery/wskazówki dotyczące wrażliwości dla tej sekcji konfiguracji kanału. |
-| `label`       | `string`                 | Etykieta kanału scalana z powierzchniami selektora i inspekcji, gdy metadane środowiska uruchomieniowego nie są gotowe. |
-| `description` | `string`                 | Krótki opis kanału dla powierzchni inspekcji i katalogu.                                   |
-| `preferOver`  | `string[]`               | Starsze lub niżej priorytetowe identyfikatory pluginów, które ten kanał powinien wyprzedzać na powierzchniach wyboru. |
+| `label`       | `string`                 | Etykieta kanału scalana z powierzchniami wyboru i inspekcji, gdy metadane środowiska uruchomieniowego nie są jeszcze gotowe. |
+| `description` | `string`                 | Krótki opis kanału dla powierzchni inspekcji i katalogu.                                     |
+| `preferOver`  | `string[]`               | Starsze lub mniej priorytetowe identyfikatory Pluginów, które ten kanał powinien wyprzedzać na powierzchniach wyboru. |
 
-## Odwołanie do `modelSupport`
+## Informacje o `modelSupport`
 
-Użyj `modelSupport`, gdy OpenClaw ma wnioskować o pluginie dostawcy na podstawie
-skrótowych identyfikatorów modeli, takich jak `gpt-5.4` lub `claude-sonnet-4.6`, zanim środowisko uruchomieniowe pluginu
-zostanie załadowane.
+Używaj `modelSupport`, gdy OpenClaw powinien wywnioskować Plugin dostawcy na podstawie
+skróconych identyfikatorów modeli, takich jak `gpt-5.4` albo `claude-sonnet-4.6`, zanim załaduje się środowisko uruchomieniowe Pluginu.
 
 ```json
 {
@@ -428,72 +431,73 @@ zostanie załadowane.
 
 OpenClaw stosuje następujący priorytet:
 
-- jawne odwołania `provider/model` używają metadanych manifestu `providers` właściciela
-- `modelPatterns` mają pierwszeństwo przed `modelPrefixes`
-- jeśli jeden plugin zewnętrzny i jeden plugin pakietowy pasują jednocześnie, wygrywa plugin zewnętrzny
-- pozostała niejednoznaczność jest ignorowana, dopóki użytkownik lub konfiguracja nie określi dostawcy
+- jawne odwołania `provider/model` używają należących do właściciela metadanych manifestu `providers`
+- `modelPatterns` mają wyższy priorytet niż `modelPrefixes`
+- jeśli pasuje jeden Plugin zewnętrzny i jeden Plugin bundlowy, wygrywa Plugin zewnętrzny
+- pozostała niejednoznaczność jest ignorowana, dopóki użytkownik lub konfiguracja nie wskaże dostawcy
 
 Pola:
 
-| Pole            | Typ        | Co oznacza                                                                    |
-| --------------- | ---------- | ----------------------------------------------------------------------------- |
-| `modelPrefixes` | `string[]` | Prefiksy dopasowywane za pomocą `startsWith` do skrótowych identyfikatorów modeli. |
-| `modelPatterns` | `string[]` | Źródła regex dopasowywane do skrótowych identyfikatorów modeli po usunięciu sufiksu profilu. |
+| Pole            | Typ        | Co oznacza                                                                     |
+| --------------- | ---------- | ------------------------------------------------------------------------------ |
+| `modelPrefixes` | `string[]` | Prefiksy dopasowywane przez `startsWith` do skróconych identyfikatorów modeli. |
+| `modelPatterns` | `string[]` | Źródła regex dopasowywane do skróconych identyfikatorów modeli po usunięciu sufiksu profilu. |
 
-Starsze klucze możliwości najwyższego poziomu są przestarzałe. Użyj `openclaw doctor --fix`, aby
+Starsze klucze capabilities najwyższego poziomu są przestarzałe. Użyj `openclaw doctor --fix`, aby
 przenieść `speechProviders`, `realtimeTranscriptionProviders`,
 `realtimeVoiceProviders`, `mediaUnderstandingProviders`,
 `imageGenerationProviders`, `videoGenerationProviders`,
 `webFetchProviders` i `webSearchProviders` do `contracts`; zwykłe
 ładowanie manifestu nie traktuje już tych pól najwyższego poziomu jako
-własności możliwości.
+własności capabilities.
 
-## Manifest a package.json
+## Manifest a `package.json`
 
-Te dwa pliki pełnią różne role:
+Te dwa pliki służą do różnych zadań:
 
-| Plik                   | Używaj go do                                                                                                                   |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `openclaw.plugin.json` | Wykrywania, walidacji konfiguracji, metadanych wyboru uwierzytelniania i wskazówek UI, które muszą istnieć przed uruchomieniem kodu pluginu |
-| `package.json`         | Metadanych npm, instalacji zależności oraz bloku `openclaw` używanego do punktów wejścia, kontroli instalacji, konfiguracji lub metadanych katalogu |
+| Plik                   | Używaj go do                                                                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `openclaw.plugin.json` | Wykrywania, walidacji konfiguracji, metadanych wyboru auth i wskazówek UI, które muszą istnieć przed uruchomieniem kodu Pluginu |
+| `package.json`         | Metadanych npm, instalacji zależności oraz bloku `openclaw` używanego do entrypointów, bramek instalacji, konfiguracji lub metadanych katalogu |
 
-Jeśli nie masz pewności, gdzie powinien znaleźć się dany fragment metadanych, użyj tej zasady:
+Jeśli nie masz pewności, gdzie powinien trafić dany fragment metadanych, stosuj tę zasadę:
 
-- jeśli OpenClaw musi o tym wiedzieć przed załadowaniem kodu pluginu, umieść to w `openclaw.plugin.json`
-- jeśli dotyczy to pakowania, plików wejściowych lub zachowania instalacji npm, umieść to w `package.json`
+- jeśli OpenClaw musi znać go przed załadowaniem kodu Pluginu, umieść go w `openclaw.plugin.json`
+- jeśli dotyczy pakowania, plików wejściowych albo zachowania instalacji npm, umieść go w `package.json`
 
 ### Pola `package.json`, które wpływają na wykrywanie
 
-Niektóre metadane pluginów sprzed uruchomienia celowo znajdują się w `package.json` w bloku
+Niektóre metadane Pluginów przed uruchomieniem celowo znajdują się w `package.json` w bloku
 `openclaw`, a nie w `openclaw.plugin.json`.
 
 Ważne przykłady:
 
-| Pole                                                              | Co oznacza                                                                                                                                   |
+| Pole                                                              | Co oznacza                                                                                                                                  |
 | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `openclaw.extensions`                                             | Deklaruje natywne punkty wejścia Plugin.                                                                                                     |
-| `openclaw.setupEntry`                                             | Lekki punkt wejścia tylko do konfiguracji używany podczas onboardingu i odroczonego uruchamiania kanału.                                    |
-| `openclaw.channel`                                                | Lekkie metadane katalogu kanałów, takie jak etykiety, ścieżki dokumentacji, aliasy i teksty wyboru.                                        |
-| `openclaw.channel.configuredState`                                | Lekkie metadane modułu sprawdzania stanu konfiguracji, które mogą odpowiedzieć na pytanie „czy konfiguracja oparta wyłącznie na env już istnieje?” bez ładowania pełnego środowiska uruchomieniowego kanału. |
-| `openclaw.channel.persistedAuthState`                             | Lekkie metadane modułu sprawdzania utrwalonego stanu uwierzytelniania, które mogą odpowiedzieć na pytanie „czy cokolwiek jest już zalogowane?” bez ładowania pełnego środowiska uruchomieniowego kanału. |
-| `openclaw.install.npmSpec` / `openclaw.install.localPath`         | Wskazówki instalacji/aktualizacji dla pluginów pakietowych i publikowanych zewnętrznie.                                                     |
-| `openclaw.install.defaultChoice`                                  | Preferowana ścieżka instalacji, gdy dostępnych jest wiele źródeł instalacji.                                                                |
-| `openclaw.install.minHostVersion`                                 | Minimalna obsługiwana wersja hosta OpenClaw z użyciem dolnego ograniczenia semver, na przykład `>=2026.3.22`.                               |
-| `openclaw.install.allowInvalidConfigRecovery`                     | Umożliwia wąską ścieżkę odzyskiwania przez ponowną instalację pluginu pakietowego, gdy konfiguracja jest nieprawidłowa.                    |
-| `openclaw.startup.deferConfiguredChannelFullLoadUntilAfterListen` | Pozwala powierzchniom kanału tylko do konfiguracji ładować się przed pełnym pluginem kanału podczas uruchamiania.                          |
+| `openclaw.extensions`                                             | Deklaruje natywne entrypointy Pluginów.                                                                                                      |
+| `openclaw.setupEntry`                                             | Lekki entrypoint tylko do konfiguracji, używany podczas onboardingu i odroczonego uruchamiania kanału.                                     |
+| `openclaw.channel`                                                | Lekkie metadane katalogu kanałów, takie jak etykiety, ścieżki do dokumentacji, aliasy i tekst wyboru.                                      |
+| `openclaw.channel.configuredState`                                | Lekkie metadane sprawdzania stanu konfiguracji, które mogą odpowiedzieć na pytanie „czy konfiguracja oparta wyłącznie na env już istnieje?” bez ładowania pełnego środowiska uruchomieniowego kanału. |
+| `openclaw.channel.persistedAuthState`                             | Lekkie metadane sprawdzania trwałego stanu auth, które mogą odpowiedzieć na pytanie „czy cokolwiek jest już zalogowane?” bez ładowania pełnego środowiska uruchomieniowego kanału. |
+| `openclaw.install.npmSpec` / `openclaw.install.localPath`         | Wskazówki instalacji/aktualizacji dla Pluginów bundlowych i publikowanych zewnętrznie.                                                      |
+| `openclaw.install.defaultChoice`                                  | Preferowana ścieżka instalacji, gdy dostępnych jest wiele źródeł instalacji.                                                               |
+| `openclaw.install.minHostVersion`                                 | Minimalna obsługiwana wersja hosta OpenClaw, z użyciem dolnego ograniczenia semver, takiego jak `>=2026.3.22`.                             |
+| `openclaw.install.allowInvalidConfigRecovery`                     | Umożliwia wąską ścieżkę odzyskiwania po ponownej instalacji bundlowego Pluginu, gdy konfiguracja jest nieprawidłowa.                      |
+| `openclaw.startup.deferConfiguredChannelFullLoadUntilAfterListen` | Pozwala powierzchniom kanałów tylko do konfiguracji załadować się przed pełnym Pluginem kanału podczas uruchamiania.                      |
 
-`openclaw.install.minHostVersion` jest egzekwowane podczas instalacji i
+`openclaw.install.minHostVersion` jest wymuszane podczas instalacji i
 ładowania rejestru manifestów. Nieprawidłowe wartości są odrzucane; nowsze, ale poprawne wartości powodują pominięcie
-pluginu na starszych hostach.
+Pluginu na starszych hostach.
 
 `openclaw.install.allowInvalidConfigRecovery` jest celowo wąskie. Nie
-sprawia, że dowolne uszkodzone konfiguracje stają się możliwe do zainstalowania. Obecnie pozwala tylko przepływom instalacji
-odzyskiwać po konkretnych nieaktualnych awariach aktualizacji pluginów pakietowych, takich jak
-brakująca ścieżka pluginu pakietowego lub nieaktualny wpis `channels.<id>` dla tego samego
-pluginu pakietowego. Niezwiązane błędy konfiguracji nadal blokują instalację i kierują operatorów
+sprawia, że dowolnie uszkodzone konfiguracje stają się możliwe do zainstalowania. Obecnie pozwala tylko
+przepływom instalacji odzyskać sprawność po określonych niepowodzeniach aktualizacji bundlowych Pluginów, takich jak
+brak ścieżki bundlowego Pluginu albo nieaktualny wpis `channels.<id>` dla tego samego
+bundlowego Pluginu. Niezwiązane błędy konfiguracji nadal blokują instalację i kierują operatorów
 do `openclaw doctor --fix`.
 
-`openclaw.channel.persistedAuthState` to metadane pakietu dla małego modułu sprawdzającego:
+`openclaw.channel.persistedAuthState` to metadane pakietu dla małego modułu
+sprawdzającego:
 
 ```json
 {
@@ -509,12 +513,12 @@ do `openclaw doctor --fix`.
 }
 ```
 
-Użyj tego, gdy przepływy konfiguracji, doctor lub stanu konfiguracji potrzebują prostego sprawdzenia
-uwierzytelniania typu tak/nie przed załadowaniem pełnego pluginu kanału. Docelowy eksport powinien być małą
-funkcją, która odczytuje tylko utrwalony stan; nie prowadź go przez pełną beczkę środowiska uruchomieniowego kanału.
+Używaj tego, gdy przepływy konfiguracji, doctor albo configured-state potrzebują prostego
+sprawdzenia auth typu tak/nie, zanim załaduje się pełny Plugin kanału. Docelowy eksport powinien być małą
+funkcją, która odczytuje wyłącznie stan trwały; nie kieruj tego przez pełny barrel środowiska uruchomieniowego kanału.
 
-`openclaw.channel.configuredState` ma ten sam kształt dla prostych kontroli
-stanu konfiguracji opartych wyłącznie na env:
+`openclaw.channel.configuredState` ma taki sam kształt dla lekkich sprawdzeń
+konfiguracji opartych wyłącznie na env:
 
 ```json
 {
@@ -530,64 +534,63 @@ stanu konfiguracji opartych wyłącznie na env:
 }
 ```
 
-Użyj tego, gdy kanał może odpowiedzieć o stanie konfiguracji na podstawie env lub innych małych
-wejść niebędących częścią środowiska uruchomieniowego. Jeśli sprawdzenie wymaga pełnego rozstrzygania konfiguracji lub rzeczywistego
-środowiska uruchomieniowego kanału, pozostaw tę logikę w hooku pluginu `config.hasConfiguredState`.
+Używaj tego, gdy kanał może odpowiedzieć o stanie konfiguracji na podstawie env lub innych małych
+wejść niezwiązanych ze środowiskiem uruchomieniowym. Jeśli sprawdzenie wymaga pełnego rozstrzygnięcia konfiguracji albo rzeczywistego
+środowiska uruchomieniowego kanału, pozostaw tę logikę w hooku Pluginu `config.hasConfiguredState`.
 
 ## Wymagania schematu JSON
 
-- **Każdy plugin musi dostarczać schemat JSON**, nawet jeśli nie przyjmuje żadnej konfiguracji.
+- **Każdy Plugin musi dostarczać schemat JSON**, nawet jeśli nie przyjmuje żadnej konfiguracji.
 - Pusty schemat jest akceptowalny (na przykład `{ "type": "object", "additionalProperties": false }`).
 - Schematy są walidowane podczas odczytu/zapisu konfiguracji, a nie w czasie działania.
 
 ## Zachowanie walidacji
 
 - Nieznane klucze `channels.*` są **błędami**, chyba że identyfikator kanału jest zadeklarowany przez
-  manifest pluginu.
+  manifest Pluginu.
 - `plugins.entries.<id>`, `plugins.allow`, `plugins.deny` i `plugins.slots.*`
-  muszą odwoływać się do **wykrywalnych** identyfikatorów pluginów. Nieznane identyfikatory są **błędami**.
-- Jeśli plugin jest zainstalowany, ale ma uszkodzony lub brakujący manifest albo schemat,
-  walidacja kończy się niepowodzeniem, a Doctor zgłasza błąd pluginu.
-- Jeśli konfiguracja pluginu istnieje, ale plugin jest **wyłączony**, konfiguracja jest zachowywana i
-  pojawia się **ostrzeżenie** w Doctor + logach.
+  muszą odwoływać się do **wykrywalnych** identyfikatorów Pluginów. Nieznane identyfikatory są **błędami**.
+- Jeśli Plugin jest zainstalowany, ale ma uszkodzony lub brakujący manifest albo schemat,
+  walidacja kończy się niepowodzeniem, a Doctor zgłasza błąd Pluginu.
+- Jeśli konfiguracja Pluginu istnieje, ale Plugin jest **wyłączony**, konfiguracja jest zachowywana i
+  w Doctor + logach wyświetlane jest **ostrzeżenie**.
 
-Pełny schemat `plugins.*` znajdziesz w [Odwołaniu do konfiguracji](/pl/gateway/configuration).
+Pełny schemat `plugins.*` znajdziesz tutaj: [Informacje o konfiguracji](/pl/gateway/configuration).
 
 ## Uwagi
 
-- Manifest jest **wymagany dla natywnych Plugin OpenClaw**, w tym dla ładowań z lokalnego systemu plików.
-- Środowisko uruchomieniowe nadal ładuje moduł pluginu osobno; manifest służy tylko do
+- Manifest jest **wymagany dla natywnych Pluginów OpenClaw**, w tym dla ładowania z lokalnego systemu plików.
+- Środowisko uruchomieniowe nadal ładuje moduł Pluginu osobno; manifest służy tylko do
   wykrywania + walidacji.
 - Natywne manifesty są parsowane przy użyciu JSON5, więc komentarze, końcowe przecinki i
-  klucze bez cudzysłowów są akceptowane, o ile końcowa wartość nadal jest obiektem.
-- Ładowarka manifestu odczytuje tylko udokumentowane pola manifestu. Unikaj dodawania
-  tutaj niestandardowych kluczy najwyższego poziomu.
-- `providerAuthEnvVars` to lekka ścieżka metadanych dla sond uwierzytelniania, walidacji znaczników env
-  i podobnych powierzchni uwierzytelniania dostawcy, które nie powinny uruchamiać środowiska uruchomieniowego pluginu
-  tylko po to, aby sprawdzić nazwy env.
-- `providerAuthAliases` pozwala wariantom dostawcy ponownie używać zmiennych env uwierzytelniania innego dostawcy,
-  profili uwierzytelniania, uwierzytelniania opartego na konfiguracji oraz wyboru onboardingu klucza API
-  bez kodowania tej relacji na sztywno w rdzeniu.
-- `channelEnvVars` to lekka ścieżka metadanych dla awaryjnego użycia shell env, promptów konfiguracji
-  i podobnych powierzchni kanału, które nie powinny uruchamiać środowiska uruchomieniowego pluginu
-  tylko po to, aby sprawdzić nazwy env.
-- `providerAuthChoices` to lekka ścieżka metadanych dla selektorów wyboru uwierzytelniania,
+  klucze bez cudzysłowów są akceptowane, o ile wartość końcowa nadal jest obiektem.
+- Loader manifestu odczytuje tylko udokumentowane pola manifestu. Unikaj dodawania
+  tutaj własnych kluczy najwyższego poziomu.
+- `providerAuthEnvVars` to lekka ścieżka metadanych dla sond auth, walidacji
+  znaczników env i podobnych powierzchni auth dostawców, które nie powinny uruchamiać środowiska uruchomieniowego Pluginu tylko po to, by sprawdzić nazwy env.
+- `providerAuthAliases` pozwala wariantom dostawców ponownie używać zmiennych env auth,
+  profili auth, auth opartych na konfiguracji oraz wyboru onboardingu klucza API innego dostawcy
+  bez kodowania tej relacji na sztywno w core.
+- `channelEnvVars` to lekka ścieżka metadanych dla fallbacku shell-env, promptów konfiguracji
+  i podobnych powierzchni kanałów, które nie powinny uruchamiać środowiska uruchomieniowego Pluginu
+  tylko po to, by sprawdzić nazwy env.
+- `providerAuthChoices` to lekka ścieżka metadanych dla selektorów wyboru auth,
   rozstrzygania `--auth-choice`, mapowania preferowanego dostawcy i prostej rejestracji flag CLI
-  dla onboardingu przed załadowaniem środowiska uruchomieniowego dostawcy. W przypadku metadanych kreatora środowiska uruchomieniowego,
+  onboardingu przed załadowaniem środowiska uruchomieniowego dostawcy. W przypadku metadanych kreatora środowiska uruchomieniowego,
   które wymagają kodu dostawcy, zobacz
   [Hooki środowiska uruchomieniowego dostawcy](/pl/plugins/architecture#provider-runtime-hooks).
-- Wyłączne rodzaje pluginów są wybierane przez `plugins.slots.*`.
+- Wyłączne rodzaje Pluginów są wybierane przez `plugins.slots.*`.
   - `kind: "memory"` jest wybierany przez `plugins.slots.memory`.
   - `kind: "context-engine"` jest wybierany przez `plugins.slots.contextEngine`
     (domyślnie: wbudowany `legacy`).
-- `channels`, `providers`, `cliBackends` i `skills` można pominąć, gdy
-  plugin ich nie potrzebuje.
-- Jeśli twój plugin zależy od modułów natywnych, udokumentuj kroki budowania oraz wszelkie
-  wymagania listy dozwolonych elementów menedżera pakietów (na przykład pnpm `allow-build-scripts`
+- `channels`, `providers`, `cliBackends` i `skills` można pominąć, jeśli
+  Plugin ich nie potrzebuje.
+- Jeśli Twój Plugin zależy od modułów natywnych, udokumentuj kroki budowania oraz wszelkie
+  wymagania dotyczące allowlist menedżera pakietów (na przykład pnpm `allow-build-scripts`
   - `pnpm rebuild <package>`).
 
 ## Powiązane
 
-- [Tworzenie Plugin](/pl/plugins/building-plugins) — wprowadzenie do pluginów
-- [Architektura Plugin](/pl/plugins/architecture) — architektura wewnętrzna
-- [Przegląd SDK](/pl/plugins/sdk-overview) — dokumentacja SDK Plugin
+- [Tworzenie Pluginów](/pl/plugins/building-plugins) — pierwsze kroki z Pluginami
+- [Architektura Pluginów](/pl/plugins/architecture) — architektura wewnętrzna
+- [Przegląd SDK](/pl/plugins/sdk-overview) — dokumentacja Plugin SDK

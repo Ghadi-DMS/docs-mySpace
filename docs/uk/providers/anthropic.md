@@ -4,42 +4,42 @@ read_when:
 summary: Використовуйте Anthropic Claude через API-ключі або Claude CLI в OpenClaw
 title: Anthropic
 x-i18n:
-    generated_at: "2026-04-12T09:50:38Z"
+    generated_at: "2026-04-12T11:08:30Z"
     model: gpt-5.4
     provider: openai
-    source_hash: dabb5adc0d626995c3649c57cf4e1a94e48ce8908c004eecc21582af9c227f4d
+    source_hash: 5e3dda5f98ade9d4c3841888103bfb43d59e075d358a701ed0ae3ffb8d5694a7
     source_path: providers/anthropic.md
     workflow: 15
 ---
 
 # Anthropic (Claude)
 
-Anthropic створює сімейство моделей **Claude**. OpenClaw підтримує два способи автентифікації:
+Anthropic створює сімейство моделей **Claude**. OpenClaw підтримує два шляхи автентифікації:
 
-- **API key** — прямий доступ до Anthropic API з оплатою за використання (моделі `anthropic/*`)
+- **API key** — прямий доступ до API Anthropic з тарифікацією за використання (`anthropic/*` моделі)
 - **Claude CLI** — повторне використання наявного входу Claude CLI на тому самому хості
 
 <Warning>
-Співробітники Anthropic повідомили нам, що використання Claude CLI у стилі OpenClaw знову дозволене, тому
+Співробітники Anthropic повідомили нам, що використання Claude CLI у стилі OpenClaw знову дозволене, тож
 OpenClaw вважає повторне використання Claude CLI та використання `claude -p` санкціонованими, якщо
 Anthropic не опублікує нову політику.
 
-Для довготривалих хостів Gateway ключі Anthropic API key все ще є найзрозумілішим і
-найпередбачуванішим шляхом для продакшну.
+Для довготривалих хостів Gateway API-ключі Anthropic усе ще є найзрозумілішим і
+найпередбачуванішим шляхом для production.
 
 Поточна публічна документація Anthropic:
 
 - [Довідка з Claude Code CLI](https://code.claude.com/docs/en/cli-reference)
 - [Огляд Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview)
-- [Використання Claude Code з планом Pro або Max](https://support.claude.com/en/articles/11145838-using-claude-code-with-your-pro-or-max-plan)
-- [Використання Claude Code з планом Team або Enterprise](https://support.anthropic.com/en/articles/11845131-using-claude-code-with-your-team-or-enterprise-plan/)
+- [Використання Claude Code з вашим планом Pro або Max](https://support.claude.com/en/articles/11145838-using-claude-code-with-your-pro-or-max-plan)
+- [Використання Claude Code з вашим планом Team або Enterprise](https://support.anthropic.com/en/articles/11845131-using-claude-code-with-your-team-or-enterprise-plan/)
   </Warning>
 
 ## Початок роботи
 
 <Tabs>
   <Tab title="API key">
-    **Найкраще для:** стандартного доступу до API та оплати за використання.
+    **Найкраще підходить для:** стандартного доступу до API і тарифікації за використання.
 
     <Steps>
       <Step title="Отримайте свій API key">
@@ -76,10 +76,10 @@ Anthropic не опублікує нову політику.
   </Tab>
 
   <Tab title="Claude CLI">
-    **Найкраще для:** повторного використання наявного входу Claude CLI без окремого API key.
+    **Найкраще підходить для:** повторного використання наявного входу Claude CLI без окремого API key.
 
     <Steps>
-      <Step title="Переконайтеся, що Claude CLI встановлено і вхід виконано">
+      <Step title="Переконайтеся, що Claude CLI встановлено і в ньому виконано вхід">
         Перевірте командою:
 
         ```bash
@@ -106,17 +106,17 @@ Anthropic не опублікує нову політику.
     </Note>
 
     <Tip>
-    Якщо вам потрібен найзрозуміліший шлях білінгу, використовуйте Anthropic API key. OpenClaw також підтримує варіанти у стилі підписки від [OpenAI Codex](/uk/providers/openai), [Qwen Cloud](/uk/providers/qwen), [MiniMax](/uk/providers/minimax) і [Z.AI / GLM](/uk/providers/glm).
+    Якщо вам потрібен найпрозоріший шлях тарифікації, натомість використовуйте API key Anthropic. OpenClaw також підтримує варіанти на основі підписки від [OpenAI Codex](/uk/providers/openai), [Qwen Cloud](/uk/providers/qwen), [MiniMax](/uk/providers/minimax) і [Z.AI / GLM](/uk/providers/glm).
     </Tip>
 
   </Tab>
 </Tabs>
 
-## Типові налаштування thinking (Claude 4.6)
+## Значення thinking за замовчуванням (Claude 4.6)
 
-Моделі Claude 4.6 типово використовують `adaptive` thinking в OpenClaw, якщо явний рівень thinking не задано.
+Для моделей Claude 4.6 в OpenClaw значення thinking за замовчуванням — `adaptive`, якщо явний рівень thinking не встановлено.
 
-Перевизначайте для окремого повідомлення через `/think:<level>` або в параметрах моделі:
+Перевизначте для окремого повідомлення через `/think:<level>` або в параметрах моделі:
 
 ```json5
 {
@@ -138,15 +138,15 @@ Anthropic не опублікує нову політику.
 - [Extended thinking](https://platform.claude.com/docs/en/build-with-claude/extended-thinking)
 </Note>
 
-## Кешування промптів
+## Кешування prompt
 
-OpenClaw підтримує функцію кешування промптів Anthropic для автентифікації через API key.
+OpenClaw підтримує функцію кешування prompt від Anthropic для автентифікації через API key.
 
-| Value               | Тривалість кешу | Опис                                   |
-| ------------------- | --------------- | -------------------------------------- |
+| Значення            | Тривалість кешу | Опис                                     |
+| ------------------- | --------------- | ---------------------------------------- |
 | `"short"` (типово)  | 5 хвилин        | Застосовується автоматично для автентифікації через API key |
-| `"long"`            | 1 година        | Розширений кеш                         |
-| `"none"`            | Без кешування   | Вимкнути кешування промптів            |
+| `"long"`            | 1 година        | Розширений кеш                           |
+| `"none"`            | Без кешування   | Вимкнути кешування prompt                |
 
 ```json5
 {
@@ -164,7 +164,7 @@ OpenClaw підтримує функцію кешування промптів A
 
 <AccordionGroup>
   <Accordion title="Перевизначення кешу для окремих агентів">
-    Використовуйте параметри на рівні моделі як базову лінію, а потім перевизначайте для конкретних агентів через `agents.list[].params`:
+    Використовуйте параметри на рівні моделі як базу, а потім перевизначайте для конкретних агентів через `agents.list[].params`:
 
     ```json5
     {
@@ -188,27 +188,27 @@ OpenClaw підтримує функцію кешування промптів A
     Порядок об’єднання конфігурації:
 
     1. `agents.defaults.models["provider/model"].params`
-    2. `agents.list[].params` (відповідний `id`, перевизначення за ключем)
+    2. `agents.list[].params` (відповідний `id`, перевизначає за ключем)
 
-    Це дозволяє одному агенту зберігати довготривалий кеш, тоді як інший агент на тій самій моделі вимикає кешування для імпульсного трафіку або трафіку з низьким повторним використанням.
+    Це дає змогу одному агенту зберігати довготривалий кеш, тоді як інший агент на тій самій моделі вимикає кешування для імпульсного трафіку або трафіку з низьким повторним використанням.
 
   </Accordion>
 
-  <Accordion title="Нотатки щодо Bedrock Claude">
-    - Моделі Anthropic Claude на Bedrock (`amazon-bedrock/*anthropic.claude*`) приймають наскрізну передачу `cacheRetention`, якщо це налаштовано.
+  <Accordion title="Примітки щодо Bedrock Claude">
+    - Моделі Anthropic Claude у Bedrock (`amazon-bedrock/*anthropic.claude*`) приймають наскрізну передачу `cacheRetention`, якщо її налаштовано.
     - Для моделей Bedrock, що не належать Anthropic, під час виконання примусово встановлюється `cacheRetention: "none"`.
-    - Типові розумні налаштування для API key також задають `cacheRetention: "short"` для посилань Claude-on-Bedrock, якщо явне значення не встановлено.
+    - Розумні типові значення для API key також ініціалізують `cacheRetention: "short"` для посилань Claude-on-Bedrock, якщо явне значення не задано.
   </Accordion>
 </AccordionGroup>
 
-## Розширене налаштування
+## Розширена конфігурація
 
 <AccordionGroup>
   <Accordion title="Швидкий режим">
-    Спільний перемикач `/fast` в OpenClaw підтримує прямий трафік Anthropic (API key та OAuth до `api.anthropic.com`).
+    Спільний перемикач `/fast` в OpenClaw підтримує прямий трафік Anthropic (API key і OAuth до `api.anthropic.com`).
 
-    | Command | Відповідає |
-    |---------|------------|
+    | Команда | Відображається на |
+    |---------|-------------------|
     | `/fast on` | `service_tier: "auto"` |
     | `/fast off` | `service_tier: "standard_only"` |
 
@@ -227,15 +227,30 @@ OpenClaw підтримує функцію кешування промптів A
     ```
 
     <Note>
-    - Вставляється лише для прямих запитів до `api.anthropic.com`. Для маршрутів через проксі `service_tier` залишається без змін.
-    - Явні параметри `serviceTier` або `service_tier` мають пріоритет над `/fast`, якщо задано обидва.
-    - Для акаунтів без доступної ємності Priority Tier значення `service_tier: "auto"` може звестися до `standard`.
+    - Вставляється лише для прямих запитів до `api.anthropic.com`. Маршрути через проксі залишають `service_tier` без змін.
+    - Явні параметри `serviceTier` або `service_tier` мають пріоритет над `/fast`, якщо встановлено обидва.
+    - Для облікових записів без місткості Priority Tier значення `service_tier: "auto"` може визначитися як `standard`.
     </Note>
 
   </Accordion>
 
+  <Accordion title="Розуміння медіа (зображення та PDF)">
+    Вбудований Plugin Anthropic реєструє розуміння зображень і PDF. OpenClaw
+    автоматично визначає медіа-можливості з налаштованої автентифікації Anthropic —
+    додаткова конфігурація не потрібна.
+
+    | Property       | Value                |
+    | -------------- | -------------------- |
+    | Default model  | `claude-opus-4-6`    |
+    | Supported input | Images, PDF documents |
+
+    Коли зображення або PDF додається до розмови, OpenClaw автоматично
+    маршрутизує його через провайдера розуміння медіа Anthropic.
+
+  </Accordion>
+
   <Accordion title="Вікно контексту 1M (бета)">
-    Вікно контексту Anthropic 1M доступне лише в бета-режимі. Увімкніть його для конкретної моделі:
+    Вікно контексту 1M від Anthropic доступне лише в межах beta. Увімкніть його для окремої моделі:
 
     ```json5
     {
@@ -251,10 +266,10 @@ OpenClaw підтримує функцію кешування промптів A
     }
     ```
 
-    OpenClaw відображає це у `anthropic-beta: context-1m-2025-08-07` у запитах.
+    OpenClaw відображає це в `anthropic-beta: context-1m-2025-08-07` у запитах.
 
     <Warning>
-    Потрібен доступ до довгого контексту для ваших облікових даних Anthropic. Застаріла автентифікація токеном (`sk-ant-oat-*`) відхиляється для запитів із контекстом 1M — OpenClaw записує попередження в лог і повертається до стандартного вікна контексту.
+    Потрібен доступ до довгого контексту для ваших облікових даних Anthropic. Застаріла автентифікація токеном (`sk-ant-oat-*`) відхиляється для запитів із контекстом 1M — OpenClaw записує попередження в журнал і повертається до стандартного вікна контексту.
     </Warning>
 
   </Accordion>
@@ -264,24 +279,24 @@ OpenClaw підтримує функцію кешування промптів A
 
 <AccordionGroup>
   <Accordion title="Помилки 401 / токен раптово став недійсним">
-    Токен-автентифікація Anthropic може завершити дію або бути відкликаною. Для нових налаштувань перейдіть на Anthropic API key.
+    Автентифікація токеном Anthropic може завершитися або бути відкликана. Для нових налаштувань перейдіть на API key Anthropic.
   </Accordion>
 
-  <Accordion title='Не знайдено API key для провайдера "anthropic"'>
-    Автентифікація є **окремою для кожного агента**. Нові агенти не успадковують ключі головного агента. Повторно запустіть онбординг для цього агента або налаштуйте API key на хості Gateway, а потім перевірте командою `openclaw models status`.
+  <Accordion title='API key не знайдено для провайдера "anthropic"'>
+    Автентифікація є **для кожного агента окремо**. Нові агенти не успадковують ключі головного агента. Повторно запустіть онбординг для цього агента або налаштуйте API key на хості Gateway, а потім перевірте через `openclaw models status`.
   </Accordion>
 
-  <Accordion title='Не знайдено облікових даних для профілю "anthropic:default"'>
-    Виконайте `openclaw models status`, щоб побачити, який профіль автентифікації активний. Повторно запустіть онбординг або налаштуйте API key для шляху цього профілю.
+  <Accordion title='Облікові дані для профілю "anthropic:default" не знайдено'>
+    Запустіть `openclaw models status`, щоб побачити, який профіль автентифікації активний. Повторно запустіть онбординг або налаштуйте API key для шляху цього профілю.
   </Accordion>
 
   <Accordion title="Немає доступного профілю автентифікації (усі в cooldown)">
-    Перевірте `openclaw models status --json` для `auth.unusableProfiles`. Обмеження Anthropic за частотою запитів можуть бути прив’язані до конкретної моделі, тому сусідня модель Anthropic усе ще може бути придатною для використання. Додайте ще один профіль Anthropic або дочекайтеся завершення cooldown.
+    Перевірте `openclaw models status --json` для `auth.unusableProfiles`. Cooldown через обмеження швидкості Anthropic може бути прив’язаний до моделі, тому споріднена модель Anthropic все ще може бути придатною до використання. Додайте інший профіль Anthropic або дочекайтеся завершення cooldown.
   </Accordion>
 </AccordionGroup>
 
 <Note>
-Більше допомоги: [Усунення несправностей](/uk/help/troubleshooting) і [FAQ](/uk/help/faq).
+Більше довідки: [Усунення несправностей](/uk/help/troubleshooting) і [FAQ](/uk/help/faq).
 </Note>
 
 ## Пов’язане
@@ -293,10 +308,10 @@ OpenClaw підтримує функцію кешування промптів A
   <Card title="CLI backends" href="/uk/gateway/cli-backends" icon="terminal">
     Налаштування бекенда Claude CLI та подробиці виконання.
   </Card>
-  <Card title="Кешування промптів" href="/uk/reference/prompt-caching" icon="database">
-    Як працює кешування промптів у різних провайдерів.
+  <Card title="Кешування prompt" href="/uk/reference/prompt-caching" icon="database">
+    Як працює кешування prompt у різних провайдерів.
   </Card>
-  <Card title="OAuth і автентифікація" href="/uk/gateway/authentication" icon="key">
+  <Card title="OAuth та автентифікація" href="/uk/gateway/authentication" icon="key">
     Подробиці автентифікації та правила повторного використання облікових даних.
   </Card>
 </CardGroup>

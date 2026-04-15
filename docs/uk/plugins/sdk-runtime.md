@@ -1,30 +1,29 @@
 ---
 read_when:
-    - Вам потрібно викликати допоміжні засоби ядра з плагіна (TTS, STT, генерація зображень, вебпошук, субагент)
-    - Ви хочете зрозуміти, що надає api.runtime
-    - Ви отримуєте доступ до допоміжних засобів конфігурації, агента або медіа з коду плагіна
+    - Вам потрібно викликати допоміжні функції ядра з Plugin-а (TTS, STT, генерація зображень, вебпошук, subagent)
+    - Ви хочете зрозуміти, що надає `api.runtime`
+    - Ви отримуєте доступ до допоміжних функцій конфігурації, агента або медіа з коду Plugin-а
 sidebarTitle: Runtime Helpers
-summary: api.runtime -- впроваджені допоміжні засоби середовища виконання, доступні для плагінів
-title: Допоміжні засоби середовища виконання плагіна
+summary: api.runtime — впроваджені допоміжні функції середовища виконання, доступні для Plugin-ів
+title: Допоміжні функції середовища виконання Plugin-ів
 x-i18n:
-    generated_at: "2026-04-10T20:23:46Z"
+    generated_at: "2026-04-15T16:36:59Z"
     model: gpt-5.4
     provider: openai
-    source_hash: fbf8a6ecd970300f784b8aca20eed40ba12c83107abd27385bfdc3347d2544be
+    source_hash: c77a6e9cd48c84affa17dce684bbd0e072c8b63485e4a5d569f3793a4ea4f9c8
     source_path: plugins/sdk-runtime.md
     workflow: 15
 ---
 
-# Допоміжні засоби середовища виконання плагіна
+# Допоміжні функції середовища виконання Plugin-ів
 
-Довідка щодо об’єкта `api.runtime`, який впроваджується в кожен плагін під час
-реєстрації. Використовуйте ці допоміжні засоби замість прямого імпорту внутрішніх
-компонентів хоста.
+Довідник для об’єкта `api.runtime`, який впроваджується в кожен Plugin під час
+реєстрації. Використовуйте ці допоміжні функції замість прямого імпорту внутрішніх компонентів хоста.
 
 <Tip>
-  **Шукаєте покрокове пояснення?** Перегляньте [Плагіни каналів](/uk/plugins/sdk-channel-plugins)
-  або [Плагіни провайдерів](/uk/plugins/sdk-provider-plugins), щоб знайти покрокові посібники,
-  які показують ці допоміжні засоби в контексті.
+  **Шукаєте покроковий огляд?** Див. [Channel Plugins](/uk/plugins/sdk-channel-plugins)
+  або [Provider Plugins](/uk/plugins/sdk-provider-plugins), щоб переглянути покрокові інструкції,
+  які показують ці допоміжні функції в контексті.
 </Tip>
 
 ```typescript
@@ -70,14 +69,13 @@ const result = await api.runtime.agent.runEmbeddedAgent({
 });
 ```
 
-`runEmbeddedAgent(...)` — це нейтральний допоміжний засіб для запуску звичайного
-ходу агента OpenClaw з коду плагіна. Він використовує той самий механізм
-визначення провайдера/моделі та вибору harness агента, що й відповіді,
-запущені каналом.
+`runEmbeddedAgent(...)` — це нейтральна допоміжна функція для запуску звичайного ходу
+агента OpenClaw з коду Plugin-а. Вона використовує те саме визначення provider/model і
+вибір agent-harness, що й відповіді, ініційовані каналом.
 
-`runEmbeddedPiAgent(...)` залишається псевдонімом для сумісності.
+`runEmbeddedPiAgent(...)` залишається сумісним псевдонімом.
 
-**Допоміжні засоби сховища сесій** розміщені в `api.runtime.agent.session`:
+**Допоміжні функції сховища сесій** розміщені в `api.runtime.agent.session`:
 
 ```typescript
 const storePath = api.runtime.agent.session.resolveStorePath(cfg);
@@ -88,7 +86,7 @@ const filePath = api.runtime.agent.session.resolveSessionFilePath(cfg, sessionId
 
 ### `api.runtime.agent.defaults`
 
-Константи стандартної моделі та провайдера:
+Константи моделі та provider за замовчуванням:
 
 ```typescript
 const model = api.runtime.agent.defaults.model; // e.g. "anthropic/claude-sonnet-4-6"
@@ -97,7 +95,7 @@ const provider = api.runtime.agent.defaults.provider; // e.g. "anthropic"
 
 ### `api.runtime.subagent`
 
-Запуск і керування фоновими запусками субагента.
+Запуск і керування фоновими запусками subagent.
 
 ```typescript
 // Start a subagent run
@@ -125,17 +123,15 @@ await api.runtime.subagent.deleteSession({
 ```
 
 <Warning>
-  Перевизначення моделі (`provider`/`model`) потребує явної згоди оператора через
+  Перевизначення моделі (`provider`/`model`) потребує згоди оператора через
   `plugins.entries.<id>.subagent.allowModelOverride: true` у конфігурації.
-  Ненадійні плагіни все одно можуть запускати субагентів, але запити на
-  перевизначення буде відхилено.
+  Ненадійні plugins усе ще можуть запускати subagents, але запити на перевизначення відхиляються.
 </Warning>
 
 ### `api.runtime.taskFlow`
 
-Прив’язує середовище виконання Task Flow до наявного ключа сесії OpenClaw або
-контексту довіреного інструмента, а потім дає змогу створювати й керувати Task Flow
-без передавання власника в кожному виклику.
+Прив’язка середовища виконання TaskFlow до наявного ключа сесії OpenClaw або довіреного
+контексту інструмента, а потім створення й керування TaskFlow без передавання власника під час кожного виклику.
 
 ```typescript
 const taskFlow = api.runtime.taskFlow.fromToolContext(ctx);
@@ -163,8 +159,8 @@ const waiting = taskFlow.setWaiting({
 ```
 
 Використовуйте `bindSession({ sessionKey, requesterOrigin })`, коли у вас уже є
-довірений ключ сесії OpenClaw із вашого власного шару прив’язки. Не виконуйте
-прив’язку на основі необробленого користувацького вводу.
+довірений ключ сесії OpenClaw з вашого власного шару прив’язки. Не виконуйте прив’язку з необробленого
+користувацького вводу.
 
 ### `api.runtime.tts`
 
@@ -190,8 +186,8 @@ const voices = await api.runtime.tts.listVoices({
 });
 ```
 
-Використовує основну конфігурацію `messages.tts` і механізм вибору провайдера.
-Повертає буфер аудіо PCM + частоту дискретизації.
+Використовує основну конфігурацію `messages.tts` і вибір provider. Повертає PCM-аудіобуфер
+і частоту дискретизації.
 
 ### `api.runtime.mediaUnderstanding`
 
@@ -225,11 +221,10 @@ const result = await api.runtime.mediaUnderstanding.runFile({
 });
 ```
 
-Повертає `{ text: undefined }`, якщо вихідні дані не було створено
-(наприклад, якщо вхідні дані було пропущено).
+Повертає `{ text: undefined }`, коли вихідні дані не створено (наприклад, якщо ввід пропущено).
 
 <Info>
-  `api.runtime.stt.transcribeAudioFile(...)` залишається псевдонімом для сумісності
+  `api.runtime.stt.transcribeAudioFile(...)` залишається сумісним псевдонімом
   для `api.runtime.mediaUnderstanding.transcribeAudioFile(...)`.
 </Info>
 
@@ -261,7 +256,7 @@ const result = await api.runtime.webSearch.search({
 
 ### `api.runtime.media`
 
-Низькорівневі мультимедійні утиліти.
+Низькорівневі медіаутиліти.
 
 ```typescript
 const webMedia = await api.runtime.media.loadWebMedia(url);
@@ -283,7 +278,7 @@ await api.runtime.config.writeConfigFile(cfg);
 
 ### `api.runtime.system`
 
-Утиліти системного рівня.
+Системні утиліти.
 
 ```typescript
 await api.runtime.system.enqueueSystemEvent(event);
@@ -307,7 +302,7 @@ api.runtime.events.onSessionTranscriptUpdate((update) => {
 
 ### `api.runtime.logging`
 
-Журналювання.
+Логування.
 
 ```typescript
 const verbose = api.runtime.logging.shouldLogVerbose();
@@ -316,7 +311,7 @@ const childLogger = api.runtime.logging.getChildLogger({ plugin: "my-plugin" }, 
 
 ### `api.runtime.modelAuth`
 
-Визначення автентифікації моделі та провайдера.
+Визначення автентифікації моделі та provider.
 
 ```typescript
 const auth = await api.runtime.modelAuth.getApiKeyForModel({ model, cfg });
@@ -346,11 +341,10 @@ api.runtime.tools.registerMemoryCli(/* ... */);
 
 ### `api.runtime.channel`
 
-Допоміжні засоби середовища виконання, специфічні для каналу (доступні, коли
-завантажено плагін каналу).
+Допоміжні функції середовища виконання для конкретного каналу (доступні, коли завантажено channel Plugin).
 
-`api.runtime.channel.mentions` — це спільна поверхня політики вхідних згадок для
-вбудованих плагінів каналів, які використовують впровадження середовища виконання:
+`api.runtime.channel.mentions` — це спільна поверхня політики згадок для вхідних повідомлень
+для вбудованих channel Plugin-ів, які використовують впровадження середовища виконання:
 
 ```typescript
 const mentionMatch = api.runtime.channel.mentions.matchesMentionWithExplicit(text, {
@@ -377,7 +371,7 @@ const decision = api.runtime.channel.mentions.resolveInboundMentionDecision({
 });
 ```
 
-Доступні допоміжні засоби для згадок:
+Доступні допоміжні функції згадок:
 
 - `buildMentionRegexes`
 - `matchesMentionPatterns`
@@ -385,20 +379,23 @@ const decision = api.runtime.channel.mentions.resolveInboundMentionDecision({
 - `implicitMentionKindWhen`
 - `resolveInboundMentionDecision`
 
-`api.runtime.channel.mentions` навмисно не надає старі допоміжні засоби сумісності
-`resolveMentionGating*`. Надавайте перевагу нормалізованому шляху
-`{ facts, policy }`.
+`api.runtime.channel.mentions` навмисно не надає старі
+сумісні допоміжні функції `resolveMentionGating*`. Надавайте перевагу нормалізованому
+шляху `{ facts, policy }`.
 
 ## Зберігання посилань на середовище виконання
 
-Використовуйте `createPluginRuntimeStore`, щоб зберігати посилання на середовище
-виконання для використання поза зворотним викликом `register`:
+Використовуйте `createPluginRuntimeStore`, щоб зберегти посилання на середовище виконання для використання поза межами
+зворотного виклику `register`:
 
 ```typescript
 import { createPluginRuntimeStore } from "openclaw/plugin-sdk/runtime-store";
 import type { PluginRuntime } from "openclaw/plugin-sdk/runtime-store";
 
-const store = createPluginRuntimeStore<PluginRuntime>("my-plugin runtime not initialized");
+const store = createPluginRuntimeStore<PluginRuntime>({
+  pluginId: "my-plugin",
+  errorMessage: "my-plugin runtime not initialized",
+});
 
 // In your entry point
 export default defineChannelPluginEntry({
@@ -419,22 +416,25 @@ export function tryGetRuntime() {
 }
 ```
 
+Для ідентичності runtime-store надавайте перевагу `pluginId`. Нижчорівнева форма `key`
+призначена для нечастих випадків, коли одному Plugin-у навмисно потрібно більше одного слота середовища виконання.
+
 ## Інші поля верхнього рівня `api`
 
 Окрім `api.runtime`, об’єкт API також надає:
 
 | Поле                     | Тип                       | Опис                                                                                        |
 | ------------------------ | ------------------------- | ------------------------------------------------------------------------------------------- |
-| `api.id`                 | `string`                  | Ідентифікатор плагіна                                                                       |
-| `api.name`               | `string`                  | Відображувана назва плагіна                                                                 |
+| `api.id`                 | `string`                  | Ідентифікатор Plugin-а                                                                      |
+| `api.name`               | `string`                  | Відображувана назва Plugin-а                                                                |
 | `api.config`             | `OpenClawConfig`          | Поточний знімок конфігурації (активний знімок середовища виконання в пам’яті, коли доступний) |
-| `api.pluginConfig`       | `Record<string, unknown>` | Конфігурація, специфічна для плагіна, з `plugins.entries.<id>.config`                       |
-| `api.logger`             | `PluginLogger`            | Logger з областю видимості (`debug`, `info`, `warn`, `error`)                               |
+| `api.pluginConfig`       | `Record<string, unknown>` | Конфігурація Plugin-а з `plugins.entries.<id>.config`                                      |
+| `api.logger`             | `PluginLogger`            | Logger з областю видимості (`debug`, `info`, `warn`, `error`)                              |
 | `api.registrationMode`   | `PluginRegistrationMode`  | Поточний режим завантаження; `"setup-runtime"` — це полегшене вікно запуску/налаштування перед повним запуском entry point |
-| `api.resolvePath(input)` | `(string) => string`      | Визначає шлях відносно кореня плагіна                                                       |
+| `api.resolvePath(input)` | `(string) => string`      | Визначає шлях відносно кореня Plugin-а                                                      |
 
 ## Пов’язане
 
-- [Огляд SDK](/uk/plugins/sdk-overview) -- довідка щодо підшляхів
+- [Огляд SDK](/uk/plugins/sdk-overview) -- довідник щодо subpath
 - [Точки входу SDK](/uk/plugins/sdk-entrypoints) -- параметри `definePluginEntry`
-- [Внутрішня структура плагіна](/uk/plugins/architecture) -- модель можливостей і реєстр
+- [Внутрішні компоненти Plugin-ів](/uk/plugins/architecture) -- модель можливостей і реєстр

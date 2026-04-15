@@ -4,38 +4,38 @@ read_when:
     - Regressionstests für Modell-/Provider-Fehler hinzufügen
     - Gateway- und Agent-Verhalten debuggen
 summary: 'Test-Kit: Unit-/E2E-/Live-Suites, Docker-Runner und was jeder Test abdeckt'
-title: Testen
+title: Tests
 x-i18n:
-    generated_at: "2026-04-15T06:21:26Z"
+    generated_at: "2026-04-15T14:40:31Z"
     model: gpt-5.4
     provider: openai
-    source_hash: fbf647a5cf13b5861a3ba0cb367dc816c57f0e9c60d3cd6320da193bfadf5609
+    source_hash: ec3632cafa1f38b27510372391b84af744266df96c58f7fac98aa03763465db8
     source_path: help/testing.md
     workflow: 15
 ---
 
-# Testen
+# Tests
 
-OpenClaw hat drei Vitest-Suites (Unit/Integration, E2E, Live) und eine kleine Anzahl von Docker-Runnern.
+OpenClaw hat drei Vitest-Suites (Unit/Integration, E2E, Live) und eine kleine Anzahl an Docker-Runnern.
 
-Dieses Dokument ist ein Leitfaden dazu, „wie wir testen“:
+Dieses Dokument ist ein Leitfaden dazu, **wie wir testen**:
 
 - Was jede Suite abdeckt (und was sie bewusst _nicht_ abdeckt)
 - Welche Befehle für gängige Workflows auszuführen sind (lokal, vor dem Push, Debugging)
 - Wie Live-Tests Anmeldedaten erkennen und Modelle/Provider auswählen
-- Wie Regressionstests für reale Modell-/Provider-Probleme hinzugefügt werden
+- Wie man Regressionen für reale Modell-/Provider-Probleme hinzufügt
 
 ## Schnellstart
 
 An den meisten Tagen:
 
 - Vollständiges Gate (vor dem Push erwartet): `pnpm build && pnpm check && pnpm test`
-- Schnellere lokale Ausführung der vollständigen Suite auf einer leistungsstarken Maschine: `pnpm test:max`
+- Schnellere lokale Ausführung der vollständigen Suite auf einer leistungsfähigen Maschine: `pnpm test:max`
 - Direkte Vitest-Watch-Schleife: `pnpm test:watch`
-- Direktes Datei-Targeting leitet jetzt auch Erweiterungs-/Kanalpfade weiter: `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts`
-- Bevorzuge zuerst gezielte Ausführungen, wenn du an einem einzelnen Fehler arbeitest.
+- Direktes Dateitargeting leitet jetzt auch Pfade für Erweiterungen/Channels weiter: `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts`
+- Bevorzuge zuerst gezielte Ausführungen, wenn du an einem einzelnen Fehler iterierst.
 - Docker-gestützte QA-Site: `pnpm qa:lab:up`
-- Linux-VM-gestützte QA-Lane: `pnpm openclaw qa suite --runner multipass --scenario channel-chat-baseline`
+- Linux-VM-gestützte QA-Strecke: `pnpm openclaw qa suite --runner multipass --scenario channel-chat-baseline`
 
 Wenn du Tests anfasst oder zusätzliche Sicherheit möchtest:
 
@@ -44,74 +44,73 @@ Wenn du Tests anfasst oder zusätzliche Sicherheit möchtest:
 
 Beim Debuggen realer Provider/Modelle (erfordert echte Anmeldedaten):
 
-- Live-Suite (Modelle + Gateway-Tool-/Bild-Probes): `pnpm test:live`
-- Eine Live-Datei gezielt und ohne viel Ausgabe ausführen: `pnpm test:live -- src/agents/models.profiles.live.test.ts`
+- Live-Suite (Modelle + Gateway-Tool-/Image-Prüfungen): `pnpm test:live`
+- Eine einzelne Live-Datei leise ausführen: `pnpm test:live -- src/agents/models.profiles.live.test.ts`
 
 Tipp: Wenn du nur einen einzelnen fehlschlagenden Fall brauchst, grenze Live-Tests bevorzugt über die unten beschriebenen Allowlist-Umgebungsvariablen ein.
 
 ## QA-spezifische Runner
 
-Diese Befehle stehen neben den Haupt-Test-Suites zur Verfügung, wenn du die Realitätsnähe von qa-lab brauchst:
+Diese Befehle stehen neben den Haupttest-Suites zur Verfügung, wenn du mehr QA-lab-Realismus brauchst:
 
 - `pnpm openclaw qa suite`
   - Führt repo-gestützte QA-Szenarien direkt auf dem Host aus.
-  - Führt standardmäßig mehrere ausgewählte Szenarien parallel mit isolierten Gateway-Workern aus, bis zu 64 Worker oder die Anzahl der ausgewählten Szenarien. Verwende `--concurrency <count>`, um die Anzahl der Worker anzupassen, oder `--concurrency 1` für die ältere serielle Lane.
+  - Führt standardmäßig mehrere ausgewählte Szenarien parallel mit isolierten Gateway-Workern aus, bis zu 64 Workern oder der Anzahl der ausgewählten Szenarien. Verwende `--concurrency <count>`, um die Anzahl der Worker anzupassen, oder `--concurrency 1` für die ältere serielle Strecke.
 - `pnpm openclaw qa suite --runner multipass`
-  - Führt dieselbe QA-Suite innerhalb einer flüchtigen Multipass-Linux-VM aus.
-  - Behält dasselbe Verhalten zur Szenarioauswahl wie `qa suite` auf dem Host bei.
+  - Führt dieselbe QA-Suite in einer kurzlebigen Multipass-Linux-VM aus.
+  - Behält dasselbe Verhalten bei der Szenarioauswahl wie `qa suite` auf dem Host bei.
   - Verwendet dieselben Flags zur Provider-/Modellauswahl wie `qa suite`.
-  - Live-Ausführungen leiten die unterstützten QA-Authentifizierungseingaben weiter, die für den Gast praktikabel sind:
-    env-basierte Provider-Schlüssel, den Pfad zur QA-Live-Provider-Konfiguration und `CODEX_HOME`, wenn vorhanden.
-  - Ausgabeverzeichnisse müssen unter dem Repo-Root bleiben, damit der Gast über den eingehängten Workspace zurückschreiben kann.
-  - Schreibt den normalen QA-Bericht + die Zusammenfassung sowie Multipass-Logs unter
-    `.artifacts/qa-e2e/...`.
+  - Live-Ausführungen reichen die unterstützten QA-Auth-Eingaben weiter, die für den Gast praktikabel sind:
+    env-basierte Provider-Schlüssel, den QA-Live-Provider-Konfigurationspfad und `CODEX_HOME`, falls vorhanden.
+  - Ausgabeordner müssen unterhalb der Repo-Wurzel bleiben, damit der Gast über den eingebundenen Workspace zurückschreiben kann.
+  - Schreibt den normalen QA-Bericht + die Zusammenfassung sowie Multipass-Logs unter `.artifacts/qa-e2e/...`.
 - `pnpm qa:lab:up`
-  - Startet die Docker-gestützte QA-Site für operatorähnliche QA-Arbeit.
+  - Startet die Docker-gestützte QA-Site für operatorartige QA-Arbeit.
 - `pnpm openclaw qa matrix`
-  - Führt die Matrix-Live-QA-Lane gegen einen flüchtigen, Docker-gestützten Tuwunel-Homeserver aus.
-  - Dieser QA-Host ist derzeit nur für Repo/Entwicklung gedacht. Gepackte OpenClaw-Installationen enthalten kein `qa-lab`, daher stellen sie `openclaw qa` nicht bereit.
-  - Repo-Checkouts laden den gebündelten Runner direkt; ein separater Installationsschritt für Plugins ist nicht erforderlich.
-  - Stellt drei temporäre Matrix-Benutzer (`driver`, `sut`, `observer`) sowie einen privaten Raum bereit und startet dann ein QA-Gateway-Child mit dem echten Matrix-Plugin als SUT-Transport.
-  - Verwendet standardmäßig das angeheftete stabile Tuwunel-Image `ghcr.io/matrix-construct/tuwunel:v1.5.1`. Überschreibe es mit `OPENCLAW_QA_MATRIX_TUWUNEL_IMAGE`, wenn du ein anderes Image testen musst.
-  - Matrix stellt keine gemeinsamen Flags für Anmeldedatenquellen bereit, weil die Lane lokal flüchtige Benutzer bereitstellt.
-  - Schreibt einen Matrix-QA-Bericht, eine Zusammenfassung und ein Artefakt mit beobachteten Ereignissen unter `.artifacts/qa-e2e/...`.
+  - Führt die Matrix-Live-QA-Strecke gegen einen kurzlebigen Docker-gestützten Tuwunel-Homeserver aus.
+  - Dieser QA-Host ist aktuell nur für Repo/Entwicklung gedacht. Gepackte OpenClaw-Installationen liefern `qa-lab` nicht mit aus und stellen daher `openclaw qa` nicht bereit.
+  - Repo-Checkouts laden den gebündelten Runner direkt; kein separater Schritt zur Plugin-Installation ist erforderlich.
+  - Richtet drei temporäre Matrix-Benutzer (`driver`, `sut`, `observer`) sowie einen privaten Raum ein und startet dann ein QA-Gateway-Unterprozess mit dem echten Matrix-Plugin als SUT-Transport.
+  - Verwendet standardmäßig das festgepinnte stabile Tuwunel-Image `ghcr.io/matrix-construct/tuwunel:v1.5.1`. Mit `OPENCLAW_QA_MATRIX_TUWUNEL_IMAGE` kannst du ein anderes Image zum Testen überschreiben.
+  - Matrix stellt keine gemeinsamen Flags für Anmeldedatenquellen bereit, da die Strecke lokal kurzlebige Benutzer bereitstellt.
+  - Schreibt einen Matrix-QA-Bericht, eine Zusammenfassung und ein Artifact mit beobachteten Ereignissen unter `.artifacts/qa-e2e/...`.
 - `pnpm openclaw qa telegram`
-  - Führt die Telegram-Live-QA-Lane gegen eine reale private Gruppe aus, wobei die Bot-Tokens von Driver und SUT aus der Umgebung verwendet werden.
+  - Führt die Telegram-Live-QA-Strecke gegen eine echte private Gruppe aus und verwendet dabei die Bot-Token für Driver und SUT aus der Umgebung.
   - Erfordert `OPENCLAW_QA_TELEGRAM_GROUP_ID`, `OPENCLAW_QA_TELEGRAM_DRIVER_BOT_TOKEN` und `OPENCLAW_QA_TELEGRAM_SUT_BOT_TOKEN`. Die Gruppen-ID muss die numerische Telegram-Chat-ID sein.
-  - Unterstützt `--credential-source convex` für gemeinsam genutzte gepoolte Anmeldedaten. Verwende standardmäßig den env-Modus oder setze `OPENCLAW_QA_CREDENTIAL_SOURCE=convex`, um gepoolte Leases zu verwenden.
+  - Unterstützt `--credential-source convex` für gemeinsam genutzte gepoolte Anmeldedaten. Verwende standardmäßig den env-Modus oder setze `OPENCLAW_QA_CREDENTIAL_SOURCE=convex`, um gepoolte Leases zu nutzen.
   - Erfordert zwei unterschiedliche Bots in derselben privaten Gruppe, wobei der SUT-Bot einen Telegram-Benutzernamen bereitstellen muss.
-  - Für stabile Bot-zu-Bot-Beobachtung aktiviere in `@BotFather` den Bot-to-Bot Communication Mode für beide Bots und stelle sicher, dass der Driver-Bot Bot-Datenverkehr in der Gruppe beobachten kann.
-  - Schreibt einen Telegram-QA-Bericht, eine Zusammenfassung und ein Artefakt mit beobachteten Nachrichten unter `.artifacts/qa-e2e/...`.
+  - Für eine stabile Bot-zu-Bot-Beobachtung aktiviere in `@BotFather` für beide Bots den Bot-to-Bot Communication Mode und stelle sicher, dass der Driver-Bot Bot-Verkehr in der Gruppe beobachten kann.
+  - Schreibt einen Telegram-QA-Bericht, eine Zusammenfassung und ein Artifact mit beobachteten Nachrichten unter `.artifacts/qa-e2e/...`.
 
-Live-Transport-Lanes teilen sich einen standardisierten Vertrag, damit neue Transporte nicht voneinander abweichen:
+Live-Transport-Strecken teilen sich einen gemeinsamen Standardvertrag, damit neue Transporte nicht auseinanderdriften:
 
-`qa-channel` bleibt die breite synthetische QA-Suite und ist nicht Teil der Live-Transport-Abdeckungsmatrix.
+`qa-channel` bleibt die breit angelegte synthetische QA-Suite und ist nicht Teil der Live-Transport-Abdeckungsmatrix.
 
-| Lane     | Canary | Mention-Gating | Allowlist-Block | Antwort auf oberster Ebene | Fortsetzen nach Neustart | Thread-Follow-up | Thread-Isolierung | Beobachtung von Reaktionen | Hilfe-Befehl |
-| -------- | ------ | -------------- | --------------- | -------------------------- | ------------------------ | ---------------- | ----------------- | -------------------------- | ------------ |
-| Matrix   | x      | x              | x               | x                          | x                        | x                | x                 | x                          |              |
-| Telegram | x      |                |                 |                            |                          |                  |                   |                            | x            |
+| Strecke | Canary | Mention-Gating | Allowlist-Block | Antwort auf oberster Ebene | Fortsetzung nach Neustart | Thread-Follow-up | Thread-Isolation | Reaktionsbeobachtung | Help-Befehl |
+| -------- | ------ | -------------- | --------------- | -------------------------- | ------------------------- | ---------------- | ---------------- | -------------------- | ----------- |
+| Matrix   | x      | x              | x               | x                          | x                         | x                | x                | x                    |             |
+| Telegram | x      |                |                 |                            |                           |                  |                  |                      | x           |
 
 ### Gemeinsame Telegram-Anmeldedaten über Convex (v1)
 
 Wenn `--credential-source convex` (oder `OPENCLAW_QA_CREDENTIAL_SOURCE=convex`) für
-`openclaw qa telegram` aktiviert ist, bezieht QA lab ein exklusives Lease aus einem Convex-gestützten Pool, sendet Heartbeat-Signale für dieses Lease, während die Lane läuft, und gibt das Lease beim Beenden frei.
+`openclaw qa telegram` aktiviert ist, bezieht QA lab ein exklusives Lease aus einem Convex-gestützten Pool, sendet Heartbeat-Signale für dieses Lease, solange die Strecke läuft, und gibt das Lease beim Beenden wieder frei.
 
 Referenzgerüst für ein Convex-Projekt:
 
 - `qa/convex-credential-broker/`
 
-Erforderliche Umgebungsvariablen:
+Erforderliche env vars:
 
 - `OPENCLAW_QA_CONVEX_SITE_URL` (zum Beispiel `https://your-deployment.convex.site`)
 - Ein Secret für die ausgewählte Rolle:
   - `OPENCLAW_QA_CONVEX_SECRET_MAINTAINER` für `maintainer`
   - `OPENCLAW_QA_CONVEX_SECRET_CI` für `ci`
-- Auswahl der Anmeldedatenrolle:
+- Auswahl der Rolle für Anmeldedaten:
   - CLI: `--credential-role maintainer|ci`
-  - Standard in der Umgebung: `OPENCLAW_QA_CREDENTIAL_ROLE` (Standard ist `maintainer`)
+  - Env-Standard: `OPENCLAW_QA_CREDENTIAL_ROLE` (Standard ist `maintainer`)
 
-Optionale Umgebungsvariablen:
+Optionale env vars:
 
 - `OPENCLAW_QA_CREDENTIAL_LEASE_TTL_MS` (Standard `1200000`)
 - `OPENCLAW_QA_CREDENTIAL_HEARTBEAT_INTERVAL_MS` (Standard `30000`)
@@ -119,11 +118,11 @@ Optionale Umgebungsvariablen:
 - `OPENCLAW_QA_CREDENTIAL_HTTP_TIMEOUT_MS` (Standard `15000`)
 - `OPENCLAW_QA_CONVEX_ENDPOINT_PREFIX` (Standard `/qa-credentials/v1`)
 - `OPENCLAW_QA_CREDENTIAL_OWNER_ID` (optionale Trace-ID)
-- `OPENCLAW_QA_ALLOW_INSECURE_HTTP=1` erlaubt loopback-`http://`-Convex-URLs für rein lokale Entwicklung.
+- `OPENCLAW_QA_ALLOW_INSECURE_HTTP=1` erlaubt Loopback-`http://`-Convex-URLs nur für lokale Entwicklung.
 
-`OPENCLAW_QA_CONVEX_SITE_URL` sollte im normalen Betrieb `https://` verwenden.
+`OPENCLAW_QA_CONVEX_SITE_URL` sollte im Normalbetrieb `https://` verwenden.
 
-Maintainer-Admin-Befehle (Pool hinzufügen/entfernen/auflisten) erfordern
+Admin-Befehle für Maintainer (Pool hinzufügen/entfernen/auflisten) erfordern
 explizit `OPENCLAW_QA_CONVEX_SECRET_MAINTAINER`.
 
 CLI-Hilfsbefehle für Maintainer:
@@ -136,7 +135,7 @@ pnpm openclaw qa credentials remove --credential-id <credential-id>
 
 Verwende `--json` für maschinenlesbare Ausgabe in Skripten und CI-Hilfsprogrammen.
 
-Standard-Endpoint-Vertrag (`OPENCLAW_QA_CONVEX_SITE_URL` + `/qa-credentials/v1`):
+Standard-Endpunktvertrag (`OPENCLAW_QA_CONVEX_SITE_URL` + `/qa-credentials/v1`):
 
 - `POST /acquire`
   - Anfrage: `{ kind, ownerId, actorRole, leaseTtlMs, heartbeatIntervalMs }`
@@ -159,62 +158,63 @@ Standard-Endpoint-Vertrag (`OPENCLAW_QA_CONVEX_SITE_URL` + `/qa-credentials/v1`)
   - Anfrage: `{ kind?, status?, includePayload?, limit? }`
   - Erfolg: `{ status: "ok", credentials, count }`
 
-Payload-Form für die Art Telegram:
+Payload-Form für Telegram-Typ:
 
 - `{ groupId: string, driverToken: string, sutToken: string }`
 - `groupId` muss eine numerische Telegram-Chat-ID als String sein.
 - `admin/add` validiert diese Form für `kind: "telegram"` und weist fehlerhafte Payloads zurück.
 
-### Einen Kanal zu QA hinzufügen
+### Einen Channel zu QA hinzufügen
 
-Das Hinzufügen eines Kanals zum Markdown-QA-System erfordert genau zwei Dinge:
+Das Hinzufügen eines Channels zum Markdown-QA-System erfordert genau zwei Dinge:
 
-1. Einen Transport-Adapter für den Kanal.
-2. Ein Szenario-Paket, das den Kanalvertrag testet.
+1. Einen Transport-Adapter für den Channel.
+2. Ein Szenariopaket, das den Channel-Vertrag testet.
 
-Füge keinen neuen Root-Befehl der obersten Ebene für QA hinzu, wenn der gemeinsame `qa-lab`-Host den Ablauf übernehmen kann.
+Füge keinen neuen QA-Befehlsstamm auf oberster Ebene hinzu, wenn der gemeinsame `qa-lab`-Host
+den Ablauf besitzen kann.
 
-`qa-lab` ist für die gemeinsamen Host-Mechaniken zuständig:
+`qa-lab` besitzt die gemeinsamen Host-Mechaniken:
 
-- den Root-Befehl `openclaw qa`
+- den `openclaw qa`-Befehlsstamm
 - Start und Beenden der Suite
 - Worker-Konkurrenz
-- Schreiben von Artefakten
+- Schreiben von Artifacts
 - Berichtserstellung
 - Szenarioausführung
-- Kompatibilitäts-Aliasse für ältere `qa-channel`-Szenarien
+- Kompatibilitätsaliasse für ältere `qa-channel`-Szenarien
 
-Runner-Plugins sind für den Transportvertrag zuständig:
+Runner-Plugins besitzen den Transportvertrag:
 
-- wie `openclaw qa <runner>` unter dem gemeinsamen Root `qa` eingehängt wird
+- wie `openclaw qa <runner>` unter dem gemeinsamen `qa`-Stamm eingehängt wird
 - wie das Gateway für diesen Transport konfiguriert wird
-- wie die Bereitschaft geprüft wird
+- wie Bereitschaft geprüft wird
 - wie eingehende Ereignisse injiziert werden
 - wie ausgehende Nachrichten beobachtet werden
 - wie Transkripte und normalisierter Transportzustand bereitgestellt werden
 - wie transportgestützte Aktionen ausgeführt werden
 - wie transport-spezifisches Zurücksetzen oder Aufräumen behandelt wird
 
-Die Mindestanforderung für die Übernahme eines neuen Kanals ist:
+Die minimale Voraussetzung für die Einführung eines neuen Channels ist:
 
-1. Behalte `qa-lab` als Besitzer des gemeinsamen Roots `qa`.
-2. Implementiere den Transport-Runner auf der gemeinsamen Host-Seam von `qa-lab`.
-3. Behalte transport-spezifische Mechaniken im Runner-Plugin oder Kanal-Harness.
-4. Hänge den Runner als `openclaw qa <runner>` ein, statt einen konkurrierenden Root-Befehl zu registrieren.
-   Runner-Plugins sollten `qaRunners` in `openclaw.plugin.json` deklarieren und ein passendes Array `qaRunnerCliRegistrations` aus `runtime-api.ts` exportieren.
-   Halte `runtime-api.ts` schlank; Lazy-CLI- und Runner-Ausführung sollten hinter separaten Entry-Points bleiben.
-5. Erstelle oder passe Markdown-Szenarien unter `qa/scenarios/` an.
-6. Verwende die generischen Szenario-Hilfsfunktionen für neue Szenarien.
-7. Sorge dafür, dass bestehende Kompatibilitäts-Aliasse weiter funktionieren, außer das Repo führt bewusst eine Migration durch.
+1. `qa-lab` als Besitzer des gemeinsamen `qa`-Stamms beibehalten.
+2. Den Transport-Runner auf der gemeinsamen `qa-lab`-Host-Seam implementieren.
+3. Transport-spezifische Mechaniken im Runner-Plugin oder Channel-Harness belassen.
+4. Den Runner als `openclaw qa <runner>` einhängen, statt einen konkurrierenden Root-Befehl zu registrieren.
+   Runner-Plugins sollten `qaRunners` in `openclaw.plugin.json` deklarieren und ein passendes `qaRunnerCliRegistrations`-Array aus `runtime-api.ts` exportieren.
+   Halte `runtime-api.ts` schlank; lazy CLI- und Runner-Ausführung sollten hinter separaten Entrypoints bleiben.
+5. Markdown-Szenarien unter `qa/scenarios/` verfassen oder anpassen.
+6. Die generischen Szenario-Helfer für neue Szenarien verwenden.
+7. Bestehende Kompatibilitätsaliasse funktionsfähig halten, außer das Repo führt bewusst eine Migration durch.
 
 Die Entscheidungsregel ist strikt:
 
-- Wenn Verhalten einmalig in `qa-lab` ausgedrückt werden kann, platziere es in `qa-lab`.
-- Wenn Verhalten von einem Kanaltransport abhängt, behalte es in diesem Runner-Plugin oder Plugin-Harness.
-- Wenn ein Szenario eine neue Fähigkeit benötigt, die mehr als ein Kanal verwenden kann, füge eine generische Hilfsfunktion hinzu, statt einen kanal-spezifischen Branch in `suite.ts`.
+- Wenn Verhalten einmalig in `qa-lab` ausgedrückt werden kann, gehört es in `qa-lab`.
+- Wenn Verhalten von einem Channel-Transport abhängt, bleibt es in diesem Runner-Plugin oder Plugin-Harness.
+- Wenn ein Szenario eine neue Fähigkeit benötigt, die mehr als ein Channel nutzen kann, füge einen generischen Helfer hinzu statt eines Channel-spezifischen Zweigs in `suite.ts`.
 - Wenn ein Verhalten nur für einen Transport sinnvoll ist, halte das Szenario transport-spezifisch und mache das im Szenariovertrag explizit.
 
-Bevorzugte Namen generischer Hilfsfunktionen für neue Szenarien sind:
+Bevorzugte generische Helfernamen für neue Szenarien sind:
 
 - `waitForTransportReady`
 - `waitForChannelReady`
@@ -229,7 +229,7 @@ Bevorzugte Namen generischer Hilfsfunktionen für neue Szenarien sind:
 - `formatTransportTranscript`
 - `resetTransport`
 
-Kompatibilitäts-Aliasse bleiben für bestehende Szenarien verfügbar, darunter:
+Kompatibilitätsaliasse bleiben für bestehende Szenarien verfügbar, darunter:
 
 - `waitForQaChannelReady`
 - `waitForOutboundMessage`
@@ -237,80 +237,81 @@ Kompatibilitäts-Aliasse bleiben für bestehende Szenarien verfügbar, darunter:
 - `formatConversationTranscript`
 - `resetBus`
 
-Neue Kanal-Arbeit sollte die generischen Namen der Hilfsfunktionen verwenden.
-Kompatibilitäts-Aliasse existieren, um eine Migration mit Stichtag zu vermeiden, nicht als Modell für das Verfassen neuer Szenarien.
+Neue Channel-Arbeit sollte die generischen Helfernamen verwenden.
+Kompatibilitätsaliasse existieren, um eine Migration an einem Stichtag zu vermeiden, nicht als Modell für
+neue Szenarioerstellung.
 
-## Test-Suites (was wo ausgeführt wird)
+## Test-Suites (was wo läuft)
 
-Stelle dir die Suites als „zunehmenden Realismus“ vor (und zunehmende Flakiness/Kosten):
+Stelle dir die Suites als „zunehmenden Realismus“ vor (und zunehmende Instabilität/Kosten):
 
 ### Unit / Integration (Standard)
 
 - Befehl: `pnpm test`
-- Konfiguration: zehn sequentielle Shard-Läufe (`vitest.full-*.config.ts`) über die bestehenden bereichsspezifischen Vitest-Projekte
-- Dateien: Core-/Unit-Inventare unter `src/**/*.test.ts`, `packages/**/*.test.ts`, `test/**/*.test.ts` und die per Allowlist freigegebenen `ui`-Node-Tests, die von `vitest.unit.config.ts` abgedeckt werden
+- Konfiguration: zehn sequenzielle Shard-Läufe (`vitest.full-*.config.ts`) über die bestehenden abgegrenzten Vitest-Projekte
+- Dateien: Core-/Unit-Inventare unter `src/**/*.test.ts`, `packages/**/*.test.ts`, `test/**/*.test.ts` sowie die per Whitelist freigegebenen `ui`-Node-Tests, die von `vitest.unit.config.ts` abgedeckt werden
 - Umfang:
   - Reine Unit-Tests
-  - In-Process-Integrationstests (Gateway-Authentifizierung, Routing, Tooling, Parsing, Konfiguration)
-  - Deterministische Regressionstests für bekannte Fehler
+  - In-Process-Integrationstests (Gateway-Auth, Routing, Tooling, Parsing, Konfiguration)
+  - Deterministische Regressionen für bekannte Fehler
 - Erwartungen:
   - Läuft in CI
   - Keine echten Schlüssel erforderlich
   - Sollte schnell und stabil sein
 - Hinweis zu Projekten:
-  - Nicht gezieltes `pnpm test` führt jetzt elf kleinere Shard-Konfigurationen aus (`core-unit-src`, `core-unit-security`, `core-unit-ui`, `core-unit-support`, `core-support-boundary`, `core-contracts`, `core-bundled`, `core-runtime`, `agentic`, `auto-reply`, `extensions`) statt eines riesigen nativen Root-Projekt-Prozesses. Das reduziert die Spitzen-RSS auf ausgelasteten Maschinen und verhindert, dass `auto-reply`-/Erweiterungs-Arbeit nicht zusammenhängende Suites ausbremst.
-  - `pnpm test --watch` verwendet weiterhin den nativen Root-`vitest.config.ts`-Projektgraphen, weil eine Watch-Schleife mit mehreren Shards nicht praktikabel ist.
-  - `pnpm test`, `pnpm test:watch` und `pnpm test:perf:imports` leiten explizite Datei-/Verzeichnis-Targets jetzt zuerst durch bereichsspezifische Lanes, sodass `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts` nicht den gesamten Startaufwand des Root-Projekts zahlen muss.
-  - `pnpm test:changed` erweitert geänderte Git-Pfade zu denselben bereichsspezifischen Lanes, wenn der Diff nur routbare Quell-/Testdateien berührt; Konfigurations-/Setup-Änderungen fallen weiterhin auf den breiten erneuten Lauf des Root-Projekts zurück.
-  - Import-leichte Unit-Tests aus Agents, Commands, Plugins, `auto-reply`-Hilfsfunktionen, `plugin-sdk` und ähnlichen rein utilitären Bereichen werden über die `unit-fast`-Lane geleitet, die `test/setup-openclaw-runtime.ts` überspringt; zustandsbehaftete/runtime-schwere Dateien bleiben auf den bestehenden Lanes.
-  - Ausgewählte `plugin-sdk`- und `commands`-Hilfsquellendateien ordnen Changed-Mode-Läufe ebenfalls expliziten benachbarten Tests in diesen leichten Lanes zu, sodass Hilfsänderungen nicht die vollständige schwere Suite für dieses Verzeichnis erneut ausführen.
-  - `auto-reply` hat jetzt drei dedizierte Buckets: Core-Hilfsfunktionen auf oberster Ebene, `reply.*`-Integrationstests auf oberster Ebene und den Teilbaum `src/auto-reply/reply/**`. So bleibt die schwerste Reply-Harness-Arbeit von den günstigen Status-/Chunk-/Token-Tests getrennt.
+  - Nicht gezieltes `pnpm test` führt jetzt elf kleinere Shard-Konfigurationen aus (`core-unit-src`, `core-unit-security`, `core-unit-ui`, `core-unit-support`, `core-support-boundary`, `core-contracts`, `core-bundled`, `core-runtime`, `agentic`, `auto-reply`, `extensions`) statt eines einzigen großen nativen Root-Projekt-Prozesses. Das senkt den Spitzen-RSS auf ausgelasteten Maschinen und verhindert, dass Auto-Reply-/Erweiterungsarbeit andere Suites ausbremst.
+  - `pnpm test --watch` verwendet weiterhin den nativen Root-`vitest.config.ts`-Projektgraphen, weil eine Multi-Shard-Watch-Schleife nicht praktikabel ist.
+  - `pnpm test`, `pnpm test:watch` und `pnpm test:perf:imports` leiten explizite Datei-/Verzeichnisziele jetzt zuerst durch abgegrenzte Strecken, sodass `pnpm test extensions/discord/src/monitor/message-handler.preflight.test.ts` nicht den Startaufwand des vollständigen Root-Projekts zahlen muss.
+  - `pnpm test:changed` erweitert geänderte Git-Pfade in dieselben abgegrenzten Strecken, wenn der Diff nur routbare Source-/Test-Dateien berührt; Konfigurations-/Setup-Änderungen fallen weiterhin auf den breiten erneuten Root-Projekt-Lauf zurück.
+  - Import-leichte Unit-Tests aus Agents, Commands, Plugins, Auto-Reply-Helfern, `plugin-sdk` und ähnlichen reinen Utility-Bereichen laufen über die `unit-fast`-Strecke, die `test/setup-openclaw-runtime.ts` überspringt; zustandsbehaftete/laufzeitintensive Dateien bleiben auf den bestehenden Strecken.
+  - Ausgewählte `plugin-sdk`- und `commands`-Helper-Quelldateien ordnen Läufe im Changed-Modus ebenfalls expliziten benachbarten Tests in diesen leichten Strecken zu, sodass Helper-Änderungen kein erneutes Ausführen der vollständigen schweren Suite für dieses Verzeichnis auslösen.
+  - `auto-reply` hat jetzt drei dedizierte Buckets: Core-Helper auf oberster Ebene, `reply.*`-Integrationstests auf oberster Ebene und den Teilbaum `src/auto-reply/reply/**`. Dadurch bleibt die schwerste Reply-Harness-Arbeit von den günstigen Status-/Chunk-/Token-Tests getrennt.
 - Hinweis zum eingebetteten Runner:
-  - Wenn du Discovery-Eingaben für Message-Tools oder den Laufzeitkontext von Compaction änderst,
-    behalte beide Ebenen der Abdeckung bei.
-  - Füge fokussierte Hilfs-Regressionstests für reine Routing-/Normalisierungsgrenzen hinzu.
-  - Halte außerdem die eingebetteten Runner-Integrations-Suites gesund:
+  - Wenn du Eingaben für die Discovery von Message-Tools oder den Laufzeitkontext von Compaction änderst,
+    halte beide Abdeckungsebenen intakt.
+  - Füge fokussierte Helper-Regressionen für reine Routing-/Normalisierungsgrenzen hinzu.
+  - Halte außerdem die Integrations-Suites des eingebetteten Runners gesund:
     `src/agents/pi-embedded-runner/compact.hooks.test.ts`,
     `src/agents/pi-embedded-runner/run.overflow-compaction.test.ts` und
     `src/agents/pi-embedded-runner/run.overflow-compaction.loop.test.ts`.
-  - Diese Suites prüfen, dass bereichsspezifische IDs und Compaction-Verhalten weiterhin
-    durch die echten Pfade `run.ts` / `compact.ts` fließen; reine Hilfstests sind kein
+  - Diese Suites verifizieren, dass abgegrenzte IDs und Compaction-Verhalten weiterhin
+    durch die echten Pfade `run.ts` / `compact.ts` fließen; reine Helper-Tests sind kein
     ausreichender Ersatz für diese Integrationspfade.
 - Hinweis zum Pool:
   - Die Basis-Vitest-Konfiguration verwendet jetzt standardmäßig `threads`.
-  - Die gemeinsame Vitest-Konfiguration setzt außerdem `isolate: false` fest und verwendet den nicht isolierten Runner für die Root-Projekte, E2E- und Live-Konfigurationen.
-  - Die Root-UI-Lane behält ihr `jsdom`-Setup und ihren Optimizer, läuft jetzt aber ebenfalls auf dem gemeinsamen nicht isolierten Runner.
-  - Jeder `pnpm test`-Shard erbt dieselben Standardwerte `threads` + `isolate: false` aus der gemeinsamen Vitest-Konfiguration.
-  - Der gemeinsame Launcher `scripts/run-vitest.mjs` fügt jetzt standardmäßig auch `--no-maglev` für Vitest-Child-Node-Prozesse hinzu, um V8-Kompilierungs-Churn bei großen lokalen Läufen zu reduzieren. Setze `OPENCLAW_VITEST_ENABLE_MAGLEV=1`, wenn du mit dem Standardverhalten von V8 vergleichen musst.
+  - Die gemeinsame Vitest-Konfiguration setzt außerdem `isolate: false` fest und verwendet den nicht isolierten Runner über die Root-Projekte, E2E- und Live-Konfigurationen hinweg.
+  - Die Root-UI-Strecke behält ihr `jsdom`-Setup und ihren Optimizer bei, läuft jetzt aber ebenfalls auf dem gemeinsamen nicht isolierten Runner.
+  - Jeder `pnpm test`-Shard übernimmt dieselben Standards `threads` + `isolate: false` aus der gemeinsamen Vitest-Konfiguration.
+  - Der gemeinsame Launcher `scripts/run-vitest.mjs` fügt für Vitest-Child-Node-Prozesse jetzt standardmäßig ebenfalls `--no-maglev` hinzu, um den V8-Kompilierungs-Overhead bei großen lokalen Läufen zu reduzieren. Setze `OPENCLAW_VITEST_ENABLE_MAGLEV=1`, wenn du mit dem Standardverhalten von V8 vergleichen musst.
 - Hinweis zur schnellen lokalen Iteration:
-  - `pnpm test:changed` wird über bereichsspezifische Lanes geroutet, wenn die geänderten Pfade sauber einer kleineren Suite zugeordnet werden können.
+  - `pnpm test:changed` leitet durch abgegrenzte Strecken, wenn die geänderten Pfade eindeutig einer kleineren Suite zugeordnet werden können.
   - `pnpm test:max` und `pnpm test:changed:max` behalten dasselbe Routing-Verhalten bei, nur mit einer höheren Worker-Obergrenze.
-  - Die automatische lokale Worker-Skalierung ist jetzt absichtlich konservativ und fährt ebenfalls zurück, wenn die Lastdurchschnittswerte des Hosts bereits hoch sind, sodass mehrere gleichzeitige Vitest-Läufe standardmäßig weniger Schaden anrichten.
-  - Die Basis-Vitest-Konfiguration markiert die Projekte-/Konfigurationsdateien als `forceRerunTriggers`, damit erneute Läufe im Changed-Modus korrekt bleiben, wenn sich die Test-Verdrahtung ändert.
-  - Die Konfiguration lässt `OPENCLAW_VITEST_FS_MODULE_CACHE` auf unterstützten Hosts aktiviert; setze `OPENCLAW_VITEST_FS_MODULE_CACHE_PATH=/abs/path`, wenn du einen expliziten Cache-Speicherort für direktes Profiling möchtest.
+  - Die automatische lokale Worker-Skalierung ist jetzt absichtlich konservativ und fährt ebenfalls zurück, wenn die Host-Load-Average bereits hoch ist, sodass mehrere gleichzeitige Vitest-Läufe standardmäßig weniger Schaden anrichten.
+  - Die Basis-Vitest-Konfiguration markiert die Projekte/Konfigurationsdateien als `forceRerunTriggers`, damit erneute Läufe im Changed-Modus korrekt bleiben, wenn sich das Test-Wiring ändert.
+  - Die Konfiguration lässt `OPENCLAW_VITEST_FS_MODULE_CACHE` auf unterstützten Hosts aktiviert; setze `OPENCLAW_VITEST_FS_MODULE_CACHE_PATH=/abs/path`, wenn du einen expliziten Cache-Ort für direktes Profiling möchtest.
 - Hinweis zum Performance-Debugging:
-  - `pnpm test:perf:imports` aktiviert die Berichterstattung zur Vitest-Importdauer sowie die Ausgabe der Import-Aufschlüsselung.
-  - `pnpm test:perf:imports:changed` beschränkt dieselbe Profiling-Ansicht auf Dateien, die sich seit `origin/main` geändert haben.
-- `pnpm test:perf:changed:bench -- --ref <git-ref>` vergleicht geroutetes `test:changed` mit dem nativen Root-Projekt-Pfad für diesen festgeschriebenen Diff und gibt Wall Time sowie das macOS-Maximum der RSS aus.
-- `pnpm test:perf:changed:bench -- --worktree` benchmarkt den aktuellen Dirty Tree, indem die Liste geänderter Dateien durch `scripts/test-projects.mjs` und die Root-Vitest-Konfiguration geleitet wird.
-  - `pnpm test:perf:profile:main` schreibt ein CPU-Profil des Main-Threads für den Start von Vitest/Vite und den Transformations-Overhead.
-  - `pnpm test:perf:profile:runner` schreibt CPU-+Heap-Profile des Runners für die Unit-Suite bei deaktivierter Datei-Parallelität.
+  - `pnpm test:perf:imports` aktiviert die Vitest-Berichterstattung zur Importdauer sowie die Ausgabe der Importaufschlüsselung.
+  - `pnpm test:perf:imports:changed` grenzt dieselbe Profiling-Ansicht auf Dateien ein, die sich seit `origin/main` geändert haben.
+- `pnpm test:perf:changed:bench -- --ref <git-ref>` vergleicht das geroutete `test:changed` mit dem nativen Root-Projekt-Pfad für diesen festgeschriebenen Diff und gibt Laufzeit sowie den maximalen RSS unter macOS aus.
+- `pnpm test:perf:changed:bench -- --worktree` benchmarkt den aktuellen Dirty-Tree, indem die Liste geänderter Dateien durch `scripts/test-projects.mjs` und die Root-Vitest-Konfiguration geroutet wird.
+  - `pnpm test:perf:profile:main` schreibt ein CPU-Profil des Main-Threads für den Vitest-/Vite-Start und den Transform-Overhead.
+  - `pnpm test:perf:profile:runner` schreibt CPU- und Heap-Profile des Runners für die Unit-Suite bei deaktivierter Dateiparallelität.
 
 ### E2E (Gateway-Smoke)
 
 - Befehl: `pnpm test:e2e`
 - Konfiguration: `vitest.e2e.config.ts`
 - Dateien: `src/**/*.e2e.test.ts`, `test/**/*.e2e.test.ts`
-- Laufzeit-Standards:
-  - Verwendet Vitest-`threads` mit `isolate: false`, passend zum Rest des Repos.
+- Laufzeitstandards:
+  - Verwendet Vitest-`threads` mit `isolate: false` und entspricht damit dem Rest des Repos.
   - Verwendet adaptive Worker (CI: bis zu 2, lokal: standardmäßig 1).
-  - Läuft standardmäßig im stillen Modus, um den Overhead durch Konsolen-I/O zu reduzieren.
-- Nützliche Overrides:
+  - Läuft standardmäßig im Silent-Modus, um den Konsolen-I/O-Overhead zu reduzieren.
+- Nützliche Überschreibungen:
   - `OPENCLAW_E2E_WORKERS=<n>`, um die Anzahl der Worker zu erzwingen (begrenzt auf 16).
-  - `OPENCLAW_E2E_VERBOSE=1`, um die ausführliche Konsolenausgabe wieder zu aktivieren.
+  - `OPENCLAW_E2E_VERBOSE=1`, um ausführliche Konsolenausgabe wieder zu aktivieren.
 - Umfang:
   - End-to-End-Verhalten von Multi-Instance-Gateways
-  - WebSocket-/HTTP-Oberflächen, Node-Pairing und umfangreicheres Networking
+  - WebSocket-/HTTP-Oberflächen, Node-Pairing und schwergewichtigere Netzwerkarbeit
 - Erwartungen:
   - Läuft in CI (wenn in der Pipeline aktiviert)
   - Keine echten Schlüssel erforderlich
@@ -322,131 +323,131 @@ Stelle dir die Suites als „zunehmenden Realismus“ vor (und zunehmende Flakin
 - Datei: `test/openshell-sandbox.e2e.test.ts`
 - Umfang:
   - Startet über Docker ein isoliertes OpenShell-Gateway auf dem Host
-  - Erstellt eine Sandbox aus einer temporären lokalen Dockerfile
+  - Erstellt aus einem temporären lokalen Dockerfile eine Sandbox
   - Testet OpenClaws OpenShell-Backend über echtes `sandbox ssh-config` + SSH-Exec
-  - Verifiziert remote-kanonisches Dateisystemverhalten über die Sandbox-FS-Bridge
+  - Verifiziert kanonisches Remote-Dateisystemverhalten über die Sandbox-FS-Bridge
 - Erwartungen:
-  - Nur Opt-in; nicht Teil des standardmäßigen `pnpm test:e2e`-Laufs
-  - Erfordert eine lokale `openshell`-CLI sowie einen funktionierenden Docker-Daemon
-  - Verwendet isoliertes `HOME` / `XDG_CONFIG_HOME` und zerstört anschließend Test-Gateway und Sandbox
-- Nützliche Overrides:
+  - Nur per Opt-in; nicht Teil des standardmäßigen `pnpm test:e2e`-Laufs
+  - Erfordert eine lokale `openshell`-CLI plus einen funktionierenden Docker-Daemon
+  - Verwendet isoliertes `HOME` / `XDG_CONFIG_HOME` und zerstört dann Test-Gateway und Sandbox
+- Nützliche Überschreibungen:
   - `OPENCLAW_E2E_OPENSHELL=1`, um den Test zu aktivieren, wenn die breitere E2E-Suite manuell ausgeführt wird
   - `OPENCLAW_E2E_OPENSHELL_COMMAND=/path/to/openshell`, um auf ein nicht standardmäßiges CLI-Binary oder Wrapper-Skript zu verweisen
 
-### Live (reale Provider + reale Modelle)
+### Live (echte Provider + echte Modelle)
 
 - Befehl: `pnpm test:live`
 - Konfiguration: `vitest.live.config.ts`
 - Dateien: `src/**/*.live.test.ts`
-- Standard: **aktiviert** durch `pnpm test:live` (setzt `OPENCLAW_LIVE_TEST=1`)
+- Standard: durch `pnpm test:live` **aktiviert** (setzt `OPENCLAW_LIVE_TEST=1`)
 - Umfang:
   - „Funktioniert dieser Provider/dieses Modell _heute_ tatsächlich mit echten Anmeldedaten?“
-  - Erkennt Änderungen an Provider-Formaten, Eigenheiten bei Tool-Calling, Authentifizierungsprobleme und Rate-Limit-Verhalten
+  - Erkennt Änderungen an Provider-Formaten, Tool-Calling-Eigenheiten, Auth-Probleme und Rate-Limit-Verhalten
 - Erwartungen:
-  - Von Haus aus nicht CI-stabil (reale Netzwerke, reale Provider-Richtlinien, Quoten, Ausfälle)
+  - Absichtlich nicht CI-stabil (echte Netzwerke, echte Provider-Richtlinien, Quoten, Ausfälle)
   - Kostet Geld / verbraucht Rate Limits
-  - Bevorzuge eingegrenzte Teilmengen statt „alles“
-- Live-Läufe sourcen `~/.profile`, um fehlende API-Schlüssel aufzunehmen.
-- Standardmäßig isolieren Live-Läufe weiterhin `HOME` und kopieren Konfigurations-/Auth-Material in ein temporäres Test-Home, damit Unit-Fixtures dein echtes `~/.openclaw` nicht verändern können.
-- Setze `OPENCLAW_LIVE_USE_REAL_HOME=1` nur, wenn Live-Tests bewusst dein echtes Home-Verzeichnis verwenden sollen.
-- `pnpm test:live` verwendet jetzt standardmäßig einen ruhigeren Modus: `[live] ...`-Fortschrittsausgaben bleiben sichtbar, aber der zusätzliche Hinweis zu `~/.profile` wird unterdrückt und Gateway-Bootstrap-Logs/Bonjour-Chatter werden stummgeschaltet. Setze `OPENCLAW_LIVE_TEST_QUIET=0`, wenn du die vollständigen Start-Logs wiederhaben möchtest.
-- Rotation von API-Schlüsseln (providerspezifisch): setze `*_API_KEYS` im Komma-/Semikolon-Format oder `*_API_KEY_1`, `*_API_KEY_2` (zum Beispiel `OPENAI_API_KEYS`, `ANTHROPIC_API_KEYS`, `GEMINI_API_KEYS`) oder pro Live-Override über `OPENCLAW_LIVE_*_KEY`; Tests versuchen bei Rate-Limit-Antworten einen erneuten Lauf.
+  - Statt „alles“ möglichst eingegrenzte Teilmengen ausführen
+- Live-Läufe sourcen `~/.profile`, um fehlende API-Schlüssel zu übernehmen.
+- Standardmäßig isolieren Live-Läufe `HOME` weiterhin und kopieren Konfigurations-/Auth-Material in ein temporäres Test-Home, damit Unit-Fixtures dein echtes `~/.openclaw` nicht verändern können.
+- Setze `OPENCLAW_LIVE_USE_REAL_HOME=1` nur dann, wenn Live-Tests absichtlich dein echtes Home-Verzeichnis verwenden sollen.
+- `pnpm test:live` verwendet jetzt standardmäßig einen ruhigeren Modus: `[live] ...`-Fortschrittsausgabe bleibt erhalten, aber der zusätzliche Hinweis zu `~/.profile` wird unterdrückt und Gateway-Bootstrap-Logs/Bonjour-Chatter werden stummgeschaltet. Setze `OPENCLAW_LIVE_TEST_QUIET=0`, wenn du wieder die vollständigen Start-Logs sehen möchtest.
+- API-Schlüsselrotation (provider-spezifisch): setze `*_API_KEYS` im Komma-/Semikolonformat oder `*_API_KEY_1`, `*_API_KEY_2` (zum Beispiel `OPENAI_API_KEYS`, `ANTHROPIC_API_KEYS`, `GEMINI_API_KEYS`) oder pro Live-Überschreibung `OPENCLAW_LIVE_*_KEY`; Tests versuchen bei Rate-Limit-Antworten erneut.
 - Fortschritts-/Heartbeat-Ausgabe:
-  - Live-Suites geben jetzt Fortschrittszeilen auf stderr aus, sodass bei langen Provider-Aufrufen sichtbar bleibt, dass Aktivität stattfindet, selbst wenn die Konsolenerfassung von Vitest ruhig ist.
-  - `vitest.live.config.ts` deaktiviert das Abfangen der Konsole durch Vitest, sodass Fortschrittszeilen von Provider/Gateway während Live-Läufen sofort gestreamt werden.
-  - Passe direkte Modell-Heartbeats mit `OPENCLAW_LIVE_HEARTBEAT_MS` an.
-  - Passe Gateway-/Probe-Heartbeats mit `OPENCLAW_LIVE_GATEWAY_HEARTBEAT_MS` an.
+  - Live-Suites geben jetzt Fortschrittszeilen auf stderr aus, sodass lange Provider-Aufrufe sichtbar aktiv bleiben, auch wenn die Vitest-Konsolenerfassung ruhig ist.
+  - `vitest.live.config.ts` deaktiviert die Vitest-Konsolenabfangung, sodass Provider-/Gateway-Fortschrittszeilen bei Live-Läufen sofort gestreamt werden.
+  - Passe Heartbeats für direkte Modelle mit `OPENCLAW_LIVE_HEARTBEAT_MS` an.
+  - Passe Heartbeats für Gateway/Probes mit `OPENCLAW_LIVE_GATEWAY_HEARTBEAT_MS` an.
 
 ## Welche Suite sollte ich ausführen?
 
 Verwende diese Entscheidungstabelle:
 
 - Logik/Tests bearbeiten: `pnpm test` ausführen (und `pnpm test:coverage`, wenn du viel geändert hast)
-- Gateway-Networking / WS-Protokoll / Pairing berühren: zusätzlich `pnpm test:e2e` ausführen
-- „Mein Bot ist down“ / providerspezifische Fehler / Tool-Calling debuggen: eingegrenztes `pnpm test:live` ausführen
+- Gateway-Networking / WS-Protokoll / Pairing anfassen: `pnpm test:e2e` ergänzen
+- „Mein Bot ist down“ / provider-spezifische Fehler / Tool-Calling debuggen: ein eingegrenztes `pnpm test:live` ausführen
 
-## Live: Android-Node-Fähigkeiten-Sweep
+## Live: Android-Node-Capability-Sweep
 
 - Test: `src/gateway/android-node.capabilities.live.test.ts`
 - Skript: `pnpm android:test:integration`
-- Ziel: **jeden aktuell beworbenen Befehl** eines verbundenen Android-Node aufrufen und das Vertragsverhalten des Befehls prüfen.
+- Ziel: **jeden aktuell beworbenen Befehl** eines verbundenen Android-Nodes aufrufen und das Befehlsvertragsverhalten prüfen.
 - Umfang:
-  - Vorgegebene/manuelle Einrichtung (die Suite installiert/startet/paired die App nicht).
-  - Gateway-`node.invoke`-Validierung Befehl für Befehl für den ausgewählten Android-Node.
-- Erforderliche Voreinrichtung:
-  - Android-App ist bereits verbunden und mit dem Gateway gepairt.
-  - App bleibt im Vordergrund.
-  - Berechtigungen/Aufnahmezustimmung wurden für die Fähigkeiten erteilt, bei denen du Erfolg erwartest.
-- Optionale Ziel-Overrides:
+  - Vorgegebene/manuelle Vorbereitung (die Suite installiert/startet/pairt die App nicht).
+  - Befehlsweise `node.invoke`-Validierung des Gateways für den ausgewählten Android-Node.
+- Erforderliche Vorbereitung:
+  - Android-App bereits verbunden und mit dem Gateway gepairt.
+  - App im Vordergrund halten.
+  - Berechtigungen/Capture-Zustimmung für Capabilities erteilt, von denen du erwartest, dass sie bestehen.
+- Optionale Zielüberschreibungen:
   - `OPENCLAW_ANDROID_NODE_ID` oder `OPENCLAW_ANDROID_NODE_NAME`.
   - `OPENCLAW_ANDROID_GATEWAY_URL` / `OPENCLAW_ANDROID_GATEWAY_TOKEN` / `OPENCLAW_ANDROID_GATEWAY_PASSWORD`.
 - Vollständige Android-Setup-Details: [Android-App](/de/platforms/android)
 
-## Live: Modell-Smoke (Profilschlüssel)
+## Live: Modell-Smoke (Profile-Keys)
 
 Live-Tests sind in zwei Ebenen aufgeteilt, damit wir Fehler isolieren können:
 
-- „Direktes Modell“ zeigt uns, dass der Provider/das Modell mit dem angegebenen Schlüssel überhaupt antworten kann.
-- „Gateway-Smoke“ zeigt uns, dass die vollständige Gateway-+Agent-Pipeline für dieses Modell funktioniert (Sitzungen, Verlauf, Tools, Sandbox-Richtlinie usw.).
+- „Direktes Modell“ sagt uns, ob der Provider/das Modell mit dem angegebenen Schlüssel überhaupt antworten kann.
+- „Gateway-Smoke“ sagt uns, ob die vollständige Gateway+Agent-Pipeline für dieses Modell funktioniert (Sitzungen, Verlauf, Tools, Sandbox-Policy usw.).
 
 ### Ebene 1: Direkte Modell-Completion (ohne Gateway)
 
 - Test: `src/agents/models.profiles.live.test.ts`
 - Ziel:
-  - Erkannte Modelle aufzählen
+  - Erkannte Modelle auflisten
   - `getApiKeyForModel` verwenden, um Modelle auszuwählen, für die du Anmeldedaten hast
-  - Pro Modell eine kleine Completion ausführen (und gezielte Regressionstests, wo nötig)
+  - Pro Modell eine kleine Completion ausführen (und gezielte Regressionen, wo nötig)
 - Aktivierung:
   - `pnpm test:live` (oder `OPENCLAW_LIVE_TEST=1`, wenn Vitest direkt aufgerufen wird)
-- Setze `OPENCLAW_LIVE_MODELS=modern` (oder `all`, Alias für modern), um diese Suite tatsächlich auszuführen; andernfalls wird sie übersprungen, damit `pnpm test:live` auf Gateway-Smoke fokussiert bleibt
+- Setze `OPENCLAW_LIVE_MODELS=modern` (oder `all`, Alias für modern), damit diese Suite tatsächlich ausgeführt wird; andernfalls wird sie übersprungen, damit `pnpm test:live` auf Gateway-Smoke fokussiert bleibt
 - Modellauswahl:
   - `OPENCLAW_LIVE_MODELS=modern`, um die moderne Allowlist auszuführen (Opus/Sonnet 4.6+, GPT-5.x + Codex, Gemini 3, GLM 4.7, MiniMax M2.7, Grok 4)
   - `OPENCLAW_LIVE_MODELS=all` ist ein Alias für die moderne Allowlist
   - oder `OPENCLAW_LIVE_MODELS="openai/gpt-5.4,anthropic/claude-opus-4-6,..."` (Komma-Allowlist)
-  - Moderne/All-Sweeps verwenden standardmäßig eine kuratierte Obergrenze mit hohem Signal; setze `OPENCLAW_LIVE_MAX_MODELS=0` für einen vollständigen modernen Sweep oder eine positive Zahl für eine kleinere Obergrenze.
+  - Moderne/alle Sweeps verwenden standardmäßig eine kuratierte Obergrenze mit hohem Signal; setze `OPENCLAW_LIVE_MAX_MODELS=0` für einen vollständigen modernen Sweep oder einen positiven Wert für eine kleinere Obergrenze.
 - Providerauswahl:
   - `OPENCLAW_LIVE_PROVIDERS="google,google-antigravity,google-gemini-cli"` (Komma-Allowlist)
 - Woher die Schlüssel kommen:
-  - Standardmäßig: Profilspeicher und env-Fallbacks
-  - Setze `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um **nur** den Profilspeicher zu erzwingen
-- Warum das existiert:
-  - Trennt „Provider-API ist kaputt / Schlüssel ist ungültig“ von „Gateway-Agent-Pipeline ist kaputt“
-  - Enthält kleine, isolierte Regressionstests (Beispiel: OpenAI-Responses/Codex-Responses-Reasoning-Replay + Tool-Call-Flows)
+  - Standardmäßig: Profile-Store und env-Fallbacks
+  - Setze `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um **nur den Profile-Store** zu erzwingen
+- Warum es das gibt:
+  - Trennt „Provider-API ist defekt / Schlüssel ist ungültig“ von „Gateway-Agent-Pipeline ist defekt“
+  - Enthält kleine, isolierte Regressionen (Beispiel: OpenAI-Responses/Codex-Responses-Reasoning-Replay- und Tool-Call-Flows)
 
-### Ebene 2: Gateway + Dev-Agent-Smoke (was „@openclaw“ tatsächlich macht)
+### Ebene 2: Gateway + Dev-Agent-Smoke (was `@openclaw` tatsächlich tut)
 
 - Test: `src/gateway/gateway-models.profiles.live.test.ts`
 - Ziel:
   - Ein In-Process-Gateway starten
   - Eine `agent:dev:*`-Sitzung erstellen/patchen (Modell-Override pro Lauf)
   - Modelle mit Schlüsseln durchlaufen und Folgendes prüfen:
-    - „aussagekräftige“ Antwort (ohne Tools)
-    - eine echte Tool-Invocation funktioniert (Read-Probe)
-    - optionale zusätzliche Tool-Probes (Exec+Read-Probe)
+    - „sinnvolle“ Antwort (ohne Tools)
+    - ein echter Tool-Aufruf funktioniert (`read`-Probe)
+    - optionale zusätzliche Tool-Probes (`exec+read`-Probe)
     - OpenAI-Regressionspfade (nur Tool-Call → Follow-up) funktionieren weiterhin
 - Probe-Details (damit du Fehler schnell erklären kannst):
-  - `read`-Probe: Der Test schreibt eine Nonce-Datei in den Workspace und fordert den Agent auf, sie mit `read` zu lesen und die Nonce zurückzugeben.
-  - `exec+read`-Probe: Der Test fordert den Agent auf, mit `exec` eine Nonce in eine temporäre Datei zu schreiben und sie dann mit `read` wieder zu lesen.
-  - Image-Probe: Der Test hängt ein erzeugtes PNG an (Katze + zufälliger Code) und erwartet, dass das Modell `cat <CODE>` zurückgibt.
+  - `read`-Probe: Der Test schreibt eine Nonce-Datei in den Workspace und fordert den Agenten auf, sie zu `read`en und die Nonce zurückzugeben.
+  - `exec+read`-Probe: Der Test fordert den Agenten auf, per `exec` eine Nonce in eine temporäre Datei zu schreiben und sie dann per `read` wieder auszulesen.
+  - Image-Probe: Der Test hängt ein generiertes PNG an (Katze + zufälliger Code) und erwartet, dass das Modell `cat <CODE>` zurückgibt.
   - Implementierungsreferenz: `src/gateway/gateway-models.profiles.live.test.ts` und `src/gateway/live-image-probe.ts`.
 - Aktivierung:
   - `pnpm test:live` (oder `OPENCLAW_LIVE_TEST=1`, wenn Vitest direkt aufgerufen wird)
 - Modellauswahl:
   - Standard: moderne Allowlist (Opus/Sonnet 4.6+, GPT-5.x + Codex, Gemini 3, GLM 4.7, MiniMax M2.7, Grok 4)
   - `OPENCLAW_LIVE_GATEWAY_MODELS=all` ist ein Alias für die moderne Allowlist
-  - Oder `OPENCLAW_LIVE_GATEWAY_MODELS="provider/model"` (oder Komma-Liste) setzen, um einzugrenzen
-  - Moderne/All-Gateway-Sweeps verwenden standardmäßig eine kuratierte Obergrenze mit hohem Signal; setze `OPENCLAW_LIVE_GATEWAY_MAX_MODELS=0` für einen vollständigen modernen Sweep oder eine positive Zahl für eine kleinere Obergrenze.
-- Providerauswahl (vermeide „alles über OpenRouter“):
+  - Oder `OPENCLAW_LIVE_GATEWAY_MODELS="provider/model"` setzen (oder Komma-Liste), um einzugrenzen
+  - Moderne/alle Gateway-Sweeps verwenden standardmäßig eine kuratierte Obergrenze mit hohem Signal; setze `OPENCLAW_LIVE_GATEWAY_MAX_MODELS=0` für einen vollständigen modernen Sweep oder einen positiven Wert für eine kleinere Obergrenze.
+- Providerauswahl (vermeide „alles von OpenRouter“):
   - `OPENCLAW_LIVE_GATEWAY_PROVIDERS="google,google-antigravity,google-gemini-cli,openai,anthropic,zai,minimax"` (Komma-Allowlist)
 - Tool- + Image-Probes sind in diesem Live-Test immer aktiviert:
   - `read`-Probe + `exec+read`-Probe (Tool-Stresstest)
-  - Image-Probe läuft, wenn das Modell Unterstützung für Bildeingaben bewirbt
-  - Ablauf (allgemein):
+  - Die Image-Probe läuft, wenn das Modell Unterstützung für Bildeingaben bewirbt
+  - Ablauf (grobe Übersicht):
     - Der Test erzeugt ein kleines PNG mit „CAT“ + zufälligem Code (`src/gateway/live-image-probe.ts`)
     - Sendet es über `agent` mit `attachments: [{ mimeType: "image/png", content: "<base64>" }]`
-    - Das Gateway parst Anhänge in `images[]` (`src/gateway/server-methods/agent.ts` + `src/gateway/chat-attachments.ts`)
+    - Das Gateway parst Attachments in `images[]` (`src/gateway/server-methods/agent.ts` + `src/gateway/chat-attachments.ts`)
     - Der eingebettete Agent leitet eine multimodale Benutzernachricht an das Modell weiter
-    - Prüfung: Die Antwort enthält `cat` + den Code (OCR-Toleranz: kleinere Fehler sind erlaubt)
+    - Prüfung: Die Antwort enthält `cat` + den Code (OCR-Toleranz: kleine Fehler sind erlaubt)
 
 Tipp: Um zu sehen, was du auf deiner Maschine testen kannst (und die genauen `provider/model`-IDs), führe Folgendes aus:
 
@@ -458,23 +459,23 @@ openclaw models list --json
 ## Live: CLI-Backend-Smoke (Claude, Codex, Gemini oder andere lokale CLIs)
 
 - Test: `src/gateway/gateway-cli-backend.live.test.ts`
-- Ziel: die Gateway-+Agent-Pipeline mit einem lokalen CLI-Backend validieren, ohne deine Standardkonfiguration anzufassen.
-- Backend-spezifische Smoke-Standards liegen in der Definition `cli-backend.ts` der besitzenden Erweiterung.
+- Ziel: die Gateway- + Agent-Pipeline mit einem lokalen CLI-Backend validieren, ohne deine Standardkonfiguration anzufassen.
+- Backend-spezifische Smoke-Standards liegen in der Definition `cli-backend.ts` der jeweiligen besitzenden Erweiterung.
 - Aktivierung:
   - `pnpm test:live` (oder `OPENCLAW_LIVE_TEST=1`, wenn Vitest direkt aufgerufen wird)
   - `OPENCLAW_LIVE_CLI_BACKEND=1`
 - Standards:
   - Standard-Provider/-Modell: `claude-cli/claude-sonnet-4-6`
-  - Verhalten von Command/Args/Image kommt aus den Metadaten des besitzenden CLI-Backend-Plugins.
-- Overrides (optional):
+  - Verhalten für Command/Args/Image kommt aus den Metadaten des jeweiligen CLI-Backend-Plugins.
+- Überschreibungen (optional):
   - `OPENCLAW_LIVE_CLI_BACKEND_MODEL="codex-cli/gpt-5.4"`
   - `OPENCLAW_LIVE_CLI_BACKEND_COMMAND="/full/path/to/codex"`
   - `OPENCLAW_LIVE_CLI_BACKEND_ARGS='["exec","--json","--color","never","--sandbox","read-only","--skip-git-repo-check"]'`
-  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_PROBE=1`, um einen echten Bildanhang zu senden (Pfade werden in den Prompt injiziert).
-  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_ARG="--image"`, um Bilddateipfade als CLI-Argumente statt per Prompt-Injektion zu übergeben.
-  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_MODE="repeat"` (oder `"list"`), um zu steuern, wie Bildargumente übergeben werden, wenn `IMAGE_ARG` gesetzt ist.
+  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_PROBE=1`, um ein echtes Bild-Attachment zu senden (Pfade werden in den Prompt injiziert).
+  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_ARG="--image"`, um Bilddateipfade als CLI-Args statt per Prompt-Injektion zu übergeben.
+  - `OPENCLAW_LIVE_CLI_BACKEND_IMAGE_MODE="repeat"` (oder `"list"`), um zu steuern, wie Bild-Args übergeben werden, wenn `IMAGE_ARG` gesetzt ist.
   - `OPENCLAW_LIVE_CLI_BACKEND_RESUME_PROBE=1`, um einen zweiten Turn zu senden und den Resume-Flow zu validieren.
-  - `OPENCLAW_LIVE_CLI_BACKEND_MODEL_SWITCH_PROBE=0`, um die standardmäßige Kontinuitätsprobe Claude Sonnet -> Opus in derselben Sitzung zu deaktivieren (auf `1` setzen, um sie zu erzwingen, wenn das ausgewählte Modell ein Switch-Ziel unterstützt).
+  - `OPENCLAW_LIVE_CLI_BACKEND_MODEL_SWITCH_PROBE=0`, um die standardmäßige Kontinuitätsprobe Claude Sonnet -> Opus in derselben Sitzung zu deaktivieren (auf `1` setzen, um sie zu erzwingen, wenn das ausgewählte Modell ein Umschaltziel unterstützt).
 
 Beispiel:
 
@@ -502,37 +503,37 @@ pnpm test:docker:live-cli-backend:gemini
 Hinweise:
 
 - Der Docker-Runner liegt unter `scripts/test-live-cli-backend-docker.sh`.
-- Er führt den Live-CLI-Backend-Smoke innerhalb des Repo-Docker-Images als Nicht-Root-Benutzer `node` aus.
-- Er löst CLI-Smoke-Metadaten aus der besitzenden Erweiterung auf und installiert dann das passende Linux-CLI-Paket (`@anthropic-ai/claude-code`, `@openai/codex` oder `@google/gemini-cli`) in ein zwischengespeichertes beschreibbares Präfix unter `OPENCLAW_DOCKER_CLI_TOOLS_DIR` (Standard: `~/.cache/openclaw/docker-cli-tools`).
-- `pnpm test:docker:live-cli-backend:claude-subscription` erfordert portables Claude-Code-Subscription-OAuth entweder über `~/.claude/.credentials.json` mit `claudeAiOauth.subscriptionType` oder `CLAUDE_CODE_OAUTH_TOKEN` aus `claude setup-token`. Zuerst wird direktes `claude -p` in Docker nachgewiesen, dann werden zwei Gateway-CLI-Backend-Turns ausgeführt, ohne Anthropic-API-Key-env-Variablen beizubehalten. Diese Subscription-Lane deaktiviert standardmäßig die Claude-MCP-/Tool- und Image-Probes, weil Claude die Nutzung durch Drittanbieter-Apps derzeit über Extra-Usage-Abrechnung statt über normale Grenzen des Subscription-Plans leitet.
-- Der Live-CLI-Backend-Smoke testet jetzt denselben End-to-End-Flow für Claude, Codex und Gemini: Text-Turn, Bildklassifizierungs-Turn, dann MCP-`cron`-Tool-Call, verifiziert über die Gateway-CLI.
-- Claudes standardmäßiger Smoke patcht außerdem die Sitzung von Sonnet auf Opus und prüft, dass sich die fortgesetzte Sitzung weiterhin eine frühere Notiz merkt.
+- Er führt den Live-CLI-Backend-Smoke im Repo-Docker-Image als Nicht-Root-Benutzer `node` aus.
+- Er löst CLI-Smoke-Metadaten aus der jeweiligen besitzenden Erweiterung auf und installiert dann das passende Linux-CLI-Paket (`@anthropic-ai/claude-code`, `@openai/codex` oder `@google/gemini-cli`) in ein gecachtes beschreibbares Präfix unter `OPENCLAW_DOCKER_CLI_TOOLS_DIR` (Standard: `~/.cache/openclaw/docker-cli-tools`).
+- `pnpm test:docker:live-cli-backend:claude-subscription` erfordert portables Claude-Code-Subscription-OAuth entweder über `~/.claude/.credentials.json` mit `claudeAiOauth.subscriptionType` oder `CLAUDE_CODE_OAUTH_TOKEN` aus `claude setup-token`. Es prüft zuerst direktes `claude -p` in Docker und führt dann zwei Gateway-CLI-Backend-Turns aus, ohne Anhtropic-API-Key-env vars beizubehalten. Diese Subscription-Strecke deaktiviert standardmäßig die Claude-MCP-/Tool- und Image-Probes, weil Claude die Nutzung von Drittanbieter-Apps derzeit über Zusatznutzungsabrechnung statt über normale Limits des Subscription-Tarifs leitet.
+- Der Live-CLI-Backend-Smoke testet jetzt denselben End-to-End-Ablauf für Claude, Codex und Gemini: Text-Turn, Bildklassifizierungs-Turn, dann MCP-Tool-Call `cron`, verifiziert über die Gateway-CLI.
+- Der standardmäßige Claude-Smoke patcht die Sitzung außerdem von Sonnet auf Opus und verifiziert, dass die fortgesetzte Sitzung sich weiterhin an eine frühere Notiz erinnert.
 
 ## Live: ACP-Bind-Smoke (`/acp spawn ... --bind here`)
 
 - Test: `src/gateway/gateway-acp-bind.live.test.ts`
-- Ziel: den echten Conversation-Bind-Flow von ACP mit einem Live-ACP-Agent validieren:
+- Ziel: den echten ACP-Conversation-Bind-Flow mit einem Live-ACP-Agenten validieren:
   - `/acp spawn <agent> --bind here` senden
-  - eine synthetische Message-Channel-Konversation direkt vor Ort binden
-  - einen normalen Follow-up auf derselben Konversation senden
-  - prüfen, dass der Follow-up im Transkript der gebundenen ACP-Sitzung landet
+  - eine synthetische Message-Channel-Konversation an Ort und Stelle binden
+  - ein normales Follow-up in derselben Konversation senden
+  - verifizieren, dass das Follow-up im Transkript der gebundenen ACP-Sitzung landet
 - Aktivierung:
   - `pnpm test:live src/gateway/gateway-acp-bind.live.test.ts`
   - `OPENCLAW_LIVE_ACP_BIND=1`
 - Standards:
-  - ACP-Agents in Docker: `claude,codex,gemini`
+  - ACP-Agenten in Docker: `claude,codex,gemini`
   - ACP-Agent für direktes `pnpm test:live ...`: `claude`
-  - Synthetischer Kanal: Slack-DM-artiger Konversationskontext
+  - Synthetischer Channel: Konversationskontext im Stil einer Slack-DM
   - ACP-Backend: `acpx`
-- Overrides:
+- Überschreibungen:
   - `OPENCLAW_LIVE_ACP_BIND_AGENT=claude`
   - `OPENCLAW_LIVE_ACP_BIND_AGENT=codex`
   - `OPENCLAW_LIVE_ACP_BIND_AGENT=gemini`
   - `OPENCLAW_LIVE_ACP_BIND_AGENTS=claude,codex,gemini`
   - `OPENCLAW_LIVE_ACP_BIND_AGENT_COMMAND='npx -y @agentclientprotocol/claude-agent-acp@<version>'`
 - Hinweise:
-  - Diese Lane verwendet die Gateway-Oberfläche `chat.send` mit rein administrativen synthetischen Feldern für die Herkunftsroute, damit Tests Message-Channel-Kontext anhängen können, ohne vorzugeben, extern zuzustellen.
-  - Wenn `OPENCLAW_LIVE_ACP_BIND_AGENT_COMMAND` nicht gesetzt ist, verwendet der Test die integrierte Agent-Registry des eingebetteten `acpx`-Plugins für den ausgewählten ACP-Harness-Agent.
+  - Diese Strecke verwendet die Gateway-Oberfläche `chat.send` mit Admin-only-Feldern für synthetische Ausgangsrouten, damit Tests Message-Channel-Kontext anhängen können, ohne vorzugeben, extern zuzustellen.
+  - Wenn `OPENCLAW_LIVE_ACP_BIND_AGENT_COMMAND` nicht gesetzt ist, verwendet der Test die eingebaute Agent-Registry des eingebetteten `acpx`-Plugins für den ausgewählten ACP-Harness-Agenten.
 
 Beispiel:
 
@@ -548,7 +549,7 @@ Docker-Rezept:
 pnpm test:docker:live-acp-bind
 ```
 
-Docker-Rezepte für einzelne Agents:
+Docker-Rezepte für einzelne Agenten:
 
 ```bash
 pnpm test:docker:live-acp-bind:claude
@@ -559,20 +560,19 @@ pnpm test:docker:live-acp-bind:gemini
 Docker-Hinweise:
 
 - Der Docker-Runner liegt unter `scripts/test-live-acp-bind-docker.sh`.
-- Standardmäßig führt er den ACP-Bind-Smoke nacheinander gegen alle unterstützten Live-CLI-Agents aus: `claude`, `codex`, dann `gemini`.
+- Standardmäßig führt er den ACP-Bind-Smoke nacheinander gegen alle unterstützten Live-CLI-Agenten aus: `claude`, `codex`, dann `gemini`.
 - Verwende `OPENCLAW_LIVE_ACP_BIND_AGENTS=claude`, `OPENCLAW_LIVE_ACP_BIND_AGENTS=codex` oder `OPENCLAW_LIVE_ACP_BIND_AGENTS=gemini`, um die Matrix einzugrenzen.
-- Er sourct `~/.profile`, staged das passende CLI-Auth-Material in den Container, installiert `acpx` in ein beschreibbares npm-Präfix und installiert dann bei Bedarf die angeforderte Live-CLI (`@anthropic-ai/claude-code`, `@openai/codex` oder `@google/gemini-cli`).
-- Innerhalb von Docker setzt der Runner `OPENCLAW_LIVE_ACP_BIND_ACPX_COMMAND=$HOME/.npm-global/bin/acpx`, damit `acpx` Provider-env-Variablen aus dem gesourcten Profil für die Child-Harness-CLI verfügbar hält.
+- Er sourct `~/.profile`, stellt passendes CLI-Auth-Material in den Container bereit, installiert `acpx` in ein beschreibbares npm-Präfix und installiert dann die angeforderte Live-CLI (`@anthropic-ai/claude-code`, `@openai/codex` oder `@google/gemini-cli`), falls sie fehlt.
+- Innerhalb von Docker setzt der Runner `OPENCLAW_LIVE_ACP_BIND_ACPX_COMMAND=$HOME/.npm-global/bin/acpx`, damit acpx Provider-env vars aus dem gesourcten Profil für die untergeordnete Harness-CLI verfügbar hält.
 
 ## Live: Codex-App-Server-Harness-Smoke
 
-- Ziel: das Plugin-eigene Codex-Harness über die normale Gateway-
+- Ziel: die Plugin-eigene Codex-Harness über die normale Gateway-
   `agent`-Methode validieren:
   - das gebündelte `codex`-Plugin laden
   - `OPENCLAW_AGENT_RUNTIME=codex` auswählen
   - einen ersten Gateway-Agent-Turn an `codex/gpt-5.4` senden
-  - einen zweiten Turn an dieselbe OpenClaw-Sitzung senden und prüfen, dass der App-Server-
-    Thread fortgesetzt werden kann
+  - einen zweiten Turn an dieselbe OpenClaw-Sitzung senden und verifizieren, dass der App-Server-Thread wiederaufgenommen werden kann
   - `/codex status` und `/codex models` über denselben Gateway-Command-
     Pfad ausführen
 - Test: `src/gateway/gateway-codex-harness.live.test.ts`
@@ -580,9 +580,9 @@ Docker-Hinweise:
 - Standardmodell: `codex/gpt-5.4`
 - Optionale Image-Probe: `OPENCLAW_LIVE_CODEX_HARNESS_IMAGE_PROBE=1`
 - Optionale MCP-/Tool-Probe: `OPENCLAW_LIVE_CODEX_HARNESS_MCP_PROBE=1`
-- Der Smoke setzt `OPENCLAW_AGENT_HARNESS_FALLBACK=none`, damit ein defektes Codex-
-  Harness nicht bestehen kann, indem es stillschweigend auf PI zurückfällt.
-- Auth: `OPENAI_API_KEY` aus der Shell/dem Profil sowie optional kopierte
+- Der Smoke setzt `OPENCLAW_AGENT_HARNESS_FALLBACK=none`, damit eine defekte Codex-
+  Harness nicht unbemerkt durch stillen Fallback auf PI bestehen kann.
+- Auth: `OPENAI_API_KEY` aus Shell/Profil sowie optional kopierte Dateien
   `~/.codex/auth.json` und `~/.codex/config.toml`
 
 Lokales Rezept:
@@ -606,19 +606,19 @@ pnpm test:docker:live-codex-harness
 Docker-Hinweise:
 
 - Der Docker-Runner liegt unter `scripts/test-live-codex-harness-docker.sh`.
-- Er sourct das eingehängte `~/.profile`, übergibt `OPENAI_API_KEY`, kopiert Codex-CLI-
-  Auth-Dateien, wenn vorhanden, installiert `@openai/codex` in ein beschreibbares eingehängtes npm-
-  Präfix, staged den Quellbaum und führt dann nur den Live-Test des Codex-Harness aus.
+- Er sourct das eingebundene `~/.profile`, übergibt `OPENAI_API_KEY`, kopiert Codex-CLI-
+  Auth-Dateien, sofern vorhanden, installiert `@openai/codex` in ein beschreibbares eingebundenes npm-
+  Präfix, stellt den Source-Tree bereit und führt dann nur den Live-Test der Codex-Harness aus.
 - Docker aktiviert standardmäßig die Image- und MCP-/Tool-Probes. Setze
   `OPENCLAW_LIVE_CODEX_HARNESS_IMAGE_PROBE=0` oder
   `OPENCLAW_LIVE_CODEX_HARNESS_MCP_PROBE=0`, wenn du einen engeren Debug-Lauf brauchst.
 - Docker exportiert außerdem `OPENCLAW_AGENT_HARNESS_FALLBACK=none`, passend zur Live-
-  Testkonfiguration, sodass `openai-codex/*`- oder PI-Fallback einen Codex-Harness-
-  Regressionsfehler nicht verbergen kann.
+  Testkonfiguration, damit `openai-codex/*`- oder PI-Fallback eine Codex-Harness-
+  Regression nicht verbergen kann.
 
 ### Empfohlene Live-Rezepte
 
-Enge, explizite Allowlists sind am schnellsten und am wenigsten flaky:
+Enge, explizite Allowlists sind am schnellsten und am wenigsten instabil:
 
 - Einzelnes Modell, direkt (ohne Gateway):
   - `OPENCLAW_LIVE_MODELS="openai/gpt-5.4" pnpm test:live src/agents/models.profiles.live.test.ts`
@@ -629,26 +629,26 @@ Enge, explizite Allowlists sind am schnellsten und am wenigsten flaky:
 - Tool-Calling über mehrere Provider hinweg:
   - `OPENCLAW_LIVE_GATEWAY_MODELS="openai/gpt-5.4,anthropic/claude-opus-4-6,google/gemini-3-flash-preview,zai/glm-4.7,minimax/MiniMax-M2.7" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
-- Fokus auf Google (Gemini-API-Key + Antigravity):
-  - Gemini (API-Key): `OPENCLAW_LIVE_GATEWAY_MODELS="google/gemini-3-flash-preview" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
+- Google-Fokus (Gemini-API-Schlüssel + Antigravity):
+  - Gemini (API-Schlüssel): `OPENCLAW_LIVE_GATEWAY_MODELS="google/gemini-3-flash-preview" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
   - Antigravity (OAuth): `OPENCLAW_LIVE_GATEWAY_MODELS="google-antigravity/claude-opus-4-6-thinking,google-antigravity/gemini-3-pro-high" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
 Hinweise:
 
-- `google/...` verwendet die Gemini-API (API-Key).
-- `google-antigravity/...` verwendet die Antigravity-OAuth-Bridge (Agent-Endpoint im Stil von Cloud Code Assist).
-- `google-gemini-cli/...` verwendet die lokale Gemini-CLI auf deiner Maschine (separate Authentifizierung + Eigenheiten beim Tooling).
+- `google/...` verwendet die Gemini-API (API-Schlüssel).
+- `google-antigravity/...` verwendet die Antigravity-OAuth-Bridge (Agent-Endpunkt im Stil von Cloud Code Assist).
+- `google-gemini-cli/...` verwendet die lokale Gemini-CLI auf deiner Maschine (separate Auth + eigene Tooling-Eigenheiten).
 - Gemini-API vs. Gemini-CLI:
-  - API: OpenClaw ruft Googles gehostete Gemini-API über HTTP auf (API-Key / Profil-Authentifizierung); das ist, was die meisten Benutzer mit „Gemini“ meinen.
-  - CLI: OpenClaw ruft ein lokales `gemini`-Binary über die Shell auf; es hat seine eigene Authentifizierung und kann sich anders verhalten (Streaming/Tool-Support/Versionsabweichungen).
+  - API: OpenClaw ruft Googles gehostete Gemini-API über HTTP auf (API-Schlüssel / Profile-Auth); das ist, was die meisten Benutzer mit „Gemini“ meinen.
+  - CLI: OpenClaw führt ein lokales `gemini`-Binary per Shell aus; es hat seine eigene Authentifizierung und kann sich anders verhalten (Streaming/Tool-Support/Versionsabweichungen).
 
 ## Live: Modellmatrix (was wir abdecken)
 
-Es gibt keine feste „CI-Modellliste“ (Live ist Opt-in), aber dies sind die **empfohlenen** Modelle, die auf einer Entwickler-Maschine mit Schlüsseln regelmäßig abgedeckt werden sollten.
+Es gibt keine feste „CI-Modellliste“ (Live ist Opt-in), aber dies sind die **empfohlenen** Modelle, die regelmäßig auf einer Entwickler-Maschine mit Schlüsseln abgedeckt werden sollten.
 
-### Moderner Smoke-Satz (Tool-Calling + Bild)
+### Modernes Smoke-Set (Tool-Calling + Image)
 
-Das ist der Lauf mit den „gängigen Modellen“, den wir funktionsfähig halten wollen:
+Das ist der Lauf für „gängige Modelle“, den wir funktionsfähig halten wollen:
 
 - OpenAI (nicht Codex): `openai/gpt-5.4` (optional: `openai/gpt-5.4-mini`)
 - OpenAI Codex: `openai-codex/gpt-5.4`
@@ -658,12 +658,12 @@ Das ist der Lauf mit den „gängigen Modellen“, den wir funktionsfähig halte
 - Z.AI (GLM): `zai/glm-4.7`
 - MiniMax: `minimax/MiniMax-M2.7`
 
-Gateway-Smoke mit Tools + Bild ausführen:
+Gateway-Smoke mit Tools + Image ausführen:
 `OPENCLAW_LIVE_GATEWAY_MODELS="openai/gpt-5.4,openai-codex/gpt-5.4,anthropic/claude-opus-4-6,google/gemini-3.1-pro-preview,google/gemini-3-flash-preview,google-antigravity/claude-opus-4-6-thinking,google-antigravity/gemini-3-flash,zai/glm-4.7,minimax/MiniMax-M2.7" pnpm test:live src/gateway/gateway-models.profiles.live.test.ts`
 
-### Basislinie: Tool-Calling (Read + optional Exec)
+### Baseline: Tool-Calling (Read + optional Exec)
 
-Wähle mindestens eines pro Provider-Familie:
+Wähle mindestens ein Modell pro Provider-Familie:
 
 - OpenAI: `openai/gpt-5.4` (oder `openai/gpt-5.4-mini`)
 - Anthropic: `anthropic/claude-opus-4-6` (oder `anthropic/claude-sonnet-4-6`)
@@ -678,149 +678,149 @@ Optionale zusätzliche Abdeckung (nice to have):
 - Cerebras: `cerebras/`… (wenn du Zugriff hast)
 - LM Studio: `lmstudio/`… (lokal; Tool-Calling hängt vom API-Modus ab)
 
-### Vision: Bild senden (Anhang → multimodale Nachricht)
+### Vision: Bild senden (Attachment → multimodale Nachricht)
 
-Nimm mindestens ein bildfähiges Modell in `OPENCLAW_LIVE_GATEWAY_MODELS` auf (Claude/Gemini/OpenAI-Bildvarianten usw.), um die Image-Probe zu testen.
+Nimm mindestens ein bildfähiges Modell in `OPENCLAW_LIVE_GATEWAY_MODELS` auf (Claude-/Gemini-/OpenAI-Varianten mit Vision-Unterstützung usw.), um die Image-Probe zu testen.
 
 ### Aggregatoren / alternative Gateways
 
-Wenn du aktivierte Schlüssel hast, unterstützen wir außerdem Tests über:
+Wenn du aktivierte Schlüssel hast, unterstützen wir Tests auch über:
 
-- OpenRouter: `openrouter/...` (Hunderte Modelle; verwende `openclaw models scan`, um Kandidaten mit Tool-+Bild-Fähigkeit zu finden)
-- OpenCode: `opencode/...` für Zen und `opencode-go/...` für Go (Authentifizierung über `OPENCODE_API_KEY` / `OPENCODE_ZEN_API_KEY`)
+- OpenRouter: `openrouter/...` (Hunderte von Modellen; verwende `openclaw models scan`, um Kandidaten mit Tool- und Image-Fähigkeiten zu finden)
+- OpenCode: `opencode/...` für Zen und `opencode-go/...` für Go (Auth über `OPENCODE_API_KEY` / `OPENCODE_ZEN_API_KEY`)
 
-Weitere Provider, die du in die Live-Matrix aufnehmen kannst (wenn du Anmeldedaten/Konfiguration hast):
+Weitere Provider, die du in die Live-Matrix aufnehmen kannst (falls du Anmeldedaten/Konfiguration hast):
 
 - Integriert: `openai`, `openai-codex`, `anthropic`, `google`, `google-vertex`, `google-antigravity`, `google-gemini-cli`, `zai`, `openrouter`, `opencode`, `opencode-go`, `xai`, `groq`, `cerebras`, `mistral`, `github-copilot`
-- Über `models.providers` (benutzerdefinierte Endpoints): `minimax` (Cloud/API) sowie jeder OpenAI-/Anthropic-kompatible Proxy (LM Studio, vLLM, LiteLLM usw.)
+- Über `models.providers` (benutzerdefinierte Endpunkte): `minimax` (Cloud/API) sowie jeder OpenAI-/Anthropic-kompatible Proxy (LM Studio, vLLM, LiteLLM usw.)
 
-Tipp: Versuche nicht, „alle Modelle“ in den Docs fest zu codieren. Die maßgebliche Liste ist das, was `discoverModels(...)` auf deiner Maschine zurückgibt + welche Schlüssel verfügbar sind.
+Tipp: Versuche nicht, in der Dokumentation „alle Modelle“ fest zu codieren. Die maßgebliche Liste ist, was `discoverModels(...)` auf deiner Maschine zurückgibt + welche Schlüssel verfügbar sind.
 
 ## Anmeldedaten (niemals committen)
 
 Live-Tests erkennen Anmeldedaten auf dieselbe Weise wie die CLI. Praktische Auswirkungen:
 
 - Wenn die CLI funktioniert, sollten Live-Tests dieselben Schlüssel finden.
-- Wenn ein Live-Test „keine Anmeldedaten“ meldet, debugge auf dieselbe Weise wie bei `openclaw models list` / Modellauswahl.
+- Wenn ein Live-Test „no creds“ meldet, debugge auf dieselbe Weise wie bei `openclaw models list` / der Modellauswahl.
 
-- Auth-Profile pro Agent: `~/.openclaw/agents/<agentId>/agent/auth-profiles.json` (das ist mit „Profilschlüssel“ in den Live-Tests gemeint)
+- Auth-Profile pro Agent: `~/.openclaw/agents/<agentId>/agent/auth-profiles.json` (das ist, was mit „Profile-Keys“ in den Live-Tests gemeint ist)
 - Konfiguration: `~/.openclaw/openclaw.json` (oder `OPENCLAW_CONFIG_PATH`)
-- Legacy-Statusverzeichnis: `~/.openclaw/credentials/` (wird bei Vorhandensein in das gestagte Live-Home kopiert, ist aber nicht der Hauptspeicher für Profilschlüssel)
-- Lokale Live-Läufe kopieren standardmäßig die aktive Konfiguration, `auth-profiles.json`-Dateien pro Agent, Legacy-`credentials/` und unterstützte externe CLI-Auth-Verzeichnisse in ein temporäres Test-Home; gestagte Live-Homes überspringen `workspace/` und `sandboxes/`, und Pfad-Overrides für `agents.*.workspace` / `agentDir` werden entfernt, damit Probes nicht in deinem echten Host-Workspace landen.
+- Legacy-State-Verzeichnis: `~/.openclaw/credentials/` (wird bei Vorhandensein in das vorbereitete Live-Home kopiert, ist aber nicht der Hauptspeicher für Profile-Keys)
+- Lokale Live-Läufe kopieren standardmäßig die aktive Konfiguration, die Dateien `auth-profiles.json` pro Agent, das Legacy-Verzeichnis `credentials/` und unterstützte externe CLI-Auth-Verzeichnisse in ein temporäres Test-Home; vorbereitete Live-Homes überspringen `workspace/` und `sandboxes/`, und Pfad-Overrides für `agents.*.workspace` / `agentDir` werden entfernt, damit Probes nicht in deinem echten Host-Workspace landen.
 
-Wenn du dich auf env-Schlüssel verlassen möchtest (z. B. aus deinem `~/.profile` exportiert), führe lokale Tests nach `source ~/.profile` aus oder verwende die Docker-Runner unten (sie können `~/.profile` in den Container einhängen).
+Wenn du dich auf env-Schlüssel verlassen willst (z. B. in deinem `~/.profile` exportiert), führe lokale Tests nach `source ~/.profile` aus oder verwende die Docker-Runner unten (sie können `~/.profile` in den Container einbinden).
 
-## Deepgram Live (Audio-Transkription)
+## Deepgram live (Audiotranskription)
 
 - Test: `src/media-understanding/providers/deepgram/audio.live.test.ts`
 - Aktivierung: `DEEPGRAM_API_KEY=... DEEPGRAM_LIVE_TEST=1 pnpm test:live src/media-understanding/providers/deepgram/audio.live.test.ts`
 
-## BytePlus Coding-Plan Live
+## BytePlus Coding-Plan live
 
 - Test: `src/agents/byteplus.live.test.ts`
 - Aktivierung: `BYTEPLUS_API_KEY=... BYTEPLUS_LIVE_TEST=1 pnpm test:live src/agents/byteplus.live.test.ts`
 - Optionales Modell-Override: `BYTEPLUS_CODING_MODEL=ark-code-latest`
 
-## ComfyUI-Workflow-Medien Live
+## ComfyUI-Workflow-Medien live
 
 - Test: `extensions/comfy/comfy.live.test.ts`
 - Aktivierung: `OPENCLAW_LIVE_TEST=1 COMFY_LIVE_TEST=1 pnpm test:live -- extensions/comfy/comfy.live.test.ts`
 - Umfang:
-  - Testet die gebündelten comfy-Pfade für Bild, Video und `music_generate`
-  - Überspringt jede Fähigkeit, sofern `models.providers.comfy.<capability>` nicht konfiguriert ist
-  - Nützlich nach Änderungen an comfy-Workflow-Submission, Polling, Downloads oder Plugin-Registrierung
+  - Testet die gebündelten Comfy-Pfade für Bild, Video und `music_generate`
+  - Überspringt jede Capability, sofern `models.providers.comfy.<capability>` nicht konfiguriert ist
+  - Nützlich nach Änderungen an Comfy-Workflow-Übermittlung, Polling, Downloads oder Plugin-Registrierung
 
-## Bildgenerierung Live
+## Bildgenerierung live
 
 - Test: `src/image-generation/runtime.live.test.ts`
 - Befehl: `pnpm test:live src/image-generation/runtime.live.test.ts`
 - Harness: `pnpm test:live:media image`
 - Umfang:
-  - Zählt jedes registrierte Plugin für Bildgenerierungs-Provider auf
-  - Lädt fehlende Provider-env-Variablen vor dem Testen aus deiner Login-Shell (`~/.profile`)
-  - Verwendet standardmäßig Live-/env-API-Schlüssel vor gespeicherten Auth-Profilen, damit veraltete Testschlüssel in `auth-profiles.json` echte Shell-Anmeldedaten nicht verdecken
-  - Überspringt Provider ohne nutzbare Authentifizierung/Profil/Modell
-  - Führt die Standardvarianten der Bildgenerierung über die gemeinsame Runtime-Fähigkeit aus:
+  - Listet jedes registrierte Plugin für Bildgenerierungs-Provider auf
+  - Lädt fehlende Provider-env vars vor dem Testen aus deiner Login-Shell (`~/.profile`)
+  - Verwendet standardmäßig Live-/env-API-Schlüssel vor gespeicherten Auth-Profilen, damit veraltete Testschlüssel in `auth-profiles.json` echte Shell-Anmeldedaten nicht überdecken
+  - Überspringt Provider ohne nutzbare Auth/Profile/Modelle
+  - Führt die Standardvarianten der Bildgenerierung über die gemeinsame Runtime-Capability aus:
     - `google:flash-generate`
     - `google:pro-generate`
     - `google:pro-edit`
     - `openai:default-generate`
-- Derzeit abgedeckte gebündelte Provider:
+- Aktuell abgedeckte gebündelte Provider:
   - `openai`
   - `google`
 - Optionale Eingrenzung:
   - `OPENCLAW_LIVE_IMAGE_GENERATION_PROVIDERS="openai,google"`
   - `OPENCLAW_LIVE_IMAGE_GENERATION_MODELS="openai/gpt-image-1,google/gemini-3.1-flash-image-preview"`
   - `OPENCLAW_LIVE_IMAGE_GENERATION_CASES="google:flash-generate,google:pro-edit"`
-- Optionales Authentifizierungsverhalten:
-  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um Authentifizierung über den Profilspeicher zu erzwingen und reine env-Overrides zu ignorieren
+- Optionales Auth-Verhalten:
+  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um Auth aus dem Profile-Store zu erzwingen und env-only-Overrides zu ignorieren
 
-## Musikgenerierung Live
+## Musikgenerierung live
 
 - Test: `extensions/music-generation-providers.live.test.ts`
 - Aktivierung: `OPENCLAW_LIVE_TEST=1 pnpm test:live -- extensions/music-generation-providers.live.test.ts`
 - Harness: `pnpm test:live:media music`
 - Umfang:
-  - Testet den gemeinsamen gebündelten Pfad für Musikgenerierungs-Provider
+  - Testet den gemeinsamen gebündelten Provider-Pfad für Musikgenerierung
   - Deckt derzeit Google und MiniMax ab
-  - Lädt Provider-env-Variablen vor dem Testen aus deiner Login-Shell (`~/.profile`)
-  - Verwendet standardmäßig Live-/env-API-Schlüssel vor gespeicherten Auth-Profilen, damit veraltete Testschlüssel in `auth-profiles.json` echte Shell-Anmeldedaten nicht verdecken
-  - Überspringt Provider ohne nutzbare Authentifizierung/Profil/Modell
+  - Lädt Provider-env vars vor dem Testen aus deiner Login-Shell (`~/.profile`)
+  - Verwendet standardmäßig Live-/env-API-Schlüssel vor gespeicherten Auth-Profilen, damit veraltete Testschlüssel in `auth-profiles.json` echte Shell-Anmeldedaten nicht überdecken
+  - Überspringt Provider ohne nutzbare Auth/Profile/Modelle
   - Führt beide deklarierten Runtime-Modi aus, wenn verfügbar:
-    - `generate` mit reiner Prompt-Eingabe
+    - `generate` mit rein promptbasierter Eingabe
     - `edit`, wenn der Provider `capabilities.edit.enabled` deklariert
-  - Aktuelle Abdeckung in der gemeinsamen Lane:
+  - Aktuelle Abdeckung der gemeinsamen Strecke:
     - `google`: `generate`, `edit`
     - `minimax`: `generate`
-    - `comfy`: separate Comfy-Live-Datei, nicht dieser gemeinsame Sweep
+    - `comfy`: separate Comfy-Live-Datei, nicht Teil dieses gemeinsamen Sweeps
 - Optionale Eingrenzung:
   - `OPENCLAW_LIVE_MUSIC_GENERATION_PROVIDERS="google,minimax"`
   - `OPENCLAW_LIVE_MUSIC_GENERATION_MODELS="google/lyria-3-clip-preview,minimax/music-2.5+"`
-- Optionales Authentifizierungsverhalten:
-  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um Authentifizierung über den Profilspeicher zu erzwingen und reine env-Overrides zu ignorieren
+- Optionales Auth-Verhalten:
+  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um Auth aus dem Profile-Store zu erzwingen und env-only-Overrides zu ignorieren
 
-## Videogenerierung Live
+## Videogenerierung live
 
 - Test: `extensions/video-generation-providers.live.test.ts`
 - Aktivierung: `OPENCLAW_LIVE_TEST=1 pnpm test:live -- extensions/video-generation-providers.live.test.ts`
 - Harness: `pnpm test:live:media video`
 - Umfang:
-  - Testet den gemeinsamen gebündelten Pfad für Videogenerierungs-Provider
-  - Verwendet standardmäßig den release-sicheren Smoke-Pfad: Nicht-FAL-Provider, eine Text-zu-Video-Anfrage pro Provider, ein einsekündiger Lobster-Prompt und eine providerbezogene Obergrenze pro Operation aus `OPENCLAW_LIVE_VIDEO_GENERATION_TIMEOUT_MS` (standardmäßig `180000`)
+  - Testet den gemeinsamen gebündelten Provider-Pfad für Videogenerierung
+  - Verwendet standardmäßig den release-sicheren Smoke-Pfad: keine FAL-Provider, eine Text-zu-Video-Anfrage pro Provider, einen einsekündigen Lobster-Prompt und eine Provider-spezifische Operationsgrenze aus `OPENCLAW_LIVE_VIDEO_GENERATION_TIMEOUT_MS` (standardmäßig `180000`)
   - Überspringt FAL standardmäßig, weil providerseitige Queue-Latenz die Release-Zeit dominieren kann; übergib `--video-providers fal` oder `OPENCLAW_LIVE_VIDEO_GENERATION_PROVIDERS="fal"`, um ihn explizit auszuführen
-  - Lädt Provider-env-Variablen vor dem Testen aus deiner Login-Shell (`~/.profile`)
-  - Verwendet standardmäßig Live-/env-API-Schlüssel vor gespeicherten Auth-Profilen, damit veraltete Testschlüssel in `auth-profiles.json` echte Shell-Anmeldedaten nicht verdecken
-  - Überspringt Provider ohne nutzbare Authentifizierung/Profil/Modell
+  - Lädt Provider-env vars vor dem Testen aus deiner Login-Shell (`~/.profile`)
+  - Verwendet standardmäßig Live-/env-API-Schlüssel vor gespeicherten Auth-Profilen, damit veraltete Testschlüssel in `auth-profiles.json` echte Shell-Anmeldedaten nicht überdecken
+  - Überspringt Provider ohne nutzbare Auth/Profile/Modelle
   - Führt standardmäßig nur `generate` aus
-  - Setze `OPENCLAW_LIVE_VIDEO_GENERATION_FULL_MODES=1`, um zusätzlich deklarierte Transformationsmodi auszuführen, wenn verfügbar:
-    - `imageToVideo`, wenn der Provider `capabilities.imageToVideo.enabled` deklariert und das ausgewählte Provider-/Modellpaar im gemeinsamen Sweep buffer-gestützte lokale Bildeingabe akzeptiert
-    - `videoToVideo`, wenn der Provider `capabilities.videoToVideo.enabled` deklariert und das ausgewählte Provider-/Modellpaar im gemeinsamen Sweep buffer-gestützte lokale Videoeingabe akzeptiert
-  - Aktuell deklarierte, aber im gemeinsamen Sweep übersprungene `imageToVideo`-Provider:
+  - Setze `OPENCLAW_LIVE_VIDEO_GENERATION_FULL_MODES=1`, um bei Verfügbarkeit auch deklarierte Transform-Modi auszuführen:
+    - `imageToVideo`, wenn der Provider `capabilities.imageToVideo.enabled` deklariert und der ausgewählte Provider/das ausgewählte Modell im gemeinsamen Sweep bufferbasierte lokale Bildeingaben akzeptiert
+    - `videoToVideo`, wenn der Provider `capabilities.videoToVideo.enabled` deklariert und der ausgewählte Provider/das ausgewählte Modell im gemeinsamen Sweep bufferbasierte lokale Videoeingaben akzeptiert
+  - Aktuelle in der gemeinsamen Sweep deklarierte, aber übersprungene `imageToVideo`-Provider:
     - `vydra`, weil das gebündelte `veo3` nur Text unterstützt und das gebündelte `kling` eine Remote-Bild-URL erfordert
   - Provider-spezifische Vydra-Abdeckung:
     - `OPENCLAW_LIVE_TEST=1 OPENCLAW_LIVE_VYDRA_VIDEO=1 pnpm test:live -- extensions/vydra/vydra.live.test.ts`
-    - diese Datei führt `veo3` Text-zu-Video sowie standardmäßig eine `kling`-Lane aus, die ein Fixture mit einer Remote-Bild-URL verwendet
+    - diese Datei führt standardmäßig `veo3` Text-zu-Video plus eine `kling`-Strecke aus, die eine Fixture mit Remote-Bild-URL verwendet
   - Aktuelle `videoToVideo`-Live-Abdeckung:
     - nur `runway`, wenn das ausgewählte Modell `runway/gen4_aleph` ist
-  - Aktuell deklarierte, aber im gemeinsamen Sweep übersprungene `videoToVideo`-Provider:
-    - `alibaba`, `qwen`, `xai`, weil diese Pfade derzeit Referenz-URLs als Remote-`http(s)` / MP4 erfordern
-    - `google`, weil die aktuelle gemeinsame Gemini-/Veo-Lane lokale buffer-gestützte Eingabe verwendet und dieser Pfad im gemeinsamen Sweep nicht akzeptiert wird
-    - `openai`, weil der aktuelle gemeinsame Pfad keine Garantien für organisationsspezifischen Zugriff auf Video-Inpainting/Remix bietet
+  - Aktuelle in der gemeinsamen Sweep deklarierte, aber übersprungene `videoToVideo`-Provider:
+    - `alibaba`, `qwen`, `xai`, weil diese Pfade derzeit Remote-Referenz-URLs mit `http(s)` / MP4 erfordern
+    - `google`, weil die aktuelle gemeinsame Gemini-/Veo-Strecke lokale bufferbasierte Eingaben verwendet und dieser Pfad im gemeinsamen Sweep nicht akzeptiert wird
+    - `openai`, weil die aktuelle gemeinsame Strecke keine Garantien für organisationsspezifischen Zugriff auf Video-Inpaint/Remix bietet
 - Optionale Eingrenzung:
   - `OPENCLAW_LIVE_VIDEO_GENERATION_PROVIDERS="google,openai,runway"`
   - `OPENCLAW_LIVE_VIDEO_GENERATION_MODELS="google/veo-3.1-fast-generate-preview,openai/sora-2,runway/gen4_aleph"`
-  - `OPENCLAW_LIVE_VIDEO_GENERATION_SKIP_PROVIDERS=""`, um jeden Provider im Standardsweep einzuschließen, einschließlich FAL
-  - `OPENCLAW_LIVE_VIDEO_GENERATION_TIMEOUT_MS=60000`, um die providerbezogene Obergrenze pro Operation für einen aggressiven Smoke-Lauf zu reduzieren
-- Optionales Authentifizierungsverhalten:
-  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um Authentifizierung über den Profilspeicher zu erzwingen und reine env-Overrides zu ignorieren
+  - `OPENCLAW_LIVE_VIDEO_GENERATION_SKIP_PROVIDERS=""`, um jeden Provider im Standard-Sweep einzubeziehen, einschließlich FAL
+  - `OPENCLAW_LIVE_VIDEO_GENERATION_TIMEOUT_MS=60000`, um die Operationsgrenze pro Provider für einen aggressiven Smoke-Lauf zu senken
+- Optionales Auth-Verhalten:
+  - `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um Auth aus dem Profile-Store zu erzwingen und env-only-Overrides zu ignorieren
 
 ## Media-Live-Harness
 
 - Befehl: `pnpm test:live:media`
 - Zweck:
-  - Führt die gemeinsamen Live-Suites für Bild, Musik und Video über einen repo-eigenen Entry-Point aus
-  - Lädt fehlende Provider-env-Variablen automatisch aus `~/.profile`
-  - Grenzt standardmäßig jede Suite automatisch auf Provider ein, die derzeit nutzbare Authentifizierung haben
+  - Führt die gemeinsamen Live-Suites für Bild, Musik und Video über einen repo-nativen Entrypoint aus
+  - Lädt fehlende Provider-env vars automatisch aus `~/.profile`
+  - Grenzt jede Suite standardmäßig automatisch auf Provider ein, die aktuell nutzbare Auth haben
   - Verwendet erneut `scripts/test-live.mjs`, sodass Heartbeat- und Quiet-Mode-Verhalten konsistent bleiben
 - Beispiele:
   - `pnpm test:live:media`
@@ -830,20 +830,20 @@ Wenn du dich auf env-Schlüssel verlassen möchtest (z. B. aus deinem `~/.profil
 
 ## Docker-Runner (optionale „funktioniert unter Linux“-Prüfungen)
 
-Diese Docker-Runner teilen sich in zwei Gruppen auf:
+Diese Docker-Runner sind in zwei Gruppen aufgeteilt:
 
-- Live-Modell-Runner: `test:docker:live-models` und `test:docker:live-gateway` führen nur ihre jeweils passende Live-Datei für Profilschlüssel innerhalb des Repo-Docker-Images aus (`src/agents/models.profiles.live.test.ts` und `src/gateway/gateway-models.profiles.live.test.ts`), wobei dein lokales Konfigurationsverzeichnis und dein Workspace eingehängt werden (und `~/.profile` gesourct wird, wenn es eingehängt ist). Die passenden lokalen Entry-Points sind `test:live:models-profiles` und `test:live:gateway-profiles`.
+- Live-Modell-Runner: `test:docker:live-models` und `test:docker:live-gateway` führen nur ihre jeweils passende Live-Datei für Profile-Keys im Repo-Docker-Image aus (`src/agents/models.profiles.live.test.ts` und `src/gateway/gateway-models.profiles.live.test.ts`), wobei dein lokales Konfigurationsverzeichnis und dein Workspace eingebunden werden (und `~/.profile` gesourct wird, falls eingebunden). Die passenden lokalen Entrypoints sind `test:live:models-profiles` und `test:live:gateway-profiles`.
 - Docker-Live-Runner verwenden standardmäßig eine kleinere Smoke-Obergrenze, damit ein vollständiger Docker-Sweep praktikabel bleibt:
   `test:docker:live-models` verwendet standardmäßig `OPENCLAW_LIVE_MAX_MODELS=12`, und
   `test:docker:live-gateway` verwendet standardmäßig `OPENCLAW_LIVE_GATEWAY_SMOKE=1`,
   `OPENCLAW_LIVE_GATEWAY_MAX_MODELS=8`,
   `OPENCLAW_LIVE_GATEWAY_STEP_TIMEOUT_MS=45000` und
-  `OPENCLAW_LIVE_GATEWAY_MODEL_TIMEOUT_MS=90000`. Überschreibe diese env-Variablen, wenn du
+  `OPENCLAW_LIVE_GATEWAY_MODEL_TIMEOUT_MS=90000`. Überschreibe diese env vars, wenn du
   ausdrücklich den größeren vollständigen Scan möchtest.
-- `test:docker:all` baut das Live-Docker-Image einmal über `test:docker:live-build` und verwendet es dann für die beiden Docker-Live-Lanes erneut.
+- `test:docker:all` baut das Live-Docker-Image einmal über `test:docker:live-build` und verwendet es dann für die beiden Live-Docker-Strecken erneut.
 - Container-Smoke-Runner: `test:docker:openwebui`, `test:docker:onboard`, `test:docker:gateway-network`, `test:docker:mcp-channels` und `test:docker:plugins` starten einen oder mehrere echte Container und verifizieren Integrationspfade auf höherer Ebene.
 
-Die Docker-Runner für Live-Modelle binden außerdem nur die benötigten CLI-Auth-Homes ein (oder alle unterstützten, wenn der Lauf nicht eingegrenzt ist) und kopieren sie dann vor dem Lauf in das Home-Verzeichnis des Containers, damit OAuth externer CLIs Tokens aktualisieren kann, ohne den Auth-Speicher des Hosts zu verändern:
+Die Docker-Runner für Live-Modelle binden außerdem nur die benötigten CLI-Auth-Homes ein (oder alle unterstützten, wenn der Lauf nicht eingegrenzt ist) und kopieren sie dann vor dem Lauf in das Container-Home, damit externes CLI-OAuth Tokens aktualisieren kann, ohne den Auth-Store des Hosts zu verändern:
 
 - Direkte Modelle: `pnpm test:docker:live-models` (Skript: `scripts/test-live-models-docker.sh`)
 - ACP-Bind-Smoke: `pnpm test:docker:live-acp-bind` (Skript: `scripts/test-live-acp-bind-docker.sh`)
@@ -853,139 +853,140 @@ Die Docker-Runner für Live-Modelle binden außerdem nur die benötigten CLI-Aut
 - Open-WebUI-Live-Smoke: `pnpm test:docker:openwebui` (Skript: `scripts/e2e/openwebui-docker.sh`)
 - Onboarding-Assistent (TTY, vollständiges Scaffolding): `pnpm test:docker:onboard` (Skript: `scripts/e2e/onboard-docker.sh`)
 - Gateway-Networking (zwei Container, WS-Auth + Health): `pnpm test:docker:gateway-network` (Skript: `scripts/e2e/gateway-network-docker.sh`)
-- MCP-Kanal-Bridge (vorgefülltes Gateway + stdio-Bridge + roher Claude-Benachrichtigungsframe-Smoke): `pnpm test:docker:mcp-channels` (Skript: `scripts/e2e/mcp-channels-docker.sh`)
+- MCP-Channel-Bridge (vorbereiteter Gateway + stdio-Bridge + roher Claude-Benachrichtigungsframe-Smoke): `pnpm test:docker:mcp-channels` (Skript: `scripts/e2e/mcp-channels-docker.sh`)
 - Plugins (Installations-Smoke + `/plugin`-Alias + Neustartsemantik des Claude-Bundles): `pnpm test:docker:plugins` (Skript: `scripts/e2e/plugins-docker.sh`)
 
 Die Docker-Runner für Live-Modelle binden außerdem den aktuellen Checkout schreibgeschützt ein und
-stagen ihn in ein temporäres Workdir innerhalb des Containers. Dadurch bleibt das Runtime-
-Image schlank, während Vitest trotzdem gegen genau deinen lokalen Quellcode/deine lokale Konfiguration ausgeführt wird.
-Der Staging-Schritt überspringt große nur lokale Caches und App-Build-Ausgaben wie
+stellen ihn in ein temporäres Workdir im Container bereit. So bleibt das Runtime-
+Image schlank, während Vitest trotzdem gegen deinen exakten lokalen Source-/Konfigurationsstand läuft.
+Der Bereitstellungsschritt überspringt große lokale Caches und App-Build-Ausgaben wie
 `.pnpm-store`, `.worktrees`, `__openclaw_vitest__` und app-lokale `.build`- oder
-Gradle-Ausgabeverzeichnisse, damit Docker-Live-Läufe nicht minutenlang
-maschinenspezifische Artefakte kopieren.
-Sie setzen außerdem `OPENCLAW_SKIP_CHANNELS=1`, damit Gateway-Live-Probes nicht
-echte Kanal-Worker für Telegram/Discord usw. innerhalb des Containers starten.
-`test:docker:live-models` führt weiterhin `pnpm test:live` aus, daher gib auch
-`OPENCLAW_LIVE_GATEWAY_*` weiter, wenn du die Gateway-
-Live-Abdeckung in dieser Docker-Lane eingrenzen oder ausschließen musst.
+Gradle-Ausgabeordner, damit Docker-Live-Läufe nicht Minuten mit dem Kopieren
+maschinenspezifischer Artifacts verbringen.
+Sie setzen außerdem `OPENCLAW_SKIP_CHANNELS=1`, damit Gateway-Live-Probes keine
+echten Telegram-/Discord-/usw.-Channel-Worker im Container starten.
+`test:docker:live-models` führt weiterhin `pnpm test:live` aus; reiche daher auch
+`OPENCLAW_LIVE_GATEWAY_*` durch, wenn du die Gateway-Live-Abdeckung in dieser Docker-Strecke
+eingrenzen oder ausschließen musst.
 `test:docker:openwebui` ist ein höherstufiger Kompatibilitäts-Smoke: Er startet einen
-OpenClaw-Gateway-Container mit aktivierten OpenAI-kompatiblen HTTP-Endpoints,
-startet einen angehefteten Open-WebUI-Container gegen dieses Gateway, meldet sich über
-Open WebUI an, prüft, dass `/api/models` `openclaw/default` bereitstellt, und sendet dann eine
-echte Chat-Anfrage über den Proxy `/api/chat/completions` von Open WebUI.
-Der erste Lauf kann deutlich langsamer sein, weil Docker möglicherweise das
-Open-WebUI-Image ziehen muss und Open WebUI möglicherweise seine eigene Kaltstart-Einrichtung abschließen muss.
-Diese Lane erwartet einen nutzbaren Live-Modell-Schlüssel, und `OPENCLAW_PROFILE_FILE`
+OpenClaw-Gateway-Container mit aktivierten OpenAI-kompatiblen HTTP-Endpunkten,
+startet einen festgepinnte Open-WebUI-Container gegen dieses Gateway, meldet sich über
+Open WebUI an, verifiziert, dass `/api/models` `openclaw/default` bereitstellt, und sendet dann
+eine echte Chat-Anfrage über den Proxy `/api/chat/completions` von Open WebUI.
+Der erste Lauf kann spürbar langsamer sein, weil Docker möglicherweise zuerst das
+Open-WebUI-Image ziehen muss und Open WebUI sein eigenes Cold-Start-Setup abschließen muss.
+Diese Strecke erwartet einen verwendbaren Live-Modellschlüssel, und `OPENCLAW_PROFILE_FILE`
 (`~/.profile` standardmäßig) ist der primäre Weg, ihn in Docker-Läufen bereitzustellen.
-Erfolgreiche Läufe geben eine kleine JSON-Payload aus wie `{ "ok": true, "model":
-"openclaw/default", ... }`.
+Erfolgreiche Läufe geben eine kleine JSON-Payload wie `{ "ok": true, "model":
+"openclaw/default", ... }` aus.
 `test:docker:mcp-channels` ist absichtlich deterministisch und benötigt kein
-echtes Telegram-, Discord- oder iMessage-Konto. Es startet ein vorgefülltes Gateway-
+echtes Telegram-, Discord- oder iMessage-Konto. Es startet einen vorbereiteten Gateway-
 Container, startet einen zweiten Container, der `openclaw mcp serve` ausführt, und
-prüft dann geroutete Konversationserkennung, Transkript-Lesezugriffe, Anhang-Metadaten,
-Verhalten der Live-Ereigniswarteschlange, Routing ausgehender Sendungen und Benachrichtigungen
-zu Kanal + Berechtigungen im Claude-Stil über die echte stdio-MCP-Bridge. Die Benachrichtigungsprüfung
-untersucht die rohen stdio-MCP-Frames direkt, sodass der Smoke das validiert, was die
-Bridge tatsächlich ausgibt, nicht nur das, was ein bestimmtes Client-SDK zufällig bereitstellt.
+verifiziert dann geroutete Konversationserkennung, Transkriptlesevorgänge, Attachment-Metadaten,
+Verhalten der Live-Event-Queue, Routing ausgehender Sends sowie Claude-artige Channel- +
+Berechtigungsbenachrichtigungen über die echte stdio-MCP-Bridge. Die Benachrichtigungsprüfung
+untersucht direkt die rohen stdio-MCP-Frames, sodass der Smoke validiert, was die
+Bridge tatsächlich ausgibt, und nicht nur, was ein bestimmtes Client-SDK gerade sichtbar macht.
 
-Manueller ACP-Smoke für Threads in natürlicher Sprache (nicht CI):
+Manueller ACP-Smoketest für Threads in natürlicher Sprache (nicht CI):
 
 - `bun scripts/dev/discord-acp-plain-language-smoke.ts --channel <discord-channel-id> ...`
-- Behalte dieses Skript für Regressions-/Debug-Workflows. Es könnte für die Validierung des ACP-Thread-Routings erneut benötigt werden, also nicht löschen.
+- Behalte dieses Skript für Regressions-/Debug-Workflows bei. Es kann für die Validierung des ACP-Thread-Routings erneut benötigt werden, also nicht löschen.
 
-Nützliche env-Variablen:
+Nützliche env vars:
 
-- `OPENCLAW_CONFIG_DIR=...` (Standard: `~/.openclaw`), eingehängt nach `/home/node/.openclaw`
-- `OPENCLAW_WORKSPACE_DIR=...` (Standard: `~/.openclaw/workspace`), eingehängt nach `/home/node/.openclaw/workspace`
-- `OPENCLAW_PROFILE_FILE=...` (Standard: `~/.profile`), eingehängt nach `/home/node/.profile` und vor dem Ausführen der Tests gesourct
-- `OPENCLAW_DOCKER_CLI_TOOLS_DIR=...` (Standard: `~/.cache/openclaw/docker-cli-tools`), eingehängt nach `/home/node/.npm-global` für zwischengespeicherte CLI-Installationen innerhalb von Docker
-- Externe CLI-Auth-Verzeichnisse/-Dateien unter `$HOME` werden schreibgeschützt unter `/host-auth...` eingehängt und dann vor dem Start der Tests nach `/home/node/...` kopiert
+- `OPENCLAW_CONFIG_DIR=...` (Standard: `~/.openclaw`), eingebunden nach `/home/node/.openclaw`
+- `OPENCLAW_WORKSPACE_DIR=...` (Standard: `~/.openclaw/workspace`), eingebunden nach `/home/node/.openclaw/workspace`
+- `OPENCLAW_PROFILE_FILE=...` (Standard: `~/.profile`), eingebunden nach `/home/node/.profile` und vor dem Ausführen der Tests gesourct
+- `OPENCLAW_DOCKER_PROFILE_ENV_ONLY=1`, um nur env vars zu prüfen, die aus `OPENCLAW_PROFILE_FILE` gesourct wurden, unter Verwendung temporärer Konfigurations-/Workspace-Verzeichnisse und ohne externe CLI-Auth-Mounts
+- `OPENCLAW_DOCKER_CLI_TOOLS_DIR=...` (Standard: `~/.cache/openclaw/docker-cli-tools`), eingebunden nach `/home/node/.npm-global` für gecachte CLI-Installationen in Docker
+- Externe CLI-Auth-Verzeichnisse/-Dateien unter `$HOME` werden schreibgeschützt unter `/host-auth...` eingebunden und dann nach `/home/node/...` kopiert, bevor die Tests starten
   - Standardverzeichnisse: `.minimax`
   - Standarddateien: `~/.codex/auth.json`, `~/.codex/config.toml`, `.claude.json`, `~/.claude/.credentials.json`, `~/.claude/settings.json`, `~/.claude/settings.local.json`
-  - Eingegrenzte Provider-Läufe hängen nur die benötigten Verzeichnisse/Dateien ein, die aus `OPENCLAW_LIVE_PROVIDERS` / `OPENCLAW_LIVE_GATEWAY_PROVIDERS` abgeleitet werden
-  - Manuelles Override mit `OPENCLAW_DOCKER_AUTH_DIRS=all`, `OPENCLAW_DOCKER_AUTH_DIRS=none` oder einer Komma-Liste wie `OPENCLAW_DOCKER_AUTH_DIRS=.claude,.codex`
+  - Eingegrenzte Provider-Läufe binden nur die benötigten Verzeichnisse/Dateien ein, die aus `OPENCLAW_LIVE_PROVIDERS` / `OPENCLAW_LIVE_GATEWAY_PROVIDERS` abgeleitet werden
+  - Manuelle Überschreibung mit `OPENCLAW_DOCKER_AUTH_DIRS=all`, `OPENCLAW_DOCKER_AUTH_DIRS=none` oder einer Komma-Liste wie `OPENCLAW_DOCKER_AUTH_DIRS=.claude,.codex`
 - `OPENCLAW_LIVE_GATEWAY_MODELS=...` / `OPENCLAW_LIVE_MODELS=...`, um den Lauf einzugrenzen
 - `OPENCLAW_LIVE_GATEWAY_PROVIDERS=...` / `OPENCLAW_LIVE_PROVIDERS=...`, um Provider im Container zu filtern
-- `OPENCLAW_SKIP_DOCKER_BUILD=1`, um ein vorhandenes Image `openclaw:local-live` für erneute Läufe wiederzuverwenden, die keinen Neubau benötigen
-- `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um sicherzustellen, dass Anmeldedaten aus dem Profilspeicher kommen (nicht aus env)
-- `OPENCLAW_OPENWEBUI_MODEL=...`, um das vom Gateway für den Open-WebUI-Smoke bereitgestellte Modell auszuwählen
-- `OPENCLAW_OPENWEBUI_PROMPT=...`, um den für den Open-WebUI-Smoke verwendeten Nonce-Prüf-Prompt zu überschreiben
-- `OPENWEBUI_IMAGE=...`, um das angeheftete Open-WebUI-Image-Tag zu überschreiben
+- `OPENCLAW_SKIP_DOCKER_BUILD=1`, um ein vorhandenes Image `openclaw:local-live` für erneute Läufe zu verwenden, die keinen Neubau benötigen
+- `OPENCLAW_LIVE_REQUIRE_PROFILE_KEYS=1`, um sicherzustellen, dass Anmeldedaten aus dem Profile-Store kommen (nicht aus env)
+- `OPENCLAW_OPENWEBUI_MODEL=...`, um das Modell auszuwählen, das das Gateway für den Open-WebUI-Smoke bereitstellt
+- `OPENCLAW_OPENWEBUI_PROMPT=...`, um den für den Open-WebUI-Smoke verwendeten Nonce-Prüfprompt zu überschreiben
+- `OPENWEBUI_IMAGE=...`, um das festgepinnte Open-WebUI-Image-Tag zu überschreiben
 
-## Docs-Sanity
+## Doku-Sanity
 
-Führe nach Änderungen an der Dokumentation die Docs-Prüfungen aus: `pnpm check:docs`.
-Führe die vollständige Mintlify-Anchor-Validierung aus, wenn du auch Prüfungen für In-Page-Überschriften benötigst: `pnpm docs:check-links:anchors`.
+Führe nach Doku-Bearbeitungen Doku-Prüfungen aus: `pnpm check:docs`.
+Führe die vollständige Mintlify-Anchor-Validierung aus, wenn du auch Heading-Prüfungen innerhalb der Seite brauchst: `pnpm docs:check-links:anchors`.
 
 ## Offline-Regression (CI-sicher)
 
-Das sind Regressionstests für die „reale Pipeline“ ohne echte Provider:
+Das sind Regressionen mit „echter Pipeline“, aber ohne echte Provider:
 
-- Gateway-Tool-Calling (Mock-OpenAI, echtes Gateway + Agent-Schleife): `src/gateway/gateway.test.ts` (Fall: "runs a mock OpenAI tool call end-to-end via gateway agent loop")
-- Gateway-Assistent (WS `wizard.start`/`wizard.next`, schreibt Konfiguration + erzwungene Authentifizierung): `src/gateway/gateway.test.ts` (Fall: "runs wizard over ws and writes auth token config")
+- Gateway-Tool-Calling (Mock-OpenAI, echtes Gateway + Agent-Loop): `src/gateway/gateway.test.ts` (Fall: "runs a mock OpenAI tool call end-to-end via gateway agent loop")
+- Gateway-Assistent (WS `wizard.start`/`wizard.next`, schreibt Konfiguration + Auth erzwungen): `src/gateway/gateway.test.ts` (Fall: "runs wizard over ws and writes auth token config")
 
-## Agent-Zuverlässigkeits-Evals (Skills)
+## Evals zur Agent-Zuverlässigkeit (Skills)
 
-Wir haben bereits einige CI-sichere Tests, die sich wie „Agent-Zuverlässigkeits-Evals“ verhalten:
+Wir haben bereits einige CI-sichere Tests, die sich wie „Evals zur Agent-Zuverlässigkeit“ verhalten:
 
-- Mock-Tool-Calling über die echte Gateway- + Agent-Schleife (`src/gateway/gateway.test.ts`).
-- End-to-End-Assistenten-Flows, die Sitzungsverdrahtung und Konfigurationseffekte validieren (`src/gateway/gateway.test.ts`).
+- Mock-Tool-Calling über den echten Gateway- + Agent-Loop (`src/gateway/gateway.test.ts`).
+- End-to-End-Assistenten-Flows, die Sitzungs-Wiring und Konfigurationseffekte validieren (`src/gateway/gateway.test.ts`).
 
 Was für Skills noch fehlt (siehe [Skills](/de/tools/skills)):
 
-- **Decisioning:** Wenn Skills im Prompt aufgeführt sind, wählt der Agent den richtigen Skill aus (oder vermeidet irrelevante)?
-- **Compliance:** Liest der Agent vor der Nutzung `SKILL.md` und folgt den erforderlichen Schritten/Argumenten?
-- **Workflow-Verträge:** Multi-Turn-Szenarien, die Tool-Reihenfolge, Übernahme des Sitzungsverlaufs und Sandbox-Grenzen prüfen.
+- **Entscheidungsfindung:** Wenn Skills im Prompt aufgeführt sind, wählt der Agent dann den richtigen Skill aus (oder vermeidet irrelevante)?
+- **Compliance:** Liest der Agent vor der Verwendung `SKILL.md` und befolgt die erforderlichen Schritte/Args?
+- **Workflow-Verträge:** Multi-Turn-Szenarien, die Tool-Reihenfolge, Sitzungsverlauf über mehrere Turns und Sandbox-Grenzen prüfen.
 
 Zukünftige Evals sollten zuerst deterministisch bleiben:
 
-- Ein Szenario-Runner, der Mock-Provider verwendet, um Tool-Calls + Reihenfolge, Skill-Datei-Lesezugriffe und Sitzungsverdrahtung zu prüfen.
-- Eine kleine Suite skill-fokussierter Szenarien (verwenden vs. vermeiden, Gating, Prompt-Injection).
-- Optionale Live-Evals (Opt-in, env-gesteuert) erst, nachdem die CI-sichere Suite vorhanden ist.
+- Ein Szenario-Runner mit Mock-Providern, der Tool-Calls + Reihenfolge, Skill-Dateilesen und Sitzungs-Wiring prüft.
+- Eine kleine Suite mit Skill-fokussierten Szenarien (verwenden vs. vermeiden, Gating, Prompt-Injection).
+- Optionale Live-Evals (Opt-in, env-gated) erst dann, wenn die CI-sichere Suite vorhanden ist.
 
-## Vertragstests (Plugin- und Kanalform)
+## Contract-Tests (Plugin- und Channel-Form)
 
-Vertragstests verifizieren, dass jedes registrierte Plugin und jeder Kanal seinem
-Schnittstellenvertrag entspricht. Sie iterieren über alle entdeckten Plugins und führen eine Suite aus
-Form- und Verhaltensprüfungen aus. Die standardmäßige Unit-Lane `pnpm test`
-überspringt diese gemeinsam genutzten Seam- und Smoke-Dateien absichtlich; führe die Vertragsbefehle explizit aus,
-wenn du gemeinsam genutzte Kanal- oder Provider-Oberflächen änderst.
+Contract-Tests verifizieren, dass jedes registrierte Plugin und jeder registrierte Channel seinem
+Schnittstellenvertrag entspricht. Sie iterieren über alle entdeckten Plugins und führen eine Suite von
+Prüfungen für Form und Verhalten aus. Die standardmäßige Unit-Strecke `pnpm test`
+überspringt diese gemeinsamen Seam- und Smoke-Dateien absichtlich; führe die Contract-Befehle explizit aus,
+wenn du gemeinsame Channel- oder Provider-Oberflächen anfasst.
 
 ### Befehle
 
-- Alle Verträge: `pnpm test:contracts`
-- Nur Kanalverträge: `pnpm test:contracts:channels`
-- Nur Provider-Verträge: `pnpm test:contracts:plugins`
+- Alle Contracts: `pnpm test:contracts`
+- Nur Channel-Contracts: `pnpm test:contracts:channels`
+- Nur Provider-Contracts: `pnpm test:contracts:plugins`
 
-### Kanalverträge
+### Channel-Contracts
 
-Zu finden unter `src/channels/plugins/contracts/*.contract.test.ts`:
+Liegen unter `src/channels/plugins/contracts/*.contract.test.ts`:
 
-- **plugin** - Grundform des Plugins (ID, Name, Fähigkeiten)
-- **setup** - Vertragsprüfung des Setup-Assistenten
-- **session-binding** - Verhalten beim Sitzungs-Binding
-- **outbound-payload** - Struktur der Nachrichten-Payload
+- **plugin** - Grundlegende Plugin-Form (ID, Name, Capabilities)
+- **setup** - Vertrag für den Setup-Assistenten
+- **session-binding** - Verhalten der Sitzungsbindung
+- **outbound-payload** - Struktur der Message-Payload
 - **inbound** - Verarbeitung eingehender Nachrichten
-- **actions** - Handler für Kanalaktionen
+- **actions** - Channel-Action-Handler
 - **threading** - Verarbeitung von Thread-IDs
 - **directory** - API für Verzeichnis/Roster
-- **group-policy** - Durchsetzung von Gruppenrichtlinien
+- **group-policy** - Durchsetzung der Gruppenrichtlinie
 
-### Provider-Statusverträge
+### Provider-Status-Contracts
 
-Zu finden unter `src/plugins/contracts/*.contract.test.ts`.
+Liegen unter `src/plugins/contracts/*.contract.test.ts`.
 
-- **status** - Kanal-Status-Probes
+- **status** - Channel-Status-Probes
 - **registry** - Form der Plugin-Registry
 
-### Provider-Verträge
+### Provider-Contracts
 
-Zu finden unter `src/plugins/contracts/*.contract.test.ts`:
+Liegen unter `src/plugins/contracts/*.contract.test.ts`:
 
-- **auth** - Vertrag des Authentifizierungsablaufs
-- **auth-choice** - Authentifizierungswahl/-auswahl
+- **auth** - Auth-Flow-Vertrag
+- **auth-choice** - Auth-Auswahl
 - **catalog** - API des Modellkatalogs
-- **discovery** - Plugin-Erkennung
+- **discovery** - Plugin-Discovery
 - **loader** - Plugin-Laden
 - **runtime** - Provider-Runtime
 - **shape** - Plugin-Form/Schnittstelle
@@ -994,20 +995,20 @@ Zu finden unter `src/plugins/contracts/*.contract.test.ts`:
 ### Wann ausführen
 
 - Nach Änderungen an `plugin-sdk`-Exports oder Subpfaden
-- Nach dem Hinzufügen oder Ändern eines Kanal- oder Provider-Plugins
-- Nach Refactorings der Plugin-Registrierung oder -Erkennung
+- Nach dem Hinzufügen oder Ändern eines Channel- oder Provider-Plugins
+- Nach Refactorings an Plugin-Registrierung oder -Discovery
 
-Vertragstests laufen in CI und erfordern keine echten API-Schlüssel.
+Contract-Tests laufen in CI und benötigen keine echten API-Schlüssel.
 
-## Regressionen hinzufügen (Leitlinien)
+## Regressionen hinzufügen (Leitfaden)
 
-Wenn du ein Provider-/Modellproblem behebst, das in Live entdeckt wurde:
+Wenn du ein in Live entdecktes Provider-/Modellproblem behebst:
 
-- Füge nach Möglichkeit eine CI-sichere Regression hinzu (Mock-/Stub-Provider oder Erfassung der exakten Transformation der Request-Form)
-- Wenn es von Natur aus nur live prüfbar ist (Rate Limits, Authentifizierungsrichtlinien), halte den Live-Test eng und als Opt-in über env-Variablen
+- Füge möglichst eine CI-sichere Regression hinzu (Mock-/Stub-Provider oder erfasse die exakte Transformation der Request-Form)
+- Wenn das Problem von Natur aus nur live testbar ist (Rate Limits, Auth-Richtlinien), halte den Live-Test eng und aktiviere ihn per Opt-in über env vars
 - Bevorzuge die kleinste Ebene, die den Fehler erkennt:
-  - Fehler bei Provider-Request-Konvertierung/-Replay → Test direkter Modelle
-  - Fehler in Gateway-Sitzung/Verlauf/Tool-Pipeline → Gateway-Live-Smoke oder CI-sicherer Gateway-Mock-Test
-- Schutzregel für SecretRef-Traversierung:
-  - `src/secrets/exec-secret-ref-id-parity.test.ts` leitet aus Registry-Metadaten (`listSecretTargetRegistryEntries()`) ein Stichprobenziel pro SecretRef-Klasse ab und prüft dann, dass Exec-IDs von Traversierungssegmenten zurückgewiesen werden.
-  - Wenn du in `src/secrets/target-registry-data.ts` eine neue SecretRef-Zielfamilie mit `includeInPlan` hinzufügst, aktualisiere `classifyTargetClass` in diesem Test. Der Test schlägt absichtlich bei nicht klassifizierten Ziel-IDs fehl, damit neue Klassen nicht stillschweigend übersprungen werden können.
+  - Fehler bei Provider-Request-Konvertierung/Replay → Test für direkte Modelle
+  - Fehler bei Gateway-Sitzung/Verlauf/Tool-Pipeline → Gateway-Live-Smoke oder CI-sicherer Gateway-Mock-Test
+- Guardrail für SecretRef-Traversierung:
+  - `src/secrets/exec-secret-ref-id-parity.test.ts` leitet aus den Registry-Metadaten (`listSecretTargetRegistryEntries()`) ein gesampeltes Ziel pro SecretRef-Klasse ab und prüft dann, dass Exec-IDs von Traversierungssegmenten zurückgewiesen werden.
+  - Wenn du in `src/secrets/target-registry-data.ts` eine neue `includeInPlan`-SecretRef-Zielfamilie hinzufügst, aktualisiere `classifyTargetClass` in diesem Test. Der Test schlägt absichtlich bei nicht klassifizierten Ziel-IDs fehl, damit neue Klassen nicht stillschweigend ausgelassen werden können.

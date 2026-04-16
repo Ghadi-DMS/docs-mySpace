@@ -3,32 +3,31 @@ read_when:
     - Rozszerzanie qa-lab lub qa-channel
     - Dodawanie scenariuszy QA opartych na repozytorium
     - Tworzenie bardziej realistycznej automatyzacji QA wokół panelu Gateway
-summary: Prywatny kształt automatyzacji QA dla qa-lab, qa-channel, scenariuszy z ziarnem i raportów protokołu
+summary: Prywatny kształt automatyzacji QA dla qa-lab, qa-channel, scenariuszy seedowanych i raportów protokołu
 title: Automatyzacja QA E2E
 x-i18n:
-    generated_at: "2026-04-13T08:50:47Z"
+    generated_at: "2026-04-16T21:51:23Z"
     model: gpt-5.4
     provider: openai
-    source_hash: a4a4f5c765163565c95c2a071f201775fd9d8d60cad4ff25d71e4710559c1570
+    source_hash: 7deefda1c90a0d2e21e2155ffd8b585fb999e7416bdbaf0ff57eb33ccc063afc
     source_path: concepts/qa-e2e-automation.md
     workflow: 15
 ---
 
 # Automatyzacja QA E2E
 
-Prywatny stos QA ma na celu testowanie OpenClaw w sposób bardziej realistyczny,
-uformowany wokół kanałów, niż jest to możliwe w pojedynczym teście jednostkowym.
+Prywatny stos QA ma na celu testowanie OpenClaw w bardziej realistyczny,
+zorientowany na kanały sposób niż pojedynczy test jednostkowy.
 
 Obecne elementy:
 
-- `extensions/qa-channel`: syntetyczny kanał wiadomości z powierzchniami dla DM, kanału, wątku,
+- `extensions/qa-channel`: syntetyczny kanał wiadomości z powierzchniami DM, kanału, wątku,
   reakcji, edycji i usuwania.
-- `extensions/qa-lab`: interfejs debuggera i magistrala QA do obserwowania transkryptu,
+- `extensions/qa-lab`: interfejs debugowania i magistrala QA do obserwowania transkryptu,
   wstrzykiwania wiadomości przychodzących i eksportowania raportu Markdown.
-- `qa/`: zasoby seed oparte na repozytorium dla zadania początkowego i bazowych
-  scenariuszy QA.
+- `qa/`: zasoby seedowane oparte na repozytorium dla zadania startowego i bazowych scenariuszy QA.
 
-Obecny przepływ pracy operatora QA to dwupanelowa strona QA:
+Obecny przepływ pracy operatora QA to dwupanelowa witryna QA:
 
 - Po lewej: panel Gateway (Control UI) z agentem.
 - Po prawej: QA Lab, pokazujący transkrypt w stylu Slacka i plan scenariusza.
@@ -39,13 +38,13 @@ Uruchom za pomocą:
 pnpm qa:lab:up
 ```
 
-To buduje stronę QA, uruchamia ścieżkę Gateway opartą na Dockerze i udostępnia
-stronę QA Lab, na której operator lub pętla automatyzacji może zlecić agentowi
-misję QA, obserwować rzeczywiste zachowanie kanału oraz zapisywać, co zadziałało,
-co się nie udało lub co pozostało zablokowane.
+To buduje witrynę QA, uruchamia opartą na Dockerze ścieżkę gateway i udostępnia
+stronę QA Lab, gdzie operator lub pętla automatyzacji może dać agentowi misję QA,
+obserwować rzeczywiste zachowanie kanału i zapisywać, co zadziałało, co się nie
+powiodło lub co pozostało zablokowane.
 
 Aby szybciej iterować nad interfejsem QA Lab bez przebudowywania obrazu Dockera za każdym razem,
-uruchom stos z podmontowanym bundle QA Lab:
+uruchom stos z podmontowanym pakietem QA Lab:
 
 ```bash
 pnpm openclaw qa docker-build-image
@@ -54,52 +53,55 @@ pnpm qa:lab:up:fast
 pnpm qa:lab:watch
 ```
 
-`qa:lab:up:fast` utrzymuje usługi Dockera na wcześniej zbudowanym obrazie i bind-mountuje
+`qa:lab:up:fast` utrzymuje usługi Dockera na wcześniej zbudowanym obrazie i podmontowuje
 `extensions/qa-lab/web/dist` do kontenera `qa-lab`. `qa:lab:watch`
-przebudowuje ten bundle przy zmianach, a przeglądarka automatycznie przeładowuje się,
-gdy zmienia się hash zasobów QA Lab.
+przebudowuje ten pakiet po zmianach, a przeglądarka automatycznie odświeża się, gdy hash
+zasobów QA Lab ulegnie zmianie.
 
-Aby uruchomić ścieżkę smoke Matrix z rzeczywistym transportem, użyj:
+Aby uruchomić ścieżkę smoke z rzeczywistym transportem Matrix, wykonaj:
 
 ```bash
 pnpm openclaw qa matrix
 ```
 
-Ta ścieżka udostępnia jednorazowy homeserver Tuwunel w Dockerze, rejestruje
-tymczasowych użytkowników drivera, SUT i obserwatora, tworzy jeden prywatny pokój,
-a następnie uruchamia rzeczywisty Plugin Matrix wewnątrz podrzędnego Gateway QA. Ścieżka z żywym transportem utrzymuje konfigurację
-podrzędną ograniczoną do testowanego transportu, więc Matrix działa bez
-`qa-channel` w konfiguracji podrzędnej.
+Ta ścieżka provisionuje jednorazowy homeserver Tuwunel w Dockerze, rejestruje
+tymczasowych użytkowników drivera, SUT i obserwatora, tworzy jeden prywatny pokój, a następnie
+uruchamia rzeczywistą wtyczkę Matrix w podrzędnym procesie gateway QA. Ścieżka z żywym transportem
+utrzymuje konfigurację podrzędną ograniczoną do testowanego transportu, więc Matrix działa bez
+`qa-channel` w konfiguracji podrzędnej. Zapisuje ustrukturyzowane artefakty raportu oraz
+połączony log stdout/stderr do wybranego katalogu wyjściowego Matrix QA. Aby
+przechwycić także zewnętrzne dane wyjściowe budowania/uruchamiania z `scripts/run-node.mjs`,
+ustaw `OPENCLAW_RUN_NODE_OUTPUT_LOG=<path>` na plik logu lokalny względem repozytorium.
 
-Aby uruchomić ścieżkę smoke Telegram z rzeczywistym transportem, użyj:
+Aby uruchomić ścieżkę smoke z rzeczywistym transportem Telegram, wykonaj:
 
 ```bash
 pnpm openclaw qa telegram
 ```
 
-Ta ścieżka jest kierowana do jednej rzeczywistej prywatnej grupy Telegram zamiast
-udostępniać jednorazowy serwer. Wymaga `OPENCLAW_QA_TELEGRAM_GROUP_ID`,
+Ta ścieżka kieruje ruch do jednej rzeczywistej prywatnej grupy Telegram zamiast provisionować
+jednorazowy serwer. Wymaga `OPENCLAW_QA_TELEGRAM_GROUP_ID`,
 `OPENCLAW_QA_TELEGRAM_DRIVER_BOT_TOKEN` oraz
 `OPENCLAW_QA_TELEGRAM_SUT_BOT_TOKEN`, a także dwóch różnych botów w tej samej
-prywatnej grupie. Bot SUT musi mieć nazwę użytkownika Telegram, a obserwacja
-bot-bot działa najlepiej, gdy oba boty mają włączony tryb Bot-to-Bot Communication Mode
+prywatnej grupie. Bot SUT musi mieć nazwę użytkownika Telegram, a obserwacja bot-do-bota
+działa najlepiej, gdy oba boty mają włączony tryb Bot-to-Bot Communication Mode
 w `@BotFather`.
 
-Ścieżki z żywym transportem współdzielą teraz jeden mniejszy kontrakt zamiast tego,
-żeby każda definiowała własny kształt listy scenariuszy:
+Ścieżki z żywym transportem współdzielą teraz jeden mniejszy kontrakt zamiast tego, by każda
+wymyślała własny kształt listy scenariuszy:
 
-`qa-channel` pozostaje szerokim syntetycznym zestawem testów zachowania produktu i nie jest częścią
-macierzy pokrycia dla żywego transportu.
+`qa-channel` pozostaje szerokim, syntetycznym zestawem testów zachowania produktu i nie jest częścią
+macierzy pokrycia żywego transportu.
 
-| Ścieżka  | Canary | Bramka wzmianek | Blokada allowlisty | Odpowiedź najwyższego poziomu | Wznowienie po restarcie | Dalszy ciąg w wątku | Izolacja wątku | Obserwacja reakcji | Polecenie help |
-| -------- | ------ | --------------- | ------------------ | ----------------------------- | ----------------------- | ------------------- | -------------- | ------------------ | -------------- |
-| Matrix   | x      | x               | x                  | x                             | x                       | x                   | x              | x                  |                |
-| Telegram | x      |                 |                    |                               |                         |                     |                |                    | x              |
+| Ścieżka  | Canary | Bramka wzmianek | Blokada allowlisty | Odpowiedź najwyższego poziomu | Wznowienie po restarcie | Dalszy ciąg wątku | Izolacja wątku | Obserwacja reakcji | Komenda help |
+| -------- | ------ | --------------- | ------------------ | ----------------------------- | ----------------------- | ----------------- | -------------- | ------------------ | ------------ |
+| Matrix   | x      | x               | x                  | x                             | x                       | x                 | x              | x                  |              |
+| Telegram | x      |                 |                    |                               |                         |                   |                |                    | x            |
 
 Dzięki temu `qa-channel` pozostaje szerokim zestawem testów zachowania produktu, podczas gdy Matrix,
-Telegram i przyszłe żywe transporty współdzielą jedną jawną checklistę kontraktu transportowego.
+Telegram i przyszłe żywe transporty współdzielą jedną jawną listę kontrolną kontraktu transportowego.
 
-Aby uruchomić ścieżkę z jednorazową maszyną wirtualną Linux bez włączania Dockera do ścieżki QA, użyj:
+Aby uruchomić ścieżkę w jednorazowej maszynie wirtualnej Linux bez wprowadzania Dockera do ścieżki QA, wykonaj:
 
 ```bash
 pnpm openclaw qa suite --runner multipass --scenario channel-chat-baseline
@@ -109,18 +111,18 @@ To uruchamia świeżego gościa Multipass, instaluje zależności, buduje OpenCl
 wewnątrz gościa, uruchamia `qa suite`, a następnie kopiuje zwykły raport QA i
 podsumowanie z powrotem do `.artifacts/qa-e2e/...` na hoście.
 Ponownie wykorzystuje to samo zachowanie wyboru scenariuszy co `qa suite` na hoście.
-Uruchomienia hosta i pakietu Multipass domyślnie wykonują równolegle wiele wybranych scenariuszy
-z izolowanymi workerami Gateway, maksymalnie do 64 workerów lub liczby wybranych
+Uruchomienia hosta i Multipass suite domyślnie wykonują wiele wybranych scenariuszy równolegle
+z izolowanymi workerami gateway, do 64 workerów lub liczby wybranych
 scenariuszy. Użyj `--concurrency <count>`, aby dostroić liczbę workerów, lub
-`--concurrency 1` do wykonywania sekwencyjnego.
-Uruchomienia live przekazują obsługiwane wejścia autoryzacji QA, które są praktyczne dla
-gościa: klucze dostawcy oparte na env, ścieżkę konfiguracji dostawcy QA live oraz
-`CODEX_HOME`, jeśli jest obecne. Utrzymuj `--output-dir` w katalogu głównym repozytorium, aby gość
-mógł zapisywać dane z powrotem przez zamontowany workspace.
+`--concurrency 1` do wykonania szeregowego.
+Uruchomienia live przekazują obsługiwane wejścia uwierzytelniania QA, które są praktyczne dla
+gościa: klucze dostawców oparte na zmiennych środowiskowych, ścieżkę konfiguracji dostawcy QA live oraz
+`CODEX_HOME`, jeśli jest obecne. Utrzymuj `--output-dir` w obrębie repozytorium, aby gość
+mógł zapisywać z powrotem przez podmontowany workspace.
 
 ## Seedy oparte na repozytorium
 
-Zasoby seed znajdują się w `qa/`:
+Zasoby seedowane znajdują się w `qa/`:
 
 - `qa/scenarios/index.md`
 - `qa/scenarios/*.md`
@@ -128,19 +130,19 @@ Zasoby seed znajdują się w `qa/`:
 Są one celowo przechowywane w git, aby plan QA był widoczny zarówno dla ludzi, jak i dla
 agenta.
 
-`qa-lab` powinien pozostać generycznym runnerem Markdown. Każdy plik scenariusza Markdown jest
+`qa-lab` powinien pozostać ogólnym runnerem Markdown. Każdy plik Markdown scenariusza jest
 źródłem prawdy dla jednego uruchomienia testu i powinien definiować:
 
 - metadane scenariusza
 - odwołania do dokumentacji i kodu
-- opcjonalne wymagania Plugin
-- opcjonalną poprawkę konfiguracji Gateway
+- opcjonalne wymagania dotyczące Plugin
+- opcjonalną łatkę konfiguracji gateway
 - wykonywalny `qa-flow`
 
-Powierzchnia wielokrotnego użytku środowiska wykonawczego, która wspiera `qa-flow`, może pozostać
-generyczna i przekrojowa. Na przykład scenariusze Markdown mogą łączyć pomocniki po stronie
-transportu z pomocnikami po stronie przeglądarki, które sterują osadzonym Control UI przez
-powierzchnię Gateway `browser.request`, bez dodawania runnera specjalnego przypadku.
+Powierzchnia wielokrotnego użytku środowiska uruchomieniowego, która obsługuje `qa-flow`, może pozostać
+ogólna i przekrojowa. Na przykład scenariusze Markdown mogą łączyć pomocniki po stronie transportu
+z pomocnikami po stronie przeglądarki, które sterują osadzonym interfejsem Control UI przez
+łącze Gateway `browser.request`, bez dodawania runnera dla przypadku specjalnego.
 
 Lista bazowa powinna pozostać wystarczająco szeroka, aby obejmować:
 
@@ -148,24 +150,24 @@ Lista bazowa powinna pozostać wystarczająco szeroka, aby obejmować:
 - zachowanie wątków
 - cykl życia akcji wiadomości
 - wywołania zwrotne Cron
-- przywoływanie pamięci
+- odwoływanie się do pamięci
 - przełączanie modeli
 - przekazanie do subagenta
 - czytanie repozytorium i dokumentacji
-- jedno małe zadanie build, takie jak Lobster Invaders
+- jedno małe zadanie budowania, takie jak Lobster Invaders
 
-## Adaptery transportowe
+## Adaptery transportu
 
-`qa-lab` jest właścicielem generycznej powierzchni transportu dla scenariuszy QA w Markdown.
-`qa-channel` jest pierwszym adapterem tej powierzchni, ale docelowy projekt jest szerszy:
-przyszłe rzeczywiste lub syntetyczne kanały powinny podłączać się do tego samego runnera pakietu
+`qa-lab` jest właścicielem ogólnego łącza transportowego dla scenariuszy QA w Markdown.
+`qa-channel` jest pierwszym adapterem na tym łączu, ale docelowy projekt jest szerszy:
+przyszłe rzeczywiste lub syntetyczne kanały powinny podłączać się do tego samego runnera suite
 zamiast dodawać runner QA specyficzny dla transportu.
 
 Na poziomie architektury podział wygląda następująco:
 
-- `qa-lab` jest właścicielem generycznego wykonywania scenariuszy, współbieżności workerów, zapisu artefaktów i raportowania.
-- adapter transportu jest właścicielem konfiguracji Gateway, gotowości, obserwacji wejścia i wyjścia, działań transportowych oraz znormalizowanego stanu transportu.
-- pliki scenariuszy Markdown w `qa/scenarios/` definiują przebieg testu; `qa-lab` udostępnia powierzchnię środowiska wykonawczego wielokrotnego użytku, która je wykonuje.
+- `qa-lab` jest właścicielem ogólnego wykonywania scenariuszy, współbieżności workerów, zapisu artefaktów i raportowania.
+- adapter transportu jest właścicielem konfiguracji gateway, gotowości, obserwacji ruchu przychodzącego i wychodzącego, działań transportowych oraz znormalizowanego stanu transportu.
+- pliki scenariuszy Markdown w `qa/scenarios/` definiują przebieg testu; `qa-lab` dostarcza wielokrotnego użytku powierzchnię środowiska uruchomieniowego, która je wykonuje.
 
 Wskazówki wdrożeniowe dla maintainerów dotyczące nowych adapterów kanałów znajdują się w
 [Testing](/pl/help/testing#adding-a-channel-to-qa).
@@ -176,11 +178,11 @@ Wskazówki wdrożeniowe dla maintainerów dotyczące nowych adapterów kanałów
 Raport powinien odpowiadać na pytania:
 
 - Co zadziałało
-- Co się nie udało
+- Co się nie powiodło
 - Co pozostało zablokowane
-- Jakie scenariusze follow-up warto dodać
+- Jakie scenariusze uzupełniające warto dodać
 
-Aby przeprowadzić kontrole charakteru i stylu, uruchom ten sam scenariusz dla wielu żywych referencji modeli
+W celu sprawdzenia charakteru i stylu uruchom ten sam scenariusz na wielu odwołaniach do modeli live
 i zapisz oceniany raport Markdown:
 
 ```bash
@@ -200,36 +202,36 @@ pnpm openclaw qa character-eval \
   --judge-concurrency 16
 ```
 
-Polecenie uruchamia lokalne podrzędne procesy Gateway QA, a nie Docker. Scenariusze
-character eval powinny ustawiać personę przez `SOUL.md`, a następnie uruchamiać zwykłe tury użytkownika,
-takie jak czat, pomoc dotycząca workspace i małe zadania plikowe. Kandydacki model
-nie powinien być informowany, że jest oceniany. Polecenie zachowuje każdy pełny
-transkrypt, zapisuje podstawowe statystyki uruchomienia, a następnie prosi modele sędziujące w trybie fast z
-rozumowaniem `xhigh` o uszeregowanie uruchomień według naturalności, klimatu i humoru.
-Użyj `--blind-judge-models` podczas porównywania dostawców: prompt sędziujący nadal otrzymuje
-każdy transkrypt i status uruchomienia, ale referencje kandydatów są zastępowane neutralnymi
-etykietami, takimi jak `candidate-01`; raport mapuje rankingi z powrotem na rzeczywiste referencje po
+Polecenie uruchamia lokalne podrzędne procesy gateway QA, a nie Docker. Scenariusze oceny charakteru
+powinny ustawiać personę przez `SOUL.md`, a następnie wykonywać zwykłe tury użytkownika,
+takie jak czat, pomoc dotyczącą workspace i małe zadania na plikach. Kandydacki model
+nie powinien wiedzieć, że jest oceniany. Polecenie zachowuje każdy pełny
+transkrypt, rejestruje podstawowe statystyki uruchomienia, a następnie prosi modele oceniające w trybie fast z
+rozumowaniem `xhigh`, aby uszeregowały uruchomienia według naturalności, klimatu i humoru.
+Użyj `--blind-judge-models` przy porównywaniu dostawców: prompt oceniający nadal otrzymuje
+każdy transkrypt i status uruchomienia, ale odwołania kandydatów są zastępowane neutralnymi
+etykietami, takimi jak `candidate-01`; raport mapuje rankingi z powrotem na rzeczywiste odwołania po
 parsowaniu.
-Uruchomienia kandydatów domyślnie używają poziomu myślenia `high`, a dla modeli OpenAI `xhigh`,
-jeśli go obsługują. Zastąpienie dla konkretnego kandydata ustawiaj inline za pomocą
+Uruchomienia kandydatów domyślnie używają trybu myślenia `high`, z `xhigh` dla modeli OpenAI,
+które go obsługują. Zastąp konkretny model kandydujący inline za pomocą
 `--model provider/model,thinking=<level>`. `--thinking <level>` nadal ustawia
-globalny fallback, a starsza forma `--model-thinking <provider/model=level>` jest
-zachowana dla kompatybilności.
-Referencje kandydatów OpenAI domyślnie używają trybu fast, tak aby priorytetowe przetwarzanie było używane tam,
-gdzie dostawca to obsługuje. Dodaj inline `,fast`, `,no-fast` lub `,fast=false`, gdy
-pojedynczy kandydat lub sędzia wymaga nadpisania. Przekaż `--fast` tylko wtedy, gdy chcesz
-wymusić tryb fast dla każdego modelu kandydującego. Czasy trwania kandydatów i sędziów są
-zapisywane w raporcie do analizy porównawczej, ale prompty sędziujące wyraźnie mówią,
-aby nie tworzyć rankingu na podstawie szybkości.
-Uruchomienia modeli kandydatów i sędziów domyślnie używają współbieżności 16. Obniż
-`--concurrency` lub `--judge-concurrency`, gdy limity dostawcy lub obciążenie lokalnego Gateway
-sprawiają, że uruchomienie staje się zbyt zaszumione.
-Gdy nie zostanie przekazane żadne `--model` kandydata, character eval domyślnie używa
+globalną wartość zapasową, a starsza forma `--model-thinking <provider/model=level>` jest
+zachowana dla zgodności.
+Odwołania kandydatów OpenAI domyślnie używają trybu fast, dzięki czemu wykorzystywane jest przetwarzanie priorytetowe tam,
+gdzie dostawca je obsługuje. Dodaj inline `,fast`, `,no-fast` lub `,fast=false`, gdy
+pojedynczy kandydat lub model oceniający wymaga nadpisania. Przekaż `--fast` tylko wtedy, gdy chcesz
+wymusić tryb fast dla każdego modelu kandydującego. Czasy trwania kandydatów i modeli oceniających są
+zapisywane w raporcie do analizy benchmarkowej, ale prompty oceniające wyraźnie mówią,
+aby nie oceniać według szybkości.
+Uruchomienia modeli kandydujących i oceniających domyślnie używają współbieżności 16. Zmniejsz
+`--concurrency` lub `--judge-concurrency`, gdy limity dostawcy lub obciążenie lokalnego gateway
+sprawiają, że uruchomienie jest zbyt zaszumione.
+Gdy nie zostanie przekazany żaden kandydat `--model`, character eval domyślnie używa
 `openai/gpt-5.4`, `openai/gpt-5.2`, `openai/gpt-5`, `anthropic/claude-opus-4-6`,
 `anthropic/claude-sonnet-4-6`, `zai/glm-5.1`,
 `moonshot/kimi-k2.5` oraz
-`google/gemini-3.1-pro-preview`, gdy nie zostanie przekazane `--model`.
-Gdy nie zostanie przekazane żadne `--judge-model`, sędziowie domyślnie używają
+`google/gemini-3.1-pro-preview`, gdy nie zostanie przekazany żaden `--model`.
+Gdy nie zostanie przekazany żaden `--judge-model`, modele oceniające domyślnie używają
 `openai/gpt-5.4,thinking=xhigh,fast` oraz
 `anthropic/claude-opus-4-6,thinking=high`.
 

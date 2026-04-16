@@ -1,36 +1,36 @@
 ---
 read_when:
-    - Sie möchten verstehen, wofür Active Memory gedacht ist
-    - Sie möchten Active Memory für einen Konversationsagenten aktivieren
-    - Sie möchten das Verhalten von Active Memory anpassen, ohne es überall zu aktivieren
+    - Sie möchten verstehen, wofür Active Memory gedacht ist.
+    - Sie möchten Active Memory für einen Konversationsagenten aktivieren.
+    - Sie möchten das Verhalten von Active Memory anpassen, ohne es überall zu aktivieren.
 summary: Ein Plugin-eigener blockierender Speicher-Sub-Agent, der relevante Erinnerungen in interaktive Chat-Sitzungen einspeist
 title: Active Memory
 x-i18n:
-    generated_at: "2026-04-14T02:08:44Z"
+    generated_at: "2026-04-16T06:22:27Z"
     model: gpt-5.4
     provider: openai
-    source_hash: b151e9eded7fc5c37e00da72d95b24c1dc94be22e855c8875f850538392b0637
+    source_hash: ab36c5fea1578348cc2258ea3b344cc7bdc814f337d659cdb790512b3ea45473
     source_path: concepts/active-memory.md
     workflow: 15
 ---
 
 # Active Memory
 
-Active Memory ist ein optionaler Plugin-eigener blockierender Speicher-Sub-Agent, der
+Active Memory ist ein optionaler, Plugin-eigener blockierender Speicher-Sub-Agent, der
 vor der Hauptantwort für geeignete Konversationssitzungen ausgeführt wird.
 
 Er existiert, weil die meisten Speichersysteme leistungsfähig, aber reaktiv sind. Sie verlassen sich darauf,
-dass der Haupt-Agent entscheidet, wann der Speicher durchsucht werden soll, oder darauf, dass der Benutzer Dinge sagt
-wie „merke dir das“ oder „durchsuche den Speicher“. Bis dahin ist der Moment, in dem der Speicher
-die Antwort natürlich hätte wirken lassen, bereits verstrichen.
+dass der Hauptagent entscheidet, wann der Speicher durchsucht werden soll, oder darauf, dass der Benutzer Dinge sagt
+wie „Merke dir das“ oder „Durchsuche den Speicher“. Zu diesem Zeitpunkt ist der Moment, in dem der Speicher
+die Antwort natürlich hätte wirken lassen, bereits vorbei.
 
 Active Memory gibt dem System eine begrenzte Gelegenheit, relevanten Speicherinhalt anzuzeigen,
 bevor die Hauptantwort generiert wird.
 
 ## Fügen Sie dies in Ihren Agenten ein
 
-Fügen Sie dies in Ihren Agenten ein, wenn Sie Active Memory mit einer
-eigenständigen, standardmäßig sicheren Konfiguration aktivieren möchten:
+Fügen Sie dies in Ihren Agenten ein, wenn Sie möchten, dass er Active Memory mit einer
+eigenständigen Konfiguration mit sicheren Standardwerten aktiviert:
 
 ```json5
 {
@@ -56,9 +56,9 @@ eigenständigen, standardmäßig sicheren Konfiguration aktivieren möchten:
 }
 ```
 
-Dadurch wird das Plugin für den Agenten `main` aktiviert, standardmäßig auf Sitzungen im Stil von Direktnachrichten
-beschränkt, lässt es zuerst das aktuelle Sitzungsmodell erben und verwendet
-das konfigurierte Fallback-Modell nur dann, wenn kein explizites oder geerbtes Modell verfügbar ist.
+Dadurch wird das Plugin für den Agenten `main` aktiviert, standardmäßig auf Sitzungen
+im Stil von Direktnachrichten beschränkt, es kann zunächst das aktuelle Sitzungsmodell übernehmen und
+verwendet das konfigurierte Fallback-Modell nur, wenn kein explizites oder übernommenes Modell verfügbar ist.
 
 Starten Sie danach das Gateway neu:
 
@@ -66,7 +66,7 @@ Starten Sie danach das Gateway neu:
 openclaw gateway
 ```
 
-So prüfen Sie es live in einer Konversation:
+Um es live in einer Unterhaltung zu prüfen:
 
 ```text
 /verbose on
@@ -78,8 +78,8 @@ So prüfen Sie es live in einer Konversation:
 Die sicherste Einrichtung ist:
 
 1. das Plugin aktivieren
-2. einen Konversationsagenten festlegen
-3. die Protokollierung nur während der Feinabstimmung aktiviert lassen
+2. einen Konversationsagenten als Ziel festlegen
+3. Logging nur während der Anpassung aktiviert lassen
 
 Beginnen Sie mit Folgendem in `openclaw.json`:
 
@@ -116,17 +116,102 @@ Das bedeutet:
 
 - `plugins.entries.active-memory.enabled: true` aktiviert das Plugin
 - `config.agents: ["main"]` aktiviert Active Memory nur für den Agenten `main`
-- `config.allowedChatTypes: ["direct"]` sorgt standardmäßig dafür, dass Active Memory nur für Sitzungen im Stil von Direktnachrichten aktiv ist
-- wenn `config.model` nicht gesetzt ist, erbt Active Memory zuerst das aktuelle Sitzungsmodell
-- `config.modelFallback` stellt optional Ihren eigenen Fallback-Anbieter bzw. Ihr eigenes Fallback-Modell für die Erinnerung bereit
+- `config.allowedChatTypes: ["direct"]` hält Active Memory standardmäßig nur für Sitzungen im Stil von Direktnachrichten aktiv
+- wenn `config.model` nicht gesetzt ist, übernimmt Active Memory zunächst das aktuelle Sitzungsmodell
+- `config.modelFallback` stellt optional Ihr eigenes Fallback-Anbieter-/Modell für den Abruf bereit
 - `config.promptStyle: "balanced"` verwendet den allgemeinen Standard-Prompt-Stil für den Modus `recent`
-- Active Memory wird weiterhin nur für geeignete interaktive persistente Chat-Sitzungen ausgeführt
+- Active Memory wird weiterhin nur in geeigneten interaktiven persistenten Chat-Sitzungen ausgeführt
 
-## So sehen Sie es
+## Empfehlungen zur Geschwindigkeit
 
-Active Memory injiziert ein verborgenes, nicht vertrauenswürdiges Prompt-Präfix für das Modell. Es
+Die einfachste Einrichtung besteht darin, `config.model` nicht zu setzen und Active Memory
+dasselbe Modell verwenden zu lassen, das Sie bereits für normale Antworten verwenden. Das ist der sicherste Standard,
+weil dabei Ihre vorhandenen Anbieter-, Authentifizierungs- und Modellpräferenzen übernommen werden.
+
+Wenn Sie möchten, dass sich Active Memory schneller anfühlt, verwenden Sie ein dediziertes Inferenzmodell,
+anstatt das Haupt-Chat-Modell zu übernehmen.
+
+Beispiel für eine Einrichtung mit schnellem Anbieter:
+
+```json5
+models: {
+  providers: {
+    cerebras: {
+      baseUrl: "https://api.cerebras.ai/v1",
+      apiKey: "${CEREBRAS_API_KEY}",
+      api: "openai-completions",
+      models: [{ id: "gpt-oss-120b", name: "GPT OSS 120B (Cerebras)" }],
+    },
+  },
+},
+plugins: {
+  entries: {
+    "active-memory": {
+      enabled: true,
+      config: {
+        model: "cerebras/gpt-oss-120b",
+      },
+    },
+  },
+}
+```
+
+Schnelle Modelloptionen, die in Betracht gezogen werden sollten:
+
+- `cerebras/gpt-oss-120b` für ein schnelles dediziertes Abrufmodell mit einer schmalen Tool-Oberfläche
+- Ihr normales Sitzungsmodell, indem Sie `config.model` nicht setzen
+- ein Fallback-Modell mit geringer Latenz wie `google/gemini-3-flash`, wenn Sie ein separates Abrufmodell möchten, ohne Ihr primäres Chat-Modell zu ändern
+
+Warum Cerebras eine starke geschwindigkeitsorientierte Option für Active Memory ist:
+
+- die Tool-Oberfläche von Active Memory ist schmal: Es ruft nur `memory_search` und `memory_get` auf
+- die Qualität des Abrufs ist wichtig, aber die Latenz ist wichtiger als beim Hauptantwortpfad
+- ein dedizierter schneller Anbieter vermeidet es, die Latenz des Speicherabrufs an Ihren primären Chat-Anbieter zu koppeln
+
+Wenn Sie kein separates geschwindigkeitsoptimiertes Modell möchten, lassen Sie `config.model` ungesetzt
+und lassen Sie Active Memory das aktuelle Sitzungsmodell übernehmen.
+
+### Cerebras-Einrichtung
+
+Fügen Sie einen Anbietereintrag wie diesen hinzu:
+
+```json5
+models: {
+  providers: {
+    cerebras: {
+      baseUrl: "https://api.cerebras.ai/v1",
+      apiKey: "${CEREBRAS_API_KEY}",
+      api: "openai-completions",
+      models: [{ id: "gpt-oss-120b", name: "GPT OSS 120B (Cerebras)" }],
+    },
+  },
+}
+```
+
+Richten Sie Active Memory dann darauf aus:
+
+```json5
+plugins: {
+  entries: {
+    "active-memory": {
+      enabled: true,
+      config: {
+        model: "cerebras/gpt-oss-120b",
+      },
+    },
+  },
+}
+```
+
+Hinweis:
+
+- stellen Sie sicher, dass der Cerebras-API-Schlüssel tatsächlich Modellzugriff für das von Ihnen gewählte Modell hat, da die Sichtbarkeit von `/v1/models` allein keinen Zugriff auf `chat/completions` garantiert
+
+## Wie man es sieht
+
+Active Memory fügt für das Modell ein verborgenes nicht vertrauenswürdiges Prompt-Präfix ein. Es
 zeigt keine rohen `<active_memory_plugin>...</active_memory_plugin>`-Tags in der
-normalen, für den Client sichtbaren Antwort an.
+normalen für den Client sichtbaren Antwort an.
 
 ## Sitzungsumschaltung
 
@@ -139,8 +224,8 @@ aktuelle Chat-Sitzung pausieren oder fortsetzen möchten, ohne die Konfiguration
 /active-memory on
 ```
 
-Dies gilt nur für die Sitzung. Es ändert nicht
-`plugins.entries.active-memory.enabled`, die Agentenauswahl oder andere globale
+Dies gilt für die Sitzung. Es ändert nicht
+`plugins.entries.active-memory.enabled`, die Agentenzuordnung oder andere globale
 Konfigurationen.
 
 Wenn der Befehl in die Konfiguration schreiben und Active Memory für
@@ -153,11 +238,11 @@ alle Sitzungen pausieren oder fortsetzen soll, verwenden Sie die explizite globa
 ```
 
 Die globale Form schreibt `plugins.entries.active-memory.config.enabled`. Dabei bleibt
-`plugins.entries.active-memory.enabled` aktiviert, damit der Befehl verfügbar bleibt, um
-Active Memory später wieder zu aktivieren.
+`plugins.entries.active-memory.enabled` aktiviert, sodass der Befehl verfügbar bleibt, um
+Active Memory später wieder einzuschalten.
 
 Wenn Sie sehen möchten, was Active Memory in einer Live-Sitzung macht, aktivieren Sie die
-Sitzungsumschaltungen, die der gewünschten Ausgabe entsprechen:
+Sitzungsumschalter, die zu der gewünschten Ausgabe passen:
 
 ```text
 /verbose on
@@ -170,12 +255,12 @@ Wenn diese aktiviert sind, kann OpenClaw Folgendes anzeigen:
 - eine lesbare Debug-Zusammenfassung wie `Active Memory Debug: Lemon pepper wings with blue cheese.`, wenn `/trace on`
 
 Diese Zeilen stammen aus demselben Active-Memory-Durchlauf, der das verborgene
-Prompt-Präfix speist, sind aber für Menschen formatiert, anstatt rohe Prompt-Markup-Strukturen offenzulegen.
-Sie werden als diagnostische Folgenachricht nach der normalen
-Assistentenantwort gesendet, sodass Kanal-Clients wie Telegram keine separate
-Diagnoseblase vor der Antwort anzeigen.
+Prompt-Präfix speist, sind aber für Menschen formatiert, anstatt rohe Prompt-
+Auszeichnung anzuzeigen. Sie werden als Diagnose-Folgenachricht nach der normalen
+Assistentenantwort gesendet, damit Kanal-Clients wie Telegram keine separate
+Diagnose-Sprechblase vor der Antwort aufblinken lassen.
 
-Wenn Sie zusätzlich `/trace raw` aktivieren, zeigt der nachverfolgte Block `Model Input (User Role)`
+Wenn Sie zusätzlich `/trace raw` aktivieren, zeigt der verfolgte Block `Model Input (User Role)`
 das verborgene Active-Memory-Präfix wie folgt an:
 
 ```text
@@ -207,16 +292,16 @@ Erwartete sichtbare Antwortform:
 
 ## Wann es ausgeführt wird
 
-Active Memory verwendet zwei Schranken:
+Active Memory verwendet zwei Gate-Prüfungen:
 
 1. **Konfigurations-Opt-in**
    Das Plugin muss aktiviert sein, und die aktuelle Agenten-ID muss in
    `plugins.entries.active-memory.config.agents` enthalten sein.
-2. **Strenge Laufzeit-Eignung**
-   Selbst wenn es aktiviert und als Ziel festgelegt ist, wird Active Memory nur für geeignete
+2. **Strikte Laufzeitberechtigung**
+   Auch wenn es aktiviert ist und als Ziel festgelegt wurde, wird Active Memory nur für geeignete
    interaktive persistente Chat-Sitzungen ausgeführt.
 
-Die tatsächliche Regel ist:
+Die tatsächliche Regel lautet:
 
 ```text
 plugin enabled
@@ -234,8 +319,8 @@ Wenn eine dieser Bedingungen fehlschlägt, wird Active Memory nicht ausgeführt.
 
 ## Sitzungstypen
 
-`config.allowedChatTypes` steuert, welche Arten von Konversationen Active
-Memory überhaupt ausführen dürfen.
+`config.allowedChatTypes` steuert, in welchen Arten von Unterhaltungen Active
+Memory überhaupt ausgeführt werden darf.
 
 Der Standardwert ist:
 
@@ -243,8 +328,8 @@ Der Standardwert ist:
 allowedChatTypes: ["direct"]
 ```
 
-Das bedeutet, dass Active Memory standardmäßig in Sitzungen im Stil von Direktnachrichten ausgeführt wird,
-aber nicht in Gruppen- oder Kanalsitzungen, sofern Sie diese nicht ausdrücklich aktivieren.
+Das bedeutet, dass Active Memory standardmäßig in Sitzungen im Stil von Direktnachrichten ausgeführt wird, aber
+nicht in Gruppen- oder Kanalsitzungen, es sei denn, Sie aktivieren diese ausdrücklich.
 
 Beispiele:
 
@@ -262,23 +347,23 @@ allowedChatTypes: ["direct", "group", "channel"]
 
 ## Wo es ausgeführt wird
 
-Active Memory ist eine Funktion zur Anreicherung von Konversationen, keine
-plattformweite Inferenzfunktion.
+Active Memory ist eine Funktion zur Anreicherung von Konversationen, keine plattformweite
+Inferenzfunktion.
 
-| Oberfläche                                                          | Führt Active Memory aus?                                |
-| ------------------------------------------------------------------- | ------------------------------------------------------- |
-| Control UI / persistente Web-Chat-Sitzungen                         | Ja, wenn das Plugin aktiviert ist und der Agent ausgewählt ist |
-| Andere interaktive Kanal-Sitzungen auf demselben persistenten Chat-Pfad | Ja, wenn das Plugin aktiviert ist und der Agent ausgewählt ist |
-| Headless-Einmalläufe                                                | Nein                                                    |
-| Heartbeat-/Hintergrundläufe                                         | Nein                                                    |
-| Generische interne `agent-command`-Pfade                            | Nein                                                    |
-| Sub-Agent-/interne Hilfsausführung                                  | Nein                                                    |
+| Surface                                                             | Active Memory wird ausgeführt?                           |
+| ------------------------------------------------------------------- | -------------------------------------------------------- |
+| Persistente Sitzungen in der Control UI / im Web-Chat               | Ja, wenn das Plugin aktiviert ist und der Agent als Ziel festgelegt ist |
+| Andere interaktive Kanalsitzungen auf demselben persistenten Chat-Pfad | Ja, wenn das Plugin aktiviert ist und der Agent als Ziel festgelegt ist |
+| Headless-Einmalläufe                                                | Nein                                                     |
+| Heartbeat-/Hintergrundläufe                                         | Nein                                                     |
+| Generische interne `agent-command`-Pfade                            | Nein                                                     |
+| Ausführung von Sub-Agenten/internen Hilfen                          | Nein                                                     |
 
-## Warum Sie es verwenden sollten
+## Warum es verwenden
 
 Verwenden Sie Active Memory, wenn:
 
-- die Sitzung persistent und benutzerseitig ist
+- die Sitzung persistent und benutzergerichtet ist
 - der Agent über sinnvollen Langzeitspeicher verfügt, der durchsucht werden kann
 - Kontinuität und Personalisierung wichtiger sind als reine Prompt-Deterministik
 
@@ -286,16 +371,16 @@ Es funktioniert besonders gut für:
 
 - stabile Präferenzen
 - wiederkehrende Gewohnheiten
-- langfristigen Benutzerkontext, der natürlich auftauchen sollte
+- langfristigen Benutzerkontext, der natürlich angezeigt werden soll
 
 Es ist ungeeignet für:
 
 - Automatisierung
 - interne Worker
 - einmalige API-Aufgaben
-- Orte, an denen verborgene Personalisierung überraschend wäre
+- Stellen, an denen verborgene Personalisierung überraschend wäre
 
-## Funktionsweise
+## Wie es funktioniert
 
 Die Laufzeitform ist:
 
@@ -317,7 +402,7 @@ Wenn die Verbindung schwach ist, sollte er `NONE` zurückgeben.
 
 ## Abfragemodi
 
-`config.queryMode` steuert, wie viel der Konversation der blockierende Speicher-Sub-Agent sieht.
+`config.queryMode` steuert, wie viel Unterhaltung der blockierende Speicher-Sub-Agent sieht.
 
 ## Prompt-Stile
 
@@ -327,9 +412,9 @@ wenn er entscheidet, ob Speicherinhalt zurückgegeben werden soll.
 Verfügbare Stile:
 
 - `balanced`: allgemeiner Standard für den Modus `recent`
-- `strict`: am wenigsten bereitwillig; am besten geeignet, wenn Sie sehr wenig Übertragung aus nahem Kontext möchten
-- `contextual`: am freundlichsten für Kontinuität; am besten geeignet, wenn der Konversationsverlauf wichtiger sein soll
-- `recall-heavy`: eher bereit, Speicher auch bei schwächeren, aber noch plausiblen Übereinstimmungen anzuzeigen
+- `strict`: am wenigsten bereitwillig; am besten, wenn Sie sehr wenig Übergreifen aus nahem Kontext möchten
+- `contextual`: am stärksten auf Kontinuität ausgerichtet; am besten, wenn der Unterhaltungsverlauf stärker ins Gewicht fallen soll
+- `recall-heavy`: eher bereit, Speicherinhalt auch bei schwächeren, aber dennoch plausiblen Übereinstimmungen anzuzeigen
 - `precision-heavy`: bevorzugt aggressiv `NONE`, sofern die Übereinstimmung nicht offensichtlich ist
 - `preference-only`: optimiert für Favoriten, Gewohnheiten, Routinen, Geschmack und wiederkehrende persönliche Fakten
 
@@ -349,7 +434,7 @@ Beispiel:
 promptStyle: "preference-only"
 ```
 
-## Richtlinie für Modell-Fallbacks
+## Modell-Fallback-Richtlinie
 
 Wenn `config.model` nicht gesetzt ist, versucht Active Memory, ein Modell in dieser Reihenfolge aufzulösen:
 
@@ -368,52 +453,52 @@ Optionales benutzerdefiniertes Fallback:
 modelFallback: "google/gemini-3-flash"
 ```
 
-Wenn kein explizites, geerbtes oder konfiguriertes Fallback-Modell aufgelöst werden kann, überspringt Active Memory
-die Erinnerung für diesen Zug.
+Wenn kein explizites, übernommenes oder konfiguriertes Fallback-Modell aufgelöst werden kann, überspringt Active Memory
+den Abruf für diesen Zug.
 
 `config.modelFallbackPolicy` wird nur noch als veraltetes Kompatibilitätsfeld
-für ältere Konfigurationen beibehalten. Es ändert das Laufzeitverhalten nicht mehr.
+für ältere Konfigurationen beibehalten. Es verändert das Laufzeitverhalten nicht mehr.
 
-## Erweiterte Ausweichmöglichkeiten
+## Erweiterte Escape-Hatches
 
 Diese Optionen sind absichtlich nicht Teil der empfohlenen Einrichtung.
 
-`config.thinking` kann die Thinking-Stufe des blockierenden Speicher-Sub-Agenten überschreiben:
+`config.thinking` kann die Denkstufe des blockierenden Speicher-Sub-Agenten überschreiben:
 
 ```json5
 thinking: "medium"
 ```
 
-Standardwert:
+Standard:
 
 ```json5
 thinking: "off"
 ```
 
 Aktivieren Sie dies nicht standardmäßig. Active Memory läuft im Antwortpfad, daher erhöht zusätzliche
-Thinking-Zeit direkt die für Benutzer sichtbare Latenz.
+Denkzeit direkt die für Benutzer sichtbare Latenz.
 
-`config.promptAppend` fügt zusätzliche Operator-Anweisungen nach dem standardmäßigen Active-
-Memory-Prompt und vor dem Konversationskontext hinzu:
+`config.promptAppend` fügt nach dem Standard-Prompt von Active Memory und vor dem Unterhaltungskontext
+zusätzliche Operator-Anweisungen hinzu:
 
 ```json5
-promptAppend: "Prefer stable long-term preferences over one-off events."
+promptAppend: "Bevorzuge stabile langfristige Präferenzen gegenüber einmaligen Ereignissen."
 ```
 
-`config.promptOverride` ersetzt den standardmäßigen Active-Memory-Prompt. OpenClaw
-hängt danach weiterhin den Konversationskontext an:
+`config.promptOverride` ersetzt den Standard-Prompt von Active Memory. OpenClaw
+hängt den Unterhaltungskontext danach weiterhin an:
 
 ```json5
 promptOverride: "You are a memory search agent. Return NONE or one compact user fact."
 ```
 
-Eine Prompt-Anpassung wird nicht empfohlen, es sei denn, Sie testen bewusst einen
-anderen Erinnerungsvertrag. Der Standard-Prompt ist darauf abgestimmt, entweder `NONE`
-oder kompakten Benutzerfakt-Kontext für das Hauptmodell zurückzugeben.
+Eine Anpassung des Prompts wird nicht empfohlen, es sei denn, Sie testen bewusst einen
+anderen Abrufvertrag. Der Standard-Prompt ist darauf abgestimmt, entweder `NONE`
+oder kompakten Benutzerfakten-Kontext für das Hauptmodell zurückzugeben.
 
 ### `message`
 
-Es wird nur die neueste Benutzernachricht gesendet.
+Es wird nur die letzte Benutzernachricht gesendet.
 
 ```text
 Latest user message only
@@ -422,16 +507,16 @@ Latest user message only
 Verwenden Sie dies, wenn:
 
 - Sie das schnellste Verhalten möchten
-- Sie die stärkste Ausrichtung auf die Erinnerung stabiler Präferenzen möchten
-- Folgezüge keinen Konversationskontext benötigen
+- Sie die stärkste Ausrichtung auf den Abruf stabiler Präferenzen möchten
+- Folgezüge keinen Unterhaltungskontext benötigen
 
-Empfohlener Timeout:
+Empfohlenes Timeout:
 
 - beginnen Sie bei etwa `3000` bis `5000` ms
 
 ### `recent`
 
-Die neueste Benutzernachricht plus ein kleiner aktueller Konversationsverlauf werden gesendet.
+Die letzte Benutzernachricht plus ein kleiner aktueller Unterhaltungsausschnitt wird gesendet.
 
 ```text
 Recent conversation tail:
@@ -445,16 +530,16 @@ Latest user message:
 
 Verwenden Sie dies, wenn:
 
-- Sie ein besseres Gleichgewicht zwischen Geschwindigkeit und konversationeller Verankerung möchten
-- Rückfragen häufig von den letzten wenigen Zügen abhängen
+- Sie ein besseres Gleichgewicht zwischen Geschwindigkeit und Gesprächsverankerung möchten
+- Folgefragen oft von den letzten wenigen Zügen abhängen
 
-Empfohlener Timeout:
+Empfohlenes Timeout:
 
 - beginnen Sie bei etwa `15000` ms
 
 ### `full`
 
-Die vollständige Konversation wird an den blockierenden Speicher-Sub-Agenten gesendet.
+Die vollständige Unterhaltung wird an den blockierenden Speicher-Sub-Agenten gesendet.
 
 ```text
 Full conversation context:
@@ -466,15 +551,15 @@ user: ...
 
 Verwenden Sie dies, wenn:
 
-- die bestmögliche Erinnerungsqualität wichtiger ist als Latenz
-- die Konversation wichtige Einrichtungsschritte weit oben im Verlauf enthält
+- die bestmögliche Abrufqualität wichtiger ist als die Latenz
+- die Unterhaltung wichtige Vorbereitung weit oben im Thread enthält
 
-Empfohlener Timeout:
+Empfohlenes Timeout:
 
-- erhöhen Sie ihn im Vergleich zu `message` oder `recent` deutlich
-- beginnen Sie bei etwa `15000` ms oder höher, je nach Größe des Threads
+- erhöhen Sie es deutlich im Vergleich zu `message` oder `recent`
+- beginnen Sie bei etwa `15000` ms oder höher, abhängig von der Thread-Größe
 
-Im Allgemeinen sollte der Timeout mit der Kontextgröße steigen:
+Im Allgemeinen sollte das Timeout mit der Kontextgröße zunehmen:
 
 ```text
 message < recent < full
@@ -482,9 +567,8 @@ message < recent < full
 
 ## Transkriptpersistenz
 
-Läufe des blockierenden Speicher-Sub-Agenten von Active Memory erzeugen während des
-Aufrufs des blockierenden Speicher-Sub-Agenten ein echtes `session.jsonl`-
-Transkript.
+Durchläufe des blockierenden Speicher-Sub-Agenten von Active Memory erzeugen während des Aufrufs des blockierenden Speicher-Sub-Agenten
+ein echtes `session.jsonl`-Transkript.
 
 Standardmäßig ist dieses Transkript temporär:
 
@@ -492,8 +576,8 @@ Standardmäßig ist dieses Transkript temporär:
 - es wird nur für den Lauf des blockierenden Speicher-Sub-Agenten verwendet
 - es wird sofort gelöscht, nachdem der Lauf abgeschlossen ist
 
-Wenn Sie diese Transkripte des blockierenden Speicher-Sub-Agenten zur Fehlerdiagnose oder
-Inspektion auf dem Datenträger behalten möchten, aktivieren Sie die Persistenz ausdrücklich:
+Wenn Sie diese Transkripte des blockierenden Speicher-Sub-Agenten zur Fehlersuche oder
+Prüfung auf der Festplatte behalten möchten, aktivieren Sie die Persistenz ausdrücklich:
 
 ```json5
 {
@@ -513,9 +597,9 @@ Inspektion auf dem Datenträger behalten möchten, aktivieren Sie die Persistenz
 ```
 
 Wenn aktiviert, speichert Active Memory Transkripte in einem separaten Verzeichnis unter dem
-Sitzungsordner des Ziel-Agenten, nicht im Haupttranskriptpfad der Benutzerkonversation.
+Sitzungsordner des Zielagenten, nicht im Haupttranskriptpfad der Benutzerunterhaltung.
 
-Das Standardlayout sieht konzeptionell so aus:
+Das Standardlayout ist konzeptionell:
 
 ```text
 agents/<agent>/sessions/active-memory/<blocking-memory-sub-agent-session-id>.jsonl
@@ -523,10 +607,10 @@ agents/<agent>/sessions/active-memory/<blocking-memory-sub-agent-session-id>.jso
 
 Sie können das relative Unterverzeichnis mit `config.transcriptDir` ändern.
 
-Verwenden Sie dies mit Bedacht:
+Verwenden Sie dies mit Vorsicht:
 
-- Transkripte des blockierenden Speicher-Sub-Agenten können sich in ausgelasteten Sitzungen schnell ansammeln
-- der Abfragemodus `full` kann viel Konversationskontext duplizieren
+- Transkripte des blockierenden Speicher-Sub-Agenten können sich bei ausgelasteten Sitzungen schnell ansammeln
+- der Abfragemodus `full` kann viel Unterhaltungskontext duplizieren
 - diese Transkripte enthalten verborgenen Prompt-Kontext und abgerufene Erinnerungen
 
 ## Konfiguration
@@ -539,32 +623,32 @@ plugins.entries.active-memory
 
 Die wichtigsten Felder sind:
 
-| Schlüssel                   | Typ                                                                                                  | Bedeutung                                                                                              |
-| --------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `enabled`                   | `boolean`                                                                                            | Aktiviert das Plugin selbst                                                                            |
-| `config.agents`             | `string[]`                                                                                           | Agenten-IDs, die Active Memory verwenden dürfen                                                        |
-| `config.model`              | `string`                                                                                             | Optionale Modellreferenz für den blockierenden Speicher-Sub-Agenten; wenn nicht gesetzt, verwendet Active Memory das aktuelle Sitzungsmodell |
-| `config.queryMode`          | `"message" \| "recent" \| "full"`                                                                    | Steuert, wie viel der Konversation der blockierende Speicher-Sub-Agent sieht                           |
-| `config.promptStyle`        | `"balanced" \| "strict" \| "contextual" \| "recall-heavy" \| "precision-heavy" \| "preference-only"` | Steuert, wie bereitwillig oder streng der blockierende Speicher-Sub-Agent ist, wenn er entscheidet, ob Speicher zurückgegeben werden soll |
+| Key                         | Type                                                                                                 | Bedeutung                                                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `enabled`                   | `boolean`                                                                                            | Aktiviert das Plugin selbst                                                                                   |
+| `config.agents`             | `string[]`                                                                                           | Agent-IDs, die Active Memory verwenden dürfen                                                                 |
+| `config.model`              | `string`                                                                                             | Optionaler Modellverweis für den blockierenden Speicher-Sub-Agenten; wenn nicht gesetzt, verwendet Active Memory das aktuelle Sitzungsmodell |
+| `config.queryMode`          | `"message" \| "recent" \| "full"`                                                                    | Steuert, wie viel Unterhaltung der blockierende Speicher-Sub-Agent sieht                                      |
+| `config.promptStyle`        | `"balanced" \| "strict" \| "contextual" \| "recall-heavy" \| "precision-heavy" \| "preference-only"` | Steuert, wie bereitwillig oder streng der blockierende Speicher-Sub-Agent bei der Entscheidung über die Rückgabe von Speicherinhalt ist |
 | `config.thinking`           | `"off" \| "minimal" \| "low" \| "medium" \| "high" \| "xhigh" \| "adaptive"`                         | Erweiterte Thinking-Überschreibung für den blockierenden Speicher-Sub-Agenten; Standard `off` für Geschwindigkeit |
-| `config.promptOverride`     | `string`                                                                                             | Erweiterter vollständiger Prompt-Ersatz; für die normale Nutzung nicht empfohlen                       |
-| `config.promptAppend`       | `string`                                                                                             | Erweiterte zusätzliche Anweisungen, die an den Standard- oder überschriebenen Prompt angehängt werden |
-| `config.timeoutMs`          | `number`                                                                                             | Harter Timeout für den blockierenden Speicher-Sub-Agenten                                              |
-| `config.maxSummaryChars`    | `number`                                                                                             | Maximal zulässige Gesamtanzahl von Zeichen in der Active-Memory-Zusammenfassung                        |
-| `config.logging`            | `boolean`                                                                                            | Gibt während der Feinabstimmung Active-Memory-Protokolle aus                                           |
-| `config.persistTranscripts` | `boolean`                                                                                            | Behält Transkripte des blockierenden Speicher-Sub-Agenten auf dem Datenträger, statt temporäre Dateien zu löschen |
-| `config.transcriptDir`      | `string`                                                                                             | Relatives Transkriptverzeichnis des blockierenden Speicher-Sub-Agenten unter dem Sitzungsordner des Agenten |
+| `config.promptOverride`     | `string`                                                                                             | Erweiterter vollständiger Prompt-Ersatz; für normale Verwendung nicht empfohlen                               |
+| `config.promptAppend`       | `string`                                                                                             | Erweiterte zusätzliche Anweisungen, die an den Standard- oder überschriebenen Prompt angehängt werden        |
+| `config.timeoutMs`          | `number`                                                                                             | Hartes Timeout für den blockierenden Speicher-Sub-Agenten                                                     |
+| `config.maxSummaryChars`    | `number`                                                                                             | Maximal zulässige Gesamtzahl von Zeichen in der Active-Memory-Zusammenfassung                                 |
+| `config.logging`            | `boolean`                                                                                            | Gibt Active-Memory-Logs während der Anpassung aus                                                             |
+| `config.persistTranscripts` | `boolean`                                                                                            | Behält Transkripte des blockierenden Speicher-Sub-Agenten auf der Festplatte, anstatt temporäre Dateien zu löschen |
+| `config.transcriptDir`      | `string`                                                                                             | Relatives Transkriptverzeichnis des blockierenden Speicher-Sub-Agenten unter dem Sitzungsordner des Agenten  |
 
-Nützliche Felder zur Feinabstimmung:
+Nützliche Felder zur Anpassung:
 
-| Schlüssel                     | Typ      | Bedeutung                                                           |
-| ----------------------------- | -------- | ------------------------------------------------------------------- |
-| `config.maxSummaryChars`      | `number` | Maximal zulässige Gesamtanzahl von Zeichen in der Active-Memory-Zusammenfassung |
-| `config.recentUserTurns`      | `number` | Frühere Benutzerzüge, die einbezogen werden, wenn `queryMode` `recent` ist |
-| `config.recentAssistantTurns` | `number` | Frühere Assistentenzüge, die einbezogen werden, wenn `queryMode` `recent` ist |
-| `config.recentUserChars`      | `number` | Maximale Zeichen pro aktuellem Benutzerzug                          |
-| `config.recentAssistantChars` | `number` | Maximale Zeichen pro aktuellem Assistentenzug                       |
-| `config.cacheTtlMs`           | `number` | Cache-Wiederverwendung für wiederholte identische Abfragen          |
+| Key                           | Type     | Bedeutung                                                    |
+| ----------------------------- | -------- | ------------------------------------------------------------ |
+| `config.maxSummaryChars`      | `number` | Maximal zulässige Gesamtzahl von Zeichen in der Active-Memory-Zusammenfassung |
+| `config.recentUserTurns`      | `number` | Vorherige Benutzerzüge, die einbezogen werden, wenn `queryMode` `recent` ist |
+| `config.recentAssistantTurns` | `number` | Vorherige Assistentenzüge, die einbezogen werden, wenn `queryMode` `recent` ist |
+| `config.recentUserChars`      | `number` | Maximale Zeichenanzahl pro aktuellem Benutzerzug             |
+| `config.recentAssistantChars` | `number` | Maximale Zeichenanzahl pro aktuellem Assistentenzug          |
+| `config.cacheTtlMs`           | `number` | Cache-Wiederverwendung für wiederholte identische Abfragen   |
 
 ## Empfohlene Einrichtung
 
@@ -590,8 +674,8 @@ Beginnen Sie mit `recent`.
 }
 ```
 
-Wenn Sie das Live-Verhalten während der Feinabstimmung prüfen möchten, verwenden Sie `/verbose on` für die
-normale Statuszeile und `/trace on` für die Active-Memory-Debug-Zusammenfassung statt
+Wenn Sie das Live-Verhalten während der Anpassung prüfen möchten, verwenden Sie `/verbose on` für die
+normale Statuszeile und `/trace on` für die Active-Memory-Debug-Zusammenfassung, anstatt
 nach einem separaten Active-Memory-Debug-Befehl zu suchen. In Chat-Kanälen werden diese
 Diagnosezeilen nach der Hauptantwort des Assistenten gesendet und nicht davor.
 
@@ -607,76 +691,74 @@ Wenn Active Memory nicht dort angezeigt wird, wo Sie es erwarten:
 1. Bestätigen Sie, dass das Plugin unter `plugins.entries.active-memory.enabled` aktiviert ist.
 2. Bestätigen Sie, dass die aktuelle Agenten-ID in `config.agents` aufgeführt ist.
 3. Bestätigen Sie, dass Sie über eine interaktive persistente Chat-Sitzung testen.
-4. Aktivieren Sie `config.logging: true` und beobachten Sie die Gateway-Protokolle.
-5. Verifizieren Sie mit `openclaw memory status --deep`, dass die Speichersuche selbst funktioniert.
+4. Aktivieren Sie `config.logging: true` und beobachten Sie die Gateway-Logs.
+5. Überprüfen Sie mit `openclaw memory status --deep`, dass die Speichersuche selbst funktioniert.
 
-Wenn Speicher-Treffer zu verrauscht sind, verschärfen Sie:
+Wenn Speicher-Treffer zu ungenau sind, verschärfen Sie:
 
 - `maxSummaryChars`
 
 Wenn Active Memory zu langsam ist:
 
-- `queryMode` reduzieren
-- `timeoutMs` reduzieren
-- die Anzahl aktueller Züge reduzieren
-- die Zeichenobergrenzen pro Zug reduzieren
+- verringern Sie `queryMode`
+- verringern Sie `timeoutMs`
+- reduzieren Sie die Anzahl aktueller Züge
+- reduzieren Sie die Zeichenobergrenzen pro Zug
 
 ## Häufige Probleme
 
-### Embedding-Anbieter wurde unerwartet geändert
+### Embedding-Anbieter hat sich unerwartet geändert
 
 Active Memory verwendet die normale `memory_search`-Pipeline unter
 `agents.defaults.memorySearch`. Das bedeutet, dass die Einrichtung des Embedding-Anbieters nur dann
-erforderlich ist, wenn Ihre `memorySearch`-Einrichtung Embeddings für das gewünschte Verhalten
-benötigt.
+erforderlich ist, wenn Ihre `memorySearch`-Einrichtung Embeddings für das gewünschte Verhalten benötigt.
 
 In der Praxis gilt:
 
-- eine explizite Anbieter-Einrichtung ist **erforderlich**, wenn Sie einen Anbieter möchten, der nicht
-  automatisch erkannt wird, etwa `ollama`
-- eine explizite Anbieter-Einrichtung ist **erforderlich**, wenn die automatische Erkennung
-  keinen verwendbaren Embedding-Anbieter für Ihre Umgebung auflösen kann
-- eine explizite Anbieter-Einrichtung ist **dringend empfohlen**, wenn Sie eine deterministische
-  Anbieterauswahl statt „der erste verfügbare gewinnt“ möchten
-- eine explizite Anbieter-Einrichtung ist in der Regel **nicht erforderlich**, wenn die automatische Erkennung bereits
-  den gewünschten Anbieter auflöst und dieser in Ihrer Bereitstellung stabil ist
+- eine explizite Anbietereinrichtung ist **erforderlich**, wenn Sie einen Anbieter möchten, der nicht
+  automatisch erkannt wird, z. B. `ollama`
+- eine explizite Anbietereinrichtung ist **erforderlich**, wenn die automatische Erkennung
+  keinen verwendbaren Embedding-Anbieter für Ihre Umgebung auflöst
+- eine explizite Anbietereinrichtung ist **dringend empfohlen**, wenn Sie eine deterministische
+  Anbieterauswahl statt „erstes verfügbares gewinnt“ möchten
+- eine explizite Anbietereinrichtung ist normalerweise **nicht erforderlich**, wenn die automatische Erkennung bereits
+  den gewünschten Anbieter auflöst und dieser Anbieter in Ihrer Bereitstellung stabil ist
 
 Wenn `memorySearch.provider` nicht gesetzt ist, erkennt OpenClaw automatisch den ersten verfügbaren
 Embedding-Anbieter.
 
 Das kann in realen Bereitstellungen verwirrend sein:
 
-- ein neu verfügbarer API-Schlüssel kann ändern, welcher Anbieter für die Speichersuche verwendet wird
+- ein neu verfügbarer API-Schlüssel kann ändern, welchen Anbieter die Speichersuche verwendet
 - ein Befehl oder eine Diagnoseoberfläche kann den ausgewählten Anbieter anders erscheinen lassen
   als den Pfad, den Sie tatsächlich bei der Live-Speichersynchronisierung oder beim
-  Bootstrap der Suche verwenden
-- gehostete Anbieter können mit Kontingent- oder Rate-Limit-Fehlern scheitern, die erst sichtbar werden,
-  wenn Active Memory vor jeder Antwort Erinnerungsabfragen ausführt
+  Such-Bootstrap verwenden
+- gehostete Anbieter können mit Kontingent- oder Ratenbegrenzungsfehlern scheitern, die erst sichtbar werden,
+  sobald Active Memory vor jeder Antwort Abrufsuchen ausführt
 
-Active Memory kann auch ohne Embeddings ausgeführt werden, wenn `memory_search` im
-degradierten rein lexikalischen Modus arbeiten kann, was typischerweise geschieht, wenn kein Embedding-
-Anbieter aufgelöst werden kann.
+Active Memory kann auch ohne Embeddings laufen, wenn `memory_search` im degradierten rein lexikalischen Modus
+arbeiten kann, was typischerweise geschieht, wenn kein Embedding-Anbieter aufgelöst werden kann.
 
-Gehen Sie nicht davon aus, dass derselbe Fallback bei Laufzeitfehlern des Anbieters gilt, etwa bei ausgeschöpftem Kontingent,
-Rate-Limits, Netzwerk-/Anbieterfehlern oder fehlenden lokalen/Remote-Modellen, nachdem bereits
-ein Anbieter ausgewählt wurde.
+Gehen Sie nicht davon aus, dass derselbe Fallback auch bei Laufzeitfehlern des Anbieters funktioniert, etwa bei
+Kontingenterschöpfung, Ratenbegrenzungen, Netzwerk-/Anbieterfehlern oder fehlenden lokalen/entfernten
+Modellen, nachdem bereits ein Anbieter ausgewählt wurde.
 
-In der Praxis gilt:
+In der Praxis:
 
-- wenn kein Embedding-Anbieter aufgelöst werden kann, kann `memory_search` auf
-  rein lexikalen Abruf degradieren
+- wenn kein Embedding-Anbieter aufgelöst werden kann, kann `memory_search` zu
+  rein lexikalischem Abruf degradieren
 - wenn ein Embedding-Anbieter aufgelöst wird und dann zur Laufzeit fehlschlägt, garantiert OpenClaw
-  derzeit keinen lexikalen Fallback für diese Anfrage
-- wenn Sie eine deterministische Anbieterauswahl benötigen, setzen Sie
-  `agents.defaults.memorySearch.provider` fest
+  derzeit keinen lexikalischen Fallback für diese Anfrage
+- wenn Sie eine deterministische Anbieterauswahl benötigen, pinnen Sie
+  `agents.defaults.memorySearch.provider`
 - wenn Sie Anbieter-Failover bei Laufzeitfehlern benötigen, konfigurieren Sie
   `agents.defaults.memorySearch.fallback` explizit
 
-Wenn Sie auf embedding-gestützten Abruf, multimodale Indizierung oder einen bestimmten
-lokalen/Remote-Anbieter angewiesen sind, setzen Sie den Anbieter explizit fest, statt sich auf
-die automatische Erkennung zu verlassen.
+Wenn Sie auf embeddinggestützten Abruf, multimodale Indizierung oder einen bestimmten
+lokalen/entfernten Anbieter angewiesen sind, pinnen Sie den Anbieter explizit, anstatt sich auf
+automatische Erkennung zu verlassen.
 
-Häufige Beispiele für das Festlegen:
+Häufige Beispiele für das Pinning:
 
 OpenAI:
 
@@ -723,8 +805,8 @@ Ollama:
 }
 ```
 
-Wenn Sie Anbieter-Failover bei Laufzeitfehlern wie ausgeschöpftem Kontingent erwarten,
-reicht das Festlegen eines Anbieters allein nicht aus. Konfigurieren Sie zusätzlich einen expliziten Fallback:
+Wenn Sie Anbieter-Failover bei Laufzeitfehlern wie Kontingenterschöpfung erwarten,
+ist das Pinning eines Anbieters allein nicht ausreichend. Konfigurieren Sie zusätzlich einen expliziten Fallback:
 
 ```json5
 {
@@ -741,30 +823,30 @@ reicht das Festlegen eines Anbieters allein nicht aus. Konfigurieren Sie zusätz
 
 ### Fehlerbehebung bei Anbieterproblemen
 
-Wenn Active Memory langsam ist, leer bleibt oder Anbieter unerwartet zu wechseln scheint:
+Wenn Active Memory langsam ist, leer bleibt oder scheinbar unerwartet den Anbieter wechselt:
 
-- beobachten Sie die Gateway-Protokolle, während Sie das Problem reproduzieren; suchen Sie nach Zeilen wie
+- beobachten Sie die Gateway-Logs, während Sie das Problem reproduzieren; achten Sie auf Zeilen wie
   `active-memory: ... start|done`, `memory sync failed (search-bootstrap)` oder
-  anbieterbezogenen Embedding-Fehlern
+  anbieterspezifische Embedding-Fehler
 - aktivieren Sie `/trace on`, um die Plugin-eigene Active-Memory-Debug-Zusammenfassung in
   der Sitzung anzuzeigen
-- aktivieren Sie `/verbose on`, wenn Sie zusätzlich die normale `🧩 Active Memory: ...`
-  Statuszeile nach jeder Antwort möchten
-- führen Sie `openclaw memory status --deep` aus, um das aktuelle Backend der Speichersuche
-  und den Zustand des Index zu prüfen
-- prüfen Sie `agents.defaults.memorySearch.provider` und die zugehörige Authentifizierung/Konfiguration, um sicherzustellen,
-  dass der Anbieter, den Sie erwarten, tatsächlich zur Laufzeit aufgelöst werden kann
-- wenn Sie `ollama` verwenden, verifizieren Sie, dass das konfigurierte Embedding-Modell installiert ist, zum
+- aktivieren Sie `/verbose on`, wenn Sie zusätzlich die normale Statuszeile
+  `🧩 Active Memory: ...` nach jeder Antwort sehen möchten
+- führen Sie `openclaw memory status --deep` aus, um das aktuelle Memory-Search-
+  Backend und den Zustand des Index zu prüfen
+- prüfen Sie `agents.defaults.memorySearch.provider` und die zugehörige Authentifizierung/Konfiguration, um
+  sicherzustellen, dass der Anbieter, den Sie erwarten, tatsächlich derjenige ist, der zur Laufzeit aufgelöst werden kann
+- wenn Sie `ollama` verwenden, prüfen Sie, ob das konfigurierte Embedding-Modell installiert ist, zum
   Beispiel mit `ollama list`
 
-Beispiel für eine Debugging-Schleife:
+Beispiel für einen Debugging-Ablauf:
 
 ```text
-1. Starten Sie das Gateway und beobachten Sie seine Protokolle
-2. Führen Sie in der Chat-Sitzung /trace on aus
-3. Senden Sie eine Nachricht, die Active Memory auslösen sollte
-4. Vergleichen Sie die im Chat sichtbare Debug-Zeile mit den Gateway-Protokollzeilen
-5. Wenn die Anbieterwahl unklar ist, setzen Sie agents.defaults.memorySearch.provider explizit fest
+1. Gateway starten und seine Logs beobachten
+2. In der Chat-Sitzung /trace on ausführen
+3. Eine Nachricht senden, die Active Memory auslösen sollte
+4. Die im Chat sichtbare Debug-Zeile mit den Gateway-Logzeilen vergleichen
+5. Wenn die Anbieterauswahl uneindeutig ist, agents.defaults.memorySearch.provider explizit pinnen
 ```
 
 Beispiel:
@@ -796,8 +878,8 @@ Oder, wenn Sie Gemini-Embeddings möchten:
 }
 ```
 
-Nach dem Ändern des Anbieters starten Sie das Gateway neu und führen einen frischen Test mit
-`/trace on` aus, damit die Active-Memory-Debug-Zeile den neuen Embedding-Pfad widerspiegelt.
+Nachdem Sie den Anbieter geändert haben, starten Sie das Gateway neu und führen Sie mit
+`/trace on` einen neuen Test aus, damit die Active-Memory-Debug-Zeile den neuen Embedding-Pfad widerspiegelt.
 
 ## Verwandte Seiten
 

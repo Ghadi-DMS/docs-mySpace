@@ -2,26 +2,26 @@
 read_when:
     - Gateway WSクライアントの実装または更新
     - プロトコルの不一致や接続失敗のデバッグ
-    - プロトコルスキーマ/モデルの再生成
-summary: 'Gateway WebSocketプロトコル: ハンドシェイク、フレーム、バージョニング'
+    - プロトコルスキーマ／モデルの再生成
+summary: Gateway WebSocketプロトコル：ハンドシェイク、フレーム、バージョニング
 title: Gatewayプロトコル
 x-i18n:
-    generated_at: "2026-04-16T04:44:16Z"
+    generated_at: "2026-04-18T04:40:12Z"
     model: gpt-5.4
     provider: openai
-    source_hash: 683e61ebe993a2d739bc34860060b0e3eda36b5c57267a2bcc03d177ec612fb3
+    source_hash: 4f0eebcfdd8c926c90b4753a6d96c59e3134ddb91740f65478f11eb75be85e41
     source_path: gateway/protocol.md
     workflow: 15
 ---
 
 # Gatewayプロトコル（WebSocket）
 
-Gateway WSプロトコルは、OpenClawの**単一のコントロールプレーン + ノード転送**です。すべてのクライアント（CLI、web UI、macOSアプリ、iOS/Androidノード、ヘッドレスノード）はWebSocket経由で接続し、ハンドシェイク時に自身の**role** + **scope**を宣言します。
+Gateway WSプロトコルは、OpenClawの**単一のコントロールプレーン + Nodeトランスポート**です。すべてのクライアント（CLI、Web UI、macOSアプリ、iOS/Android Node、ヘッドレスNode）はWebSocket経由で接続し、ハンドシェイク時に自身の**role** + **scope**を宣言します。
 
-## 転送
+## トランスポート
 
-- WebSocket、JSONペイロードのテキストフレーム。
-- 最初のフレームは**必ず**`connect`リクエストでなければなりません。
+- WebSocket、JSONペイロードを持つテキストフレーム。
+- 最初のフレームは**必ず**`connect`リクエストである必要があります。
 
 ## ハンドシェイク（connect）
 
@@ -92,9 +92,20 @@ Gateway → Client:
 }
 ```
 
-`server`、`features`、`snapshot`、`policy`はすべてスキーマ（`src/gateway/protocol/schema/frames.ts`）で必須です。`auth`と`canvasHostUrl`は任意です。
+`server`、`features`、`snapshot`、`policy`はすべてスキーマ（`src/gateway/protocol/schema/frames.ts`）で必須です。`canvasHostUrl`は任意です。`auth`は利用可能な場合にネゴシエートされたrole/scopesを報告し、Gatewayが発行した場合は`deviceToken`も含みます。
 
-デバイストークンが発行される場合、`hello-ok`には次も含まれます:
+デバイストークンが発行されない場合でも、`hello-ok.auth`はネゴシエートされた権限を報告できます。
+
+```json
+{
+  "auth": {
+    "role": "operator",
+    "scopes": ["operator.read", "operator.write"]
+  }
+}
+```
+
+デバイストークンが発行された場合、`hello-ok`には次も含まれます。
 
 ```json
 {
@@ -106,7 +117,7 @@ Gateway → Client:
 }
 ```
 
-信頼済みブートストラップのハンドオフ中、`hello-ok.auth`には`deviceTokens`内に追加の制限付きroleエントリが含まれる場合もあります:
+信頼されたブートストラップのハンドオフ中、`hello-ok.auth`には`deviceTokens`内に追加の境界付きroleエントリが含まれることもあります。
 
 ```json
 {
@@ -125,7 +136,7 @@ Gateway → Client:
 }
 ```
 
-組み込みのnode/operatorブートストラップフローでは、主要なnodeトークンは`scopes: []`のままであり、引き渡されるoperatorトークンはブートストラップoperator allowlist（`operator.approvals`、`operator.read`、`operator.talk.secrets`、`operator.write`）に制限されたままです。ブートストラップのscopeチェックはroleプレフィックス付きのままです。operatorエントリはoperatorリクエストのみを満たし、operator以外のroleでも引き続き自身のroleプレフィックス配下のscopeが必要です。
+組み込みのnode/operatorブートストラップフローでは、プライマリNodeトークンは`scopes: []`のままで、ハンドオフされたoperatorトークンはブートストラップoperator許可リスト（`operator.approvals`、`operator.read`、`operator.talk.secrets`、`operator.write`）に制限されたままです。ブートストラップscopeチェックは引き続きroleプレフィックス付きです。operatorエントリはoperatorリクエストのみを満たし、非operatorロールは引き続き自身のroleプレフィックス配下のscopeを必要とします。
 
 ### Nodeの例
 
@@ -164,18 +175,18 @@ Gateway → Client:
 
 ## フレーミング
 
-- **リクエスト**: `{type:"req", id, method, params}`
-- **レスポンス**: `{type:"res", id, ok, payload|error}`
-- **イベント**: `{type:"event", event, payload, seq?, stateVersion?}`
+- **Request**: `{type:"req", id, method, params}`
+- **Response**: `{type:"res", id, ok, payload|error}`
+- **Event**: `{type:"event", event, payload, seq?, stateVersion?}`
 
-副作用を持つメソッドには**idempotency keys**が必要です（スキーマを参照）。
+副作用を伴うメソッドには**冪等性キー**が必要です（スキーマを参照）。
 
 ## Roles + scopes
 
 ### Roles
 
-- `operator` = コントロールプレーンクライアント（CLI/UI/automation）。
-- `node` = capabilityホスト（camera/screen/canvas/system.run）。
+- `operator` = コントロールプレーンクライアント（CLI/UI/自動化）。
+- `node` = 機能ホスト（camera/screen/canvas/system.run）。
 
 ### Scopes（operator）
 
@@ -188,153 +199,152 @@ Gateway → Client:
 - `operator.pairing`
 - `operator.talk.secrets`
 
-`includeSecrets: true`を指定した`talk.config`には`operator.talk.secrets`（または`operator.admin`）が必要です。
+`includeSecrets: true`を伴う`talk.config`には`operator.talk.secrets`（または`operator.admin`）が必要です。
 
-Plugin登録済みのGateway RPCメソッドは独自のoperator scopeを要求できますが、予約済みのコア管理プレフィックス（`config.*`、`exec.approvals.*`、`wizard.*`、`update.*`）は常に`operator.admin`に解決されます。
+Plugin登録されたGateway RPCメソッドは独自のoperator scopeを要求できますが、予約済みのコア管理プレフィックス（`config.*`、`exec.approvals.*`、`wizard.*`、`update.*`）は常に`operator.admin`に解決されます。
 
-メソッドscopeは最初のゲートにすぎません。`chat.send`経由で到達する一部のスラッシュコマンドには、その上により厳しいコマンドレベルのチェックが適用されます。たとえば、永続的な`/config set`と`/config unset`の書き込みには`operator.admin`が必要です。
+メソッドscopeは最初のゲートにすぎません。`chat.send`経由で到達する一部のスラッシュコマンドには、その上により厳しいコマンドレベルのチェックが適用されます。たとえば、永続的な`/config set`および`/config unset`の書き込みには`operator.admin`が必要です。
 
-`node.pair.approve`にも、ベースのメソッドscopeに加えて追加の承認時scopeチェックがあります:
+`node.pair.approve`にも、ベースメソッドscopeに加えて追加の承認時scopeチェックがあります。
 
 - コマンドなしのリクエスト: `operator.pairing`
-- exec以外のnodeコマンドを含むリクエスト: `operator.pairing` + `operator.write`
-- `system.run`、`system.run.prepare`、または`system.which`を含むリクエスト:
-  `operator.pairing` + `operator.admin`
+- non-exec Nodeコマンドを含むリクエスト: `operator.pairing` + `operator.write`
+- `system.run`、`system.run.prepare`、または`system.which`を含むリクエスト: `operator.pairing` + `operator.admin`
 
 ### Caps/commands/permissions（node）
 
-ノードは接続時にcapabilityクレームを宣言します:
+Nodeは接続時に機能クレームを宣言します。
 
-- `caps`: 高レベルのcapabilityカテゴリ。
-- `commands`: invoke用のコマンドallowlist。
-- `permissions`: 細かなトグル（例: `screen.record`、`camera.capture`）。
+- `caps`: 高レベルな機能カテゴリ。
+- `commands`: invoke用のコマンド許可リスト。
+- `permissions`: 細粒度のトグル（例: `screen.record`、`camera.capture`）。
 
-Gatewayはこれらを**クレーム**として扱い、サーバー側allowlistを適用します。
+Gatewayはこれらを**クレーム**として扱い、サーバー側の許可リストを強制します。
 
 ## プレゼンス
 
-- `system-presence`は、デバイスIDをキーとしたエントリを返します。
-- プレゼンスエントリには`deviceId`、`roles`、`scopes`が含まれるため、UIはそのデバイスが**operator**と**node**の両方として接続している場合でも、デバイスごとに1行で表示できます。
+- `system-presence`はデバイスIDをキーとするエントリを返します。
+- プレゼンスエントリには`deviceId`、`roles`、`scopes`が含まれるため、UIは**operator**と**node**の両方として接続している場合でも、デバイスごとに1行で表示できます。
 
-## 一般的なRPCメソッドファミリー
+## 一般的なRPCメソッド群
 
-このページは生成された完全ダンプではありませんが、公開WSサーフェスは上記のハンドシェイク/認証の例よりも広範です。現在Gatewayが公開している主要なメソッドファミリーは以下です。
+このページは生成された完全なダンプではありませんが、公開WSサーフェスは上記のハンドシェイク/認証の例よりも広範です。以下は、Gatewayが現在公開している主なメソッド群です。
 
-`hello-ok.features.methods`は、`src/gateway/server-methods-list.ts`とロード済みplugin/channelのメソッドエクスポートから構築される保守的なディスカバリー一覧です。これを機能ディスカバリーとして扱ってください。`src/gateway/server-methods/*.ts`に実装されている呼び出し可能なすべてのヘルパーの生成ダンプではありません。
+`hello-ok.features.methods`は、`src/gateway/server-methods-list.ts`とロードされたplugin/channelのメソッドexportから構築された保守的な検出リストです。これを機能検出として扱ってください。`src/gateway/server-methods/*.ts`で実装されているすべての呼び出し可能ヘルパーの生成ダンプではありません。
 
-### Systemとidentity
+### システムとID
 
-- `health`は、キャッシュ済みまたは新たにプローブされたgateway healthスナップショットを返します。
-- `status`は`/status`形式のgatewayサマリーを返します。機密フィールドは、admin scopeを持つoperatorクライアントにのみ含まれます。
-- `gateway.identity.get`は、relayおよびpairingフローで使われるgateway device identityを返します。
-- `system-presence`は、接続中のoperator/nodeデバイスの現在のプレゼンススナップショットを返します。
-- `system-event`はsystem eventを追加し、プレゼンスコンテキストを更新/ブロードキャストできます。
+- `health`は、キャッシュされた、または新たにプローブされたGatewayヘルススナップショットを返します。
+- `status`は`/status`スタイルのGatewayサマリーを返します。機微なフィールドは、admin scopeを持つoperatorクライアントにのみ含まれます。
+- `gateway.identity.get`は、relayおよびpairingフローで使用されるGatewayデバイスIDを返します。
+- `system-presence`は、接続中のoperator/Nodeデバイスの現在のプレゼンススナップショットを返します。
+- `system-event`はシステムイベントを追加し、プレゼンスコンテキストを更新/ブロードキャストできます。
 - `last-heartbeat`は、最新の永続化されたHeartbeatイベントを返します。
-- `set-heartbeats`は、Gateway上のHeartbeat処理を切り替えます。
+- `set-heartbeats`は、Gateway上でHeartbeat処理を切り替えます。
 
-### Modelsとusage
+### モデルと使用状況
 
-- `models.list`は、実行時に許可されたモデルカタログを返します。
+- `models.list`は、ランタイムで許可されたモデルカタログを返します。
 - `usage.status`は、プロバイダー使用量ウィンドウ/残りクォータのサマリーを返します。
-- `usage.cost`は、日付範囲に対する集計済みコスト使用量サマリーを返します。
-- `doctor.memory.status`は、アクティブなデフォルトagent workspaceにおけるvector-memory / embeddingの準備状況を返します。
+- `usage.cost`は、日付範囲の集計コスト使用量サマリーを返します。
+- `doctor.memory.status`は、アクティブなデフォルトエージェントワークスペースのベクトルメモリ/埋め込み準備状況を返します。
 - `sessions.usage`は、セッションごとの使用量サマリーを返します。
 - `sessions.usage.timeseries`は、1つのセッションの時系列使用量を返します。
 - `sessions.usage.logs`は、1つのセッションの使用量ログエントリを返します。
 
-### Channelsとloginヘルパー
+### Channelsとログインヘルパー
 
-- `channels.status`は、組み込み + バンドル済みchannel/pluginのステータスサマリーを返します。
-- `channels.logout`は、そのchannelがlogoutをサポートしている場合に特定のchannel/accountをlogoutします。
-- `web.login.start`は、現在のQR対応web channel providerのQR/web loginフローを開始します。
-- `web.login.wait`は、そのQR/web loginフローの完了を待ち、成功時にchannelを開始します。
-- `push.test`は、登録済みiOS nodeにテストAPNs pushを送信します。
+- `channels.status`は、組み込み + バンドルされたchannel/pluginのステータスサマリーを返します。
+- `channels.logout`は、そのchannelがログアウトをサポートしている場合に、特定のchannel/accountをログアウトします。
+- `web.login.start`は、現在のQR対応web channel providerに対するQR/webログインフローを開始します。
+- `web.login.wait`は、そのQR/webログインフローの完了を待機し、成功時にchannelを開始します。
+- `push.test`は、登録済みのiOS NodeにテストAPNsプッシュを送信します。
 - `voicewake.get`は、保存されているウェイクワードトリガーを返します。
 - `voicewake.set`は、ウェイクワードトリガーを更新し、変更をブロードキャストします。
 
-### Messagingとlogs
+### メッセージングとログ
 
-- `send`は、chat runner外でchannel/account/threadを対象にした送信を行う、直接のアウトバウンド配信RPCです。
-- `logs.tail`は、カーソル/制限および最大バイト制御付きで、設定済みgateway file-log tailを返します。
+- `send`は、chat runnerの外側でchannel/account/threadターゲット宛て送信を行うための直接の送信RPCです。
+- `logs.tail`は、設定されたGatewayファイルログの末尾を、cursor/limitおよびmax-byte制御付きで返します。
 
 ### TalkとTTS
 
 - `talk.config`は、有効なTalk設定ペイロードを返します。`includeSecrets`には`operator.talk.secrets`（または`operator.admin`）が必要です。
-- `talk.mode`は、WebChat/Control UIクライアント向けに現在のTalkモード状態を設定/ブロードキャストします。
-- `talk.speak`は、アクティブなTalk speech providerを通じて音声合成します。
-- `tts.status`は、TTSの有効状態、アクティブなprovider、フォールバックprovider、およびprovider config状態を返します。
-- `tts.providers`は、表示可能なTTS provider一覧を返します。
+- `talk.mode`は、WebChat/Control UIクライアント向けの現在のTalk mode状態を設定/ブロードキャストします。
+- `talk.speak`は、アクティブなTalk speech providerを通じて音声を合成します。
+- `tts.status`は、TTS有効状態、アクティブprovider、フォールバックprovider、およびprovider設定状態を返します。
+- `tts.providers`は、表示可能なTTS providerインベントリを返します。
 - `tts.enable`と`tts.disable`は、TTS設定状態を切り替えます。
 - `tts.setProvider`は、優先TTS providerを更新します。
 - `tts.convert`は、単発のtext-to-speech変換を実行します。
 
 ### Secrets、config、update、wizard
 
-- `secrets.reload`は、アクティブなSecretRefを再解決し、完全に成功した場合にのみ実行時secret状態を切り替えます。
-- `secrets.resolve`は、特定のcommand/targetセットに対するコマンド対象secret割り当てを解決します。
-- `config.get`は、現在のconfigスナップショットとハッシュを返します。
-- `config.set`は、検証済みconfigペイロードを書き込みます。
-- `config.patch`は、部分的なconfig更新をマージします。
-- `config.apply`は、完全なconfigペイロードを検証して置き換えます。
-- `config.schema`は、Control UIとCLIツールで使われるライブconfig schemaペイロードを返します。schema、`uiHints`、version、生成メタデータを含み、実行時にロード可能な場合はplugin + channel schemaメタデータも含みます。このschemaには、nested object、wildcard、array-item、および一致するフィールドドキュメントが存在する場合の`anyOf` / `oneOf` / `allOf`構成分岐を含め、UIで使われる同じラベルとヘルプテキストから導出されたフィールド`title` / `description`メタデータが含まれます。
-- `config.schema.lookup`は、1つのconfig pathに対するpathスコープのlookupペイロードを返します。正規化済みpath、浅いschema node、一致したhint + `hintPath`、およびUI/CLIのドリルダウン用の直下の子サマリーを返します。
-  - lookup schema nodeは、ユーザー向けドキュメントと一般的な検証フィールドを保持します: `title`、`description`、`type`、`enum`、`const`、`format`、`pattern`、数値/文字列/配列/オブジェクトの制約、および`additionalProperties`、`deprecated`、`readOnly`、`writeOnly`のような真偽値フラグ。
-  - 子サマリーは、`key`、正規化済み`path`、`type`、`required`、`hasChildren`、および一致した`hint` / `hintPath`を公開します。
-- `update.run`は、Gateway updateフローを実行し、update自体が成功した場合にのみ再起動をスケジュールします。
-- `wizard.start`、`wizard.next`、`wizard.status`、`wizard.cancel`は、オンボーディングウィザードをWS RPCで公開します。
+- `secrets.reload`は、アクティブなSecretRefを再解決し、完全に成功した場合にのみランタイムのシークレット状態を入れ替えます。
+- `secrets.resolve`は、特定のcommand/targetセットに対するコマンド対象シークレット割り当てを解決します。
+- `config.get`は、現在の設定スナップショットとハッシュを返します。
+- `config.set`は、検証済みの設定ペイロードを書き込みます。
+- `config.patch`は、部分的な設定更新をマージします。
+- `config.apply`は、完全な設定ペイロードを検証して置き換えます。
+- `config.schema`は、Control UIとCLIツールで使用されるライブ設定スキーマペイロードを返します。スキーマ、`uiHints`、バージョン、生成メタデータを含み、ランタイムがロードできる場合はplugin + channelのスキーマメタデータも含みます。このスキーマには、同じラベルとヘルプテキストから導出された`title` / `description`メタデータが含まれ、ネストされたオブジェクト、ワイルドカード、配列項目、および一致するフィールドドキュメントが存在する場合の`anyOf` / `oneOf` / `allOf`構成ブランチも含まれます。
+- `config.schema.lookup`は、1つの設定パスに対するパススコープのlookupペイロードを返します。正規化されたパス、浅いスキーマノード、一致したヒント + `hintPath`、およびUI/CLIドリルダウン用の直下の子サマリーを含みます。
+  - Lookupスキーマノードは、ユーザー向けドキュメントと一般的な検証フィールドを保持します。`title`、`description`、`type`、`enum`、`const`、`format`、`pattern`、数値/文字列/配列/オブジェクトの境界、および`additionalProperties`、`deprecated`、`readOnly`、`writeOnly`などの真偽値フラグです。
+  - 子サマリーは、`key`、正規化された`path`、`type`、`required`、`hasChildren`に加えて、一致した`hint` / `hintPath`を公開します。
+- `update.run`は、Gateway更新フローを実行し、更新自体が成功した場合にのみ再起動をスケジュールします。
+- `wizard.start`、`wizard.next`、`wizard.status`、`wizard.cancel`は、WS RPC経由でオンボーディングウィザードを公開します。
 
 ### 既存の主要ファミリー
 
-#### Agentとworkspaceヘルパー
+#### Agentとワークスペースのヘルパー
 
 - `agents.list`は、設定済みagentエントリを返します。
-- `agents.create`、`agents.update`、`agents.delete`は、agentレコードとworkspace接続を管理します。
-- `agents.files.list`、`agents.files.get`、`agents.files.set`は、agent向けに公開されるブートストラップworkspaceファイルを管理します。
-- `agent.identity.get`は、agentまたはsessionに対する有効なassistant identityを返します。
-- `agent.wait`は、実行の完了を待ち、利用可能であれば終端スナップショットを返します。
+- `agents.create`、`agents.update`、`agents.delete`は、agentレコードとワークスペース配線を管理します。
+- `agents.files.list`、`agents.files.get`、`agents.files.set`は、agentに公開されるブートストラップワークスペースファイルを管理します。
+- `agent.identity.get`は、agentまたはセッションに対する有効なアシスタントIDを返します。
+- `agent.wait`は、実行の完了を待機し、利用可能な場合は終端スナップショットを返します。
 
-#### Session制御
+#### セッション制御
 
 - `sessions.list`は、現在のセッションインデックスを返します。
 - `sessions.subscribe`と`sessions.unsubscribe`は、現在のWSクライアントに対するセッション変更イベント購読を切り替えます。
 - `sessions.messages.subscribe`と`sessions.messages.unsubscribe`は、1つのセッションに対するtranscript/messageイベント購読を切り替えます。
-- `sessions.preview`は、特定のセッションキーに対する制限付きtranscriptプレビューを返します。
+- `sessions.preview`は、特定のセッションキーに対する境界付きtranscriptプレビューを返します。
 - `sessions.resolve`は、セッションターゲットを解決または正規化します。
 - `sessions.create`は、新しいセッションエントリを作成します。
 - `sessions.send`は、既存のセッションにメッセージを送信します。
-- `sessions.steer`は、アクティブなセッション向けの割り込みして方向付けるバリアントです。
-- `sessions.abort`は、セッションのアクティブな処理を中止します。
+- `sessions.steer`は、アクティブなセッションに対する割り込みとsteerのバリアントです。
+- `sessions.abort`は、セッションのアクティブな作業を中止します。
 - `sessions.patch`は、セッションメタデータ/オーバーライドを更新します。
 - `sessions.reset`、`sessions.delete`、`sessions.compact`は、セッションメンテナンスを実行します。
-- `sessions.get`は、保存されている完全なセッション行を返します。
-- chat実行では引き続き`chat.history`、`chat.send`、`chat.abort`、`chat.inject`を使います。
-- `chat.history`は、UIクライアント向けに表示用に正規化されています。visible textからインラインdirectiveタグが削除され、プレーンテキストのtool-call XMLペイロード（`<tool_call>...</tool_call>`、`<function_call>...</function_call>`、`<tool_calls>...</tool_calls>`、`<function_calls>...</function_calls>`、および切り詰められたtool-callブロックを含む）と、漏れたASCII/全角のmodel control tokenが削除され、完全にsilent-tokenだけのassistant行（完全一致の`NO_REPLY` / `no_reply`など）は省略され、過大な行はプレースホルダーに置き換えられる場合があります。
+- `sessions.get`は、完全な保存済みセッション行を返します。
+- chat実行では引き続き`chat.history`、`chat.send`、`chat.abort`、`chat.inject`を使用します。
+- `chat.history`は、UIクライアント向けに表示正規化されています。インラインdirectiveタグは可視テキストから除去され、プレーンテキストのtool-call XMLペイロード（`<tool_call>...</tool_call>`、`<function_call>...</function_call>`、`<tool_calls>...</tool_calls>`、`<function_calls>...</function_calls>`、および切り詰められたtool-callブロックを含む）と漏出したASCII/全角のモデル制御トークンは除去され、正確な`NO_REPLY` / `no_reply`のような純粋なsilent-token assistant行は省略され、サイズの大きすぎる行はプレースホルダーに置き換えられることがあります。
 
 #### デバイスペアリングとデバイストークン
 
 - `device.pair.list`は、保留中および承認済みのペア済みデバイスを返します。
 - `device.pair.approve`、`device.pair.reject`、`device.pair.remove`は、デバイスペアリングレコードを管理します。
-- `device.token.rotate`は、承認済みのroleおよびscopeの範囲内でペア済みデバイストークンをローテーションします。
-- `device.token.revoke`は、ペア済みデバイストークンを無効化します。
+- `device.token.rotate`は、承認済みのroleおよびscope境界内でペア済みデバイストークンをローテーションします。
+- `device.token.revoke`は、ペア済みデバイストークンを失効させます。
 
 #### Nodeのペアリング、invoke、保留中の作業
 
-- `node.pair.request`、`node.pair.list`、`node.pair.approve`、`node.pair.reject`、`node.pair.verify`は、nodeのペアリングとブートストラップ検証を扱います。
-- `node.list`と`node.describe`は、既知/接続済みのnode状態を返します。
-- `node.rename`は、ペア済みnodeラベルを更新します。
-- `node.invoke`は、接続済みnodeにコマンドを転送します。
+- `node.pair.request`、`node.pair.list`、`node.pair.approve`、`node.pair.reject`、`node.pair.verify`は、Nodeペアリングとブートストラップ検証を扱います。
+- `node.list`と`node.describe`は、既知の/接続中のNode状態を返します。
+- `node.rename`は、ペア済みNodeラベルを更新します。
+- `node.invoke`は、接続中のNodeにコマンドを転送します。
 - `node.invoke.result`は、invokeリクエストの結果を返します。
-- `node.event`は、node由来のイベントをgatewayに戻します。
+- `node.event`は、Node起点のイベントをGatewayに戻します。
 - `node.canvas.capability.refresh`は、スコープ付きcanvas-capabilityトークンを更新します。
-- `node.pending.pull`と`node.pending.ack`は、接続済みnodeキューAPIです。
-- `node.pending.enqueue`と`node.pending.drain`は、オフライン/切断中のnode向けの永続的な保留作業を管理します。
+- `node.pending.pull`と`node.pending.ack`は、接続中NodeキューAPIです。
+- `node.pending.enqueue`と`node.pending.drain`は、オフライン/切断中のNode向けの永続的な保留作業を管理します。
 
 #### 承認ファミリー
 
-- `exec.approval.request`、`exec.approval.get`、`exec.approval.list`、`exec.approval.resolve`は、単発のexec承認リクエストと、保留中承認の参照/再生を扱います。
-- `exec.approval.waitDecision`は、1件の保留中exec承認を待機し、最終判断を返します（タイムアウト時は`null`）。
-- `exec.approvals.get`と`exec.approvals.set`は、gateway exec承認ポリシースナップショットを管理します。
-- `exec.approvals.node.get`と`exec.approvals.node.set`は、node relayコマンド経由でnodeローカルのexec承認ポリシーを管理します。
+- `exec.approval.request`、`exec.approval.get`、`exec.approval.list`、`exec.approval.resolve`は、単発のexec承認リクエストと、保留中承認のlookup/replayを扱います。
+- `exec.approval.waitDecision`は、1つの保留中exec承認を待機し、最終決定を返します（タイムアウト時は`null`）。
+- `exec.approvals.get`と`exec.approvals.set`は、Gateway exec承認ポリシースナップショットを管理します。
+- `exec.approvals.node.get`と`exec.approvals.node.set`は、Node relayコマンド経由でNodeローカルexec承認ポリシーを管理します。
 - `plugin.approval.request`、`plugin.approval.list`、`plugin.approval.waitDecision`、`plugin.approval.resolve`は、Plugin定義の承認フローを扱います。
 
 #### その他の主要ファミリー
@@ -342,21 +352,21 @@ Gatewayはこれらを**クレーム**として扱い、サーバー側allowlist
 - automation:
   - `wake`は、即時または次回Heartbeat時のwakeテキスト注入をスケジュールします
   - `cron.list`、`cron.status`、`cron.add`、`cron.update`、`cron.remove`、`cron.run`、`cron.runs`
-- skills/tools: `commands.list`、`skills.*`、`tools.catalog`、`tools.effective`
+- Skills/tools: `commands.list`、`skills.*`、`tools.catalog`、`tools.effective`
 
 ### 一般的なイベントファミリー
 
 - `chat`: `chat.inject`やその他のtranscript専用chatイベントなどのUI chat更新。
-- `session.message`と`session.tool`: 購読中セッション向けのtranscript/event-stream更新。
+- `session.message`と`session.tool`: 購読中セッション向けのtranscript/イベントストリーム更新。
 - `sessions.changed`: セッションインデックスまたはメタデータが変更されました。
-- `presence`: system presenceスナップショット更新。
+- `presence`: システムプレゼンススナップショット更新。
 - `tick`: 定期的なkeepalive / livenessイベント。
-- `health`: gateway healthスナップショット更新。
+- `health`: Gatewayヘルススナップショット更新。
 - `heartbeat`: Heartbeatイベントストリーム更新。
-- `cron`: cron実行/ジョブ変更イベント。
-- `shutdown`: gatewayシャットダウン通知。
-- `node.pair.requested` / `node.pair.resolved`: nodeペアリングのライフサイクル。
-- `node.invoke.request`: node invokeリクエストのブロードキャスト。
+- `cron`: Cron実行/ジョブ変更イベント。
+- `shutdown`: Gatewayシャットダウン通知。
+- `node.pair.requested` / `node.pair.resolved`: Nodeペアリングのライフサイクル。
+- `node.invoke.request`: Node invokeリクエストのブロードキャスト。
 - `device.pair.requested` / `device.pair.resolved`: ペア済みデバイスのライフサイクル。
 - `voicewake.changed`: ウェイクワードトリガー設定が変更されました。
 - `exec.approval.requested` / `exec.approval.resolved`: exec承認のライフサイクル。
@@ -364,125 +374,125 @@ Gatewayはこれらを**クレーム**として扱い、サーバー側allowlist
 
 ### Nodeヘルパーメソッド
 
-- ノードは、auto-allowチェック用に現在のskill実行可能ファイル一覧を取得するために`skills.bins`を呼び出せます。
+- Nodeは、自動許可チェック用に現在のskill実行ファイル一覧を取得するために`skills.bins`を呼び出せます。
 
 ### Operatorヘルパーメソッド
 
-- operatorは、agentの実行時コマンド一覧を取得するために`commands.list`（`operator.read`）を呼び出せます。
-  - `agentId`は任意です。省略するとデフォルトagent workspaceを参照します。
-  - `scope`は、主要な`name`がどのサーフェスを対象にするかを制御します:
-    - `text`は、先頭の`/`を除いた主要なテキストコマンドトークンを返します
-    - `native`およびデフォルトの`both`パスは、利用可能な場合にprovider対応のnative名を返します
-  - `textAliases`は、`/model`や`/m`のような正確なスラッシュエイリアスを保持します。
-  - `nativeName`は、存在する場合にprovider対応のnativeコマンド名を保持します。
-  - `provider`は任意で、native命名とnative Pluginコマンドの可用性にのみ影響します。
+- Operatorは、agentのランタイムコマンドインベントリを取得するために`commands.list`（`operator.read`）を呼び出せます。
+  - `agentId`は任意です。省略するとデフォルトagentワークスペースを読み取ります。
+  - `scope`は、主`name`がどのサーフェスを対象にするかを制御します。
+    - `text`は、先頭の`/`を除いた主textコマンドトークンを返します
+    - `native`およびデフォルトの`both`パスは、利用可能な場合にprovider対応native名を返します
+  - `textAliases`は、`/model`や`/m`のような正確なスラッシュ別名を保持します。
+  - `nativeName`は、存在する場合にprovider対応nativeコマンド名を保持します。
+  - `provider`は任意で、native名付けとnative Pluginコマンド可用性にのみ影響します。
   - `includeArgs=false`は、レスポンスからシリアライズ済み引数メタデータを省略します。
-- operatorは、agentの実行時ツールカタログを取得するために`tools.catalog`（`operator.read`）を呼び出せます。レスポンスには、グループ化されたツールと出所メタデータが含まれます:
+- Operatorは、agentのランタイムtoolカタログを取得するために`tools.catalog`（`operator.read`）を呼び出せます。レスポンスには、グループ化されたtoolsとprovenanceメタデータが含まれます。
   - `source`: `core`または`plugin`
-  - `pluginId`: `source="plugin"`の場合のPlugin所有者
-  - `optional`: Pluginツールが任意かどうか
-- operatorは、セッションの実行時有効ツール一覧を取得するために`tools.effective`（`operator.read`）を呼び出せます。
+  - `pluginId`: `source="plugin"`のときのPlugin所有者
+  - `optional`: Plugin toolが任意かどうか
+- Operatorは、セッションのランタイムで有効なtoolインベントリを取得するために`tools.effective`（`operator.read`）を呼び出せます。
   - `sessionKey`は必須です。
-  - gatewayは、呼び出し元が指定したauthやdeliveryコンテキストを受け入れる代わりに、サーバー側でセッションから信頼できる実行時コンテキストを導出します。
-  - レスポンスはセッションスコープであり、core、Plugin、channelツールを含め、現在アクティブな会話で今使えるものを反映します。
-- operatorは、agentの表示可能なskill一覧を取得するために`skills.status`（`operator.read`）を呼び出せます。
-  - `agentId`は任意です。省略するとデフォルトagent workspaceを参照します。
-  - レスポンスには、生のsecret値を公開せずに、適格性、不足要件、configチェック、サニタイズ済みインストールオプションが含まれます。
-- operatorは、ClawHubディスカバリーメタデータ向けに`skills.search`と`skills.detail`（`operator.read`）を呼び出せます。
-- operatorは、`skills.install`（`operator.admin`）を2つのモードで呼び出せます:
-  - ClawHubモード: `{ source: "clawhub", slug, version?, force? }`は、skillフォルダーをデフォルトagent workspaceの`skills/`ディレクトリにインストールします。
-  - Gateway installerモード: `{ name, installId, dangerouslyForceUnsafeInstall?, timeoutMs? }`は、gatewayホスト上で宣言済み`metadata.openclaw.install`アクションを実行します。
-- operatorは、`skills.update`（`operator.admin`）を2つのモードで呼び出せます:
-  - ClawHubモードでは、デフォルトagent workspace内の1つの追跡対象slug、またはすべての追跡対象ClawHubインストールを更新します。
-  - Configモードでは、`enabled`、`apiKey`、`env`などの`skills.entries.<skillKey>`値にパッチを適用します。
+  - Gatewayは、呼び出し元から供給されたauthやdeliveryコンテキストを受け入れる代わりに、セッションから信頼できるランタイムコンテキストをサーバー側で導出します。
+  - レスポンスはセッションスコープであり、core、Plugin、channel toolsを含めて、アクティブな会話が現在使用できるものを反映します。
+- Operatorは、agentの可視なskillインベントリを取得するために`skills.status`（`operator.read`）を呼び出せます。
+  - `agentId`は任意です。省略するとデフォルトagentワークスペースを読み取ります。
+  - レスポンスには、適格性、不足している要件、configチェック、生のシークレット値を公開しないサニタイズ済みinstallオプションが含まれます。
+- Operatorは、ClawHub検出メタデータのために`skills.search`と`skills.detail`（`operator.read`）を呼び出せます。
+- Operatorは、`skills.install`（`operator.admin`）を2つのモードで呼び出せます。
+  - ClawHubモード: `{ source: "clawhub", slug, version?, force? }`は、デフォルトagentワークスペースの`skills/`ディレクトリにskillフォルダーをインストールします。
+  - Gatewayインストーラーモード: `{ name, installId, dangerouslyForceUnsafeInstall?, timeoutMs? }`は、Gatewayホスト上で宣言された`metadata.openclaw.install`アクションを実行します。
+- Operatorは、`skills.update`（`operator.admin`）を2つのモードで呼び出せます。
+  - ClawHubモードは、1つの追跡対象slug、またはデフォルトagentワークスペース内のすべての追跡対象ClawHubインストールを更新します。
+  - Configモードは、`enabled`、`apiKey`、`env`などの`skills.entries.<skillKey>`値をパッチします。
 
 ## Exec承認
 
-- execリクエストに承認が必要な場合、gatewayは`exec.approval.requested`をブロードキャストします。
-- operatorクライアントは、`exec.approval.resolve`を呼び出して解決します（`operator.approvals` scopeが必要です）。
-- `host=node`の場合、`exec.approval.request`には`systemRunPlan`（正規化された`argv`/`cwd`/`rawCommand`/sessionメタデータ）を含める必要があります。`systemRunPlan`が欠けているリクエストは拒否されます。
-- 承認後、転送される`node.invoke system.run`呼び出しは、その正規化された`systemRunPlan`を権威あるコマンド/cwd/sessionコンテキストとして再利用します。
-- 呼び出し元がprepareと最終承認済み`system.run`転送の間で`command`、`rawCommand`、`cwd`、`agentId`、または`sessionKey`を変更した場合、gatewayは変更されたペイロードを信用せずに実行を拒否します。
+- execリクエストに承認が必要な場合、Gatewayは`exec.approval.requested`をブロードキャストします。
+- Operatorクライアントは、`exec.approval.resolve`を呼び出して解決します（`operator.approvals` scopeが必要です）。
+- `host=node`の場合、`exec.approval.request`には`systemRunPlan`（正規化された`argv`/`cwd`/`rawCommand`/セッションメタデータ）が含まれている必要があります。`systemRunPlan`がないリクエストは拒否されます。
+- 承認後、転送された`node.invoke system.run`呼び出しは、その正規の`systemRunPlan`を権威あるcommand/cwd/sessionコンテキストとして再利用します。
+- 呼び出し元がprepareと最終承認済み`system.run`転送の間で`command`、`rawCommand`、`cwd`、`agentId`、`sessionKey`を変更した場合、Gatewayは変更されたペイロードを信用せず、その実行を拒否します。
 
-## Agent deliveryフォールバック
+## Agent配信フォールバック
 
-- `agent`リクエストには、アウトバウンド配信を要求するために`deliver=true`を含めることができます。
-- `bestEffortDeliver=false`は厳密な動作を維持します。未解決または内部専用のdeliveryターゲットは`INVALID_REQUEST`を返します。
-- `bestEffortDeliver=true`は、外部配信可能なルートを解決できない場合（たとえばinternal/webchatセッションや曖昧なマルチchannel設定）に、セッション専用実行へのフォールバックを許可します。
+- `agent`リクエストには、送信先配信を要求するための`deliver=true`を含めることができます。
+- `bestEffortDeliver=false`は厳密な動作を維持します。未解決または内部専用の配信先ターゲットは`INVALID_REQUEST`を返します。
+- `bestEffortDeliver=true`は、外部配信可能ルートを解決できない場合（たとえば内部/webchatセッションや曖昧なマルチchannel設定）に、セッション専用実行へのフォールバックを許可します。
 
 ## バージョニング
 
 - `PROTOCOL_VERSION`は`src/gateway/protocol/schema/protocol-schemas.ts`にあります。
 - クライアントは`minProtocol` + `maxProtocol`を送信し、サーバーは不一致を拒否します。
-- スキーマ + モデルはTypeBox定義から生成されます:
+- スキーマ + モデルはTypeBox定義から生成されます。
   - `pnpm protocol:gen`
   - `pnpm protocol:gen:swift`
   - `pnpm protocol:check`
 
 ### クライアント定数
 
-`src/gateway/client.ts`のリファレンスクライアントは、これらのデフォルト値を使用します。値はprotocol v3全体で安定しており、サードパーティクライアントにとって期待されるベースラインです。
+`src/gateway/client.ts`のリファレンスクライアントは、これらのデフォルト値を使用します。値はプロトコルv3全体で安定しており、サードパーティクライアントに期待されるベースラインです。
 
 | 定数 | デフォルト | ソース |
-| --- | --- | --- |
+| ----------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
 | `PROTOCOL_VERSION` | `3` | `src/gateway/protocol/schema/protocol-schemas.ts` |
 | リクエストタイムアウト（RPCごと） | `30_000` ms | `src/gateway/client.ts` (`requestTimeoutMs`) |
-| 事前認証 / connect-challengeタイムアウト | `10_000` ms | `src/gateway/handshake-timeouts.ts`（`250`–`10_000`にクランプ） |
+| preauth / connect-challengeタイムアウト | `10_000` ms | `src/gateway/handshake-timeouts.ts`（クランプ `250`–`10_000`） |
 | 初期再接続バックオフ | `1_000` ms | `src/gateway/client.ts` (`backoffMs`) |
 | 最大再接続バックオフ | `30_000` ms | `src/gateway/client.ts` (`scheduleReconnect`) |
-| device-token切断後の高速再試行クランプ | `250` ms | `src/gateway/client.ts` |
+| device-token close後の高速リトライクランプ | `250` ms | `src/gateway/client.ts` |
 | `terminate()`前の強制停止猶予 | `250` ms | `FORCE_STOP_TERMINATE_GRACE_MS` |
-| `stopAndWait()`のデフォルトタイムアウト | `1_000` ms | `STOP_AND_WAIT_TIMEOUT_MS` |
+| `stopAndWait()`デフォルトタイムアウト | `1_000` ms | `STOP_AND_WAIT_TIMEOUT_MS` |
 | デフォルトtick間隔（`hello-ok`前） | `30_000` ms | `src/gateway/client.ts` |
-| tick-timeout切断 | 無通信が`tickIntervalMs * 2`を超えた場合はコード`4000` | `src/gateway/client.ts` |
+| tickタイムアウトclose | 無通信が`tickIntervalMs * 2`を超えるとコード`4000` | `src/gateway/client.ts` |
 | `MAX_PAYLOAD_BYTES` | `25 * 1024 * 1024`（25 MB） | `src/gateway/server-constants.ts` |
 
-サーバーは、有効な`policy.tickIntervalMs`、`policy.maxPayload`、`policy.maxBufferedBytes`を`hello-ok`で通知します。クライアントは、ハンドシェイク前のデフォルト値ではなく、これらの値を尊重する必要があります。
+サーバーは、有効な`policy.tickIntervalMs`、`policy.maxPayload`、`policy.maxBufferedBytes`を`hello-ok`で通知します。クライアントは、ハンドシェイク前のデフォルト値ではなく、それらの値に従うべきです。
 
 ## 認証
 
-- 共有シークレットによるgateway認証は、設定された認証モードに応じて`connect.params.auth.token`または`connect.params.auth.password`を使います。
-- Tailscale Serve（`gateway.auth.allowTailscale: true`）や非loopbackの`gateway.auth.mode: "trusted-proxy"`のようなidentity付きモードでは、`connect.params.auth.*`ではなくリクエストヘッダーからconnect認証チェックを満たします。
-- private-ingressの`gateway.auth.mode: "none"`は共有シークレットのconnect認証を完全にスキップします。このモードを公開/信頼できないingressで公開しないでください。
-- ペアリング後、Gatewayは接続のrole + scopesにスコープされた**device token**を発行します。これは`hello-ok.auth.deviceToken`で返され、クライアントは今後の接続のためにこれを永続化する必要があります。
-- クライアントは、接続成功時には必ず主要な`hello-ok.auth.deviceToken`を永続化する必要があります。
-- その**保存済み**device tokenで再接続する場合は、そのトークンに対して保存済みの承認scopeセットも再利用する必要があります。これにより、すでに許可されているread/probe/statusアクセスが維持され、再接続時により狭い暗黙のadmin専用scopeへと黙って縮小されることを防げます。
-- クライアント側のconnect認証組み立て（`src/gateway/client.ts`内の`selectConnectAuth`）:
-  - `auth.password`は独立しており、設定されていれば常に転送されます。
-  - `auth.token`は優先順で設定されます: まず明示的な共有トークン、次に明示的な`deviceToken`、その次に保存済みのデバイス単位トークン（`deviceId` + `role`をキーとする）。
-  - `auth.bootstrapToken`は、上記のどれでも`auth.token`が解決されなかった場合にのみ送信されます。共有トークンまたは解決済みdevice tokenがあれば抑止されます。
-  - one-shotの`AUTH_TOKEN_MISMATCH`再試行時の保存済みdevice tokenの自動昇格は、**trusted endpointsのみ**で有効です — loopback、またはピン留めされた`tlsFingerprint`を持つ`wss://`です。ピン留めなしの公開`wss://`は該当しません。
-- 追加の`hello-ok.auth.deviceTokens`エントリは、ブートストラップのハンドオフトークンです。`wss://`やloopback/local pairingのような信頼できる転送でブートストラップ認証を使って接続した場合にのみ永続化してください。
-- クライアントが明示的な**`deviceToken`**または明示的な**`scopes`**を指定した場合、その呼び出し元が要求したscopeセットが引き続き権威あるものです。キャッシュ済みscopeは、クライアントが保存済みのデバイス単位トークンを再利用している場合にのみ再利用されます。
-- device tokenは、`device.token.rotate`と`device.token.revoke`でローテーション/無効化できます（`operator.pairing` scopeが必要です）。
-- トークン発行/ローテーションは、そのデバイスのpairingエントリに記録された承認済みroleセットの範囲内に制限されます。トークンのローテーションによって、そのデバイスをpairing承認で一度も許可されていないroleへ拡張することはできません。
-- ペア済みデバイストークンセッションでは、呼び出し元が`operator.admin`も持っていない限り、デバイス管理は自分自身のスコープに限定されます。adminではない呼び出し元は、自分**自身の**デバイスエントリのみをremove/revoke/rotateできます。
-- `device.token.rotate`は、要求されたoperator scopeセットも、呼び出し元の現在のセッションscopeに照らしてチェックします。adminではない呼び出し元は、現在保持しているものより広いoperator scopeセットへトークンをローテーションできません。
-- 認証失敗には、`error.details.code`に加えて復旧ヒントが含まれます:
+- 共有シークレットGateway認証は、設定された認証モードに応じて`connect.params.auth.token`または`connect.params.auth.password`を使用します。
+- Tailscale Serve（`gateway.auth.allowTailscale: true`）や非loopbackの`gateway.auth.mode: "trusted-proxy"`のようなID保持モードでは、`connect.params.auth.*`ではなくリクエストヘッダーからconnect認証チェックを満たします。
+- プライベートingressの`gateway.auth.mode: "none"`は共有シークレットconnect認証を完全にスキップします。このモードを公開/信頼できないingressで公開しないでください。
+- ペアリング後、Gatewayは接続のrole + scopesにスコープされた**device token**を発行します。これは`hello-ok.auth.deviceToken`で返され、クライアントは将来の接続のためにそれを永続化する必要があります。
+- クライアントは、成功したconnectの後に常にプライマリ`hello-ok.auth.deviceToken`を永続化する必要があります。
+- その**保存済み**device tokenで再接続する場合、そのトークンに対して保存済みの承認scopeセットも再利用する必要があります。これにより、すでに付与されたread/probe/statusアクセスが保持され、再接続がより狭い暗黙のadmin専用scopeへ静かに縮小されることを防ぎます。
+- クライアント側のconnect認証組み立て（`src/gateway/client.ts`の`selectConnectAuth`）:
+  - `auth.password`は直交しており、設定されている場合は常に転送されます。
+  - `auth.token`は優先順位順に設定されます。最初に明示的な共有トークン、次に明示的な`deviceToken`、最後に保存済みのデバイス単位トークン（`deviceId` + `role`でキー付け）。
+  - `auth.bootstrapToken`は、上記のいずれでも`auth.token`が解決されなかった場合にのみ送信されます。共有トークンまたは解決済みのdevice tokenがあれば送信されません。
+  - 保存済みdevice tokenの自動昇格は、ワンショットの`AUTH_TOKEN_MISMATCH`リトライ時でも**信頼されたエンドポイントのみ**で有効です — loopback、または固定された`tlsFingerprint`を持つ`wss://`です。ピン留めなしの公開`wss://`は該当しません。
+- 追加の`hello-ok.auth.deviceTokens`エントリはブートストラップ引き継ぎトークンです。`wss://`またはloopback/local pairingのような信頼されたトランスポート上でブートストラップ認証を使った接続の場合にのみ永続化してください。
+- クライアントが明示的な`deviceToken`または明示的な`scopes`を指定した場合、その呼び出し元要求のscopeセットが引き続き権威を持ちます。キャッシュ済みscopeが再利用されるのは、クライアントが保存済みのデバイス単位トークンを再利用している場合だけです。
+- Device tokenは`device.token.rotate`と`device.token.revoke`でローテーション/失効できます（`operator.pairing` scopeが必要です）。
+- トークンの発行/ローテーションは、そのデバイスのペアリングエントリに記録された承認済みroleセットの範囲内に制限されます。トークンのローテーションによって、ペアリング承認が一度も許可していないroleへそのデバイスを拡張することはできません。
+- ペア済みデバイストークンセッションでは、呼び出し元が`operator.admin`も持っていない限り、デバイス管理は自身のスコープに限定されます。非admin呼び出し元は、自分**自身**のデバイスエントリのみをremove/revoke/rotateできます。
+- `device.token.rotate`は、要求されたoperator scopeセットが呼び出し元の現在のセッションscopeに対して適切かどうかも確認します。非admin呼び出し元は、自分が現在保持しているより広いoperator scopeセットへトークンをローテーションできません。
+- 認証失敗には、`error.details.code`と回復ヒントが含まれます:
   - `error.details.canRetryWithDeviceToken`（boolean）
   - `error.details.recommendedNextStep`（`retry_with_device_token`、`update_auth_configuration`、`update_auth_credentials`、`wait_then_retry`、`review_auth_configuration`）
 - `AUTH_TOKEN_MISMATCH`に対するクライアント動作:
-  - 信頼できるクライアントは、キャッシュ済みのデバイス単位トークンで1回だけ制限付き再試行を試みられます。
-  - その再試行が失敗した場合、クライアントは自動再接続ループを停止し、operatorの対応ガイダンスを表示する必要があります。
+  - 信頼されたクライアントは、キャッシュ済みのデバイス単位トークンで1回だけ制限付きリトライを試行できます。
+  - そのリトライが失敗した場合、クライアントは自動再接続ループを停止し、オペレーターの対応ガイダンスを表示する必要があります。
 
 ## デバイスID + ペアリング
 
-- ノードは、キーペアのフィンガープリントから導出された安定したデバイスID（`device.id`）を含める必要があります。
+- Nodeは、キーペアフィンガープリントから導出された安定したデバイスID（`device.id`）を含める必要があります。
 - Gatewayは、デバイス + roleごとにトークンを発行します。
-- 新しいデバイスIDには、ローカル自動承認が有効になっていない限り、ペアリング承認が必要です。
+- ローカル自動承認が有効でない限り、新しいデバイスIDにはペアリング承認が必要です。
 - ペアリング自動承認は、直接のlocal loopback接続を中心にしています。
-- OpenClawには、信頼済み共有シークレットのヘルパーフロー向けに、限定的なbackend/container-local self-connectパスもあります。
-- 同一ホストのtailnetまたはLAN接続も、ペアリング上は引き続きリモートとして扱われ、承認が必要です。
-- すべてのWSクライアントは、`connect`時に`device` IDを含める必要があります（operator + node）。
-  Control UIがこれを省略できるのは次のモードのみです:
-  - localhost専用の安全でないHTTP互換のための`gateway.controlUi.allowInsecureAuth=true`。
-  - `gateway.auth.mode: "trusted-proxy"`によるoperator Control UI認証が成功している場合。
-  - `gateway.controlUi.dangerouslyDisableDeviceAuth=true`（緊急用、重大なセキュリティ低下）。
-- すべての接続は、サーバーが提供する`connect.challenge` nonceに署名する必要があります。
+- OpenClawには、信頼された共有シークレットヘルパーフロー向けの限定的なバックエンド/コンテナローカル自己接続パスもあります。
+- 同一ホストのtailnetまたはLAN接続は、依然としてpairing上はリモートとして扱われ、承認が必要です。
+- すべてのWSクライアントは、`connect`中に`device` IDを含める必要があります（operator + node）。
+  Control UIがこれを省略できるのは、次のモードのみです:
+  - localhost専用の安全でないHTTP互換性のための`gateway.controlUi.allowInsecureAuth=true`。
+  - 成功した`gateway.auth.mode: "trusted-proxy"` operator Control UI認証。
+  - `gateway.controlUi.dangerouslyDisableDeviceAuth=true`（非常時用、深刻なセキュリティ低下）。
+- すべての接続は、サーバー提供の`connect.challenge` nonceに署名する必要があります。
 
-### デバイス認証移行の診断
+### デバイス認証移行診断
 
-従来のchallenge前署名動作をまだ使っているレガシークライアント向けに、`connect`は現在、安定した`error.details.reason`とともに`error.details.code`配下で`DEVICE_AUTH_*`詳細コードを返します。
+従来のchallenge前署名動作をまだ使用しているレガシークライアント向けに、`connect`は現在、安定した`error.details.reason`の下で`error.details.code`に`DEVICE_AUTH_*`詳細コードを返します。
 
 一般的な移行失敗:
 
@@ -491,23 +501,23 @@ Gatewayはこれらを**クレーム**として扱い、サーバー側allowlist
 | `device nonce required` | `DEVICE_AUTH_NONCE_REQUIRED` | `device-nonce-missing` | クライアントが`device.nonce`を省略した（または空で送信した）。 |
 | `device nonce mismatch` | `DEVICE_AUTH_NONCE_MISMATCH` | `device-nonce-mismatch` | クライアントが古い/誤ったnonceで署名した。 |
 | `device signature invalid` | `DEVICE_AUTH_SIGNATURE_INVALID` | `device-signature` | 署名ペイロードがv2ペイロードと一致しない。 |
-| `device signature expired` | `DEVICE_AUTH_SIGNATURE_EXPIRED` | `device-signature-stale` | 署名済みタイムスタンプが許容スキュー範囲外。 |
+| `device signature expired` | `DEVICE_AUTH_SIGNATURE_EXPIRED` | `device-signature-stale` | 署名済みタイムスタンプが許容されるスキュー範囲外。 |
 | `device identity mismatch` | `DEVICE_AUTH_DEVICE_ID_MISMATCH` | `device-id-mismatch` | `device.id`が公開鍵フィンガープリントと一致しない。 |
-| `device public key invalid` | `DEVICE_AUTH_PUBLIC_KEY_INVALID` | `device-public-key` | 公開鍵形式/正規化に失敗した。 |
+| `device public key invalid` | `DEVICE_AUTH_PUBLIC_KEY_INVALID` | `device-public-key` | 公開鍵の形式/正規化に失敗した。 |
 
-移行先の目標:
+移行目標:
 
-- 必ず`connect.challenge`を待ちます。
-- サーバーnonceを含むv2ペイロードに署名します。
-- 同じnonceを`connect.params.device.nonce`で送信します。
-- 推奨される署名ペイロードは`v3`で、device/client/role/scopes/token/nonceフィールドに加えて`platform`と`deviceFamily`も束縛します。
-- レガシー`v2`署名も互換性のため引き続き受け入れられますが、ペア済みデバイスのメタデータ固定は、再接続時のコマンドポリシーを引き続き制御します。
+- 常に`connect.challenge`を待機する。
+- サーバーnonceを含むv2ペイロードに署名する。
+- 同じnonceを`connect.params.device.nonce`で送信する。
+- 推奨される署名ペイロードは`v3`で、device/client/role/scopes/token/nonceフィールドに加えて`platform`と`deviceFamily`を束縛します。
+- レガシー`v2`署名も互換性のため引き続き受け入れられますが、ペア済みデバイスメタデータのピン留めは再接続時のコマンドポリシーを引き続き制御します。
 
 ## TLS + ピン留め
 
-- WS接続でTLSがサポートされます。
-- クライアントは任意でgateway証明書フィンガープリントをピン留めできます（`gateway.tls`設定に加えて`gateway.remote.tlsFingerprint`またはCLIの`--tls-fingerprint`を参照）。
+- WS接続ではTLSがサポートされます。
+- クライアントは任意でGateway証明書フィンガープリントをピン留めできます（`gateway.tls` configおよび`gateway.remote.tlsFingerprint`またはCLI `--tls-fingerprint`を参照）。
 
 ## スコープ
 
-このプロトコルは、**完全なgateway API**（status、channels、models、chat、agent、sessions、nodes、approvalsなど）を公開します。正確なサーフェスは、`src/gateway/protocol/schema.ts`内のTypeBoxスキーマで定義されています。
+このプロトコルは**完全なGateway API**（status、channels、models、chat、agent、sessions、nodes、approvalsなど）を公開します。正確なサーフェスは`src/gateway/protocol/schema.ts`のTypeBoxスキーマで定義されています。
